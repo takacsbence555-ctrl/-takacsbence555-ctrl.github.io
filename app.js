@@ -755,24 +755,27 @@ modules.home = () =>
   "</b></div><div><span>Cancellations</span><b>2</b></div><div><span>Staff working</span><b>3</b></div><div><span>Decisions required</span><b>" +
   (state.plan === "active" ? "0" : "1") +
   '</b></div></div></section><section class="panel notification-card"><span>DECISION PHILOSOPHY</span><h3>Less administration.<br>Fewer decisions.<br>Better outcomes.</h3><p>Normal operations stay quiet. You are notified only when policy, money or strategy requires your judgment.</p></section></div><div class="home-footer"><button class="ghost" data-action="reset-demo">↻ Reset full demo story</button><span>All numbers marked as demo data are simulated.</span></div>';
-modules.operator = () =>
-  '<div class="operator-score"><div><span>REVENUE TARGET</span><b>' +
-  money(state.target) +
-  "</b></div><div><span>CURRENT FORECAST</span><b>" +
-  money(state.forecast) +
-  '</b></div><div><span>PROJECTED GAP</span><b class="' +
-  (state.gap > 0 ? "negative" : "positive") +
-  '">' +
-  (state.gap > 0 ? "−" + money(state.gap) : "+" + money(Math.abs(state.gap))) +
-  '</b></div><div><span>MODE</span><b>COPILOT</b></div></div><section class="operator-analysis"><header><div><span>✦ OPERATOR ANALYSIS</span><h2>' +
-  (state.plan === "active"
-    ? "Approved plan is running"
-    : "Revenue goal is at risk") +
-  '</h2></div><span class="demo-chip">DEMO DATA</span></header><div class="signals"><div><b>18</b><span>empty appointments</span></div><div><b>47</b><span>customers due to return</span></div><div><b>12</b><span>high-value customers at churn risk</span></div><div><b>61%</b><span>Tue–Thu utilization</span></div></div></section><section class="plan-card"><div class="plan-head"><div><span>PREPARED PLAN · 5 ACTIONS</span><h2>Close the monthly revenue gap</h2><p>Optimized for revenue, margin, retention and your current approval rules.</p></div><div class="plan-total"><span>TOTAL EXPECTED IMPACT</span><b>+€1,500</b></div></div><div class="plan-lines"><div><span><b>Customer reactivation</b><small>12 high-value customers · personalized</small></span><strong>+€540</strong></div><div><span><b>Cancellation / waitlist recovery</b><small>8 best-fit offers · no discount</small></span><strong>+€280</strong></div><div><span><b>Personalized rebooking</b><small>47 cycle-aware messages</small></span><strong>+€390</strong></div><div><span><b>Marketing optimization</b><small>Move €47 budget to higher-performing segment</small></span><strong>+€120</strong></div><div><span><b>Upsell opportunities</b><small>Contextual product and service suggestions</small></span><strong>+€170</strong></div></div><div class="plan-meta"><span><small>ESTIMATED COST</small><b>€47</b></span><span><small>CONFIDENCE</small><b>78%</b></span><span><small>RISK</small><b>Low</b></span><span><small>OWNER DECISIONS</small><b>1</b></span></div><div class="plan-actions">' +
-  (state.plan === "active"
-    ? '<button class="primary" data-action="view-results">VIEW RESULTS</button>'
-    : '<button class="primary" data-action="approve-plan">APPROVE PLAN</button><button class="secondary" data-action="modify-plan">Modify</button><button class="secondary" data-action="reject-plan">Reject</button><button class="text-btn" data-action="reasoning">Show reasoning</button>') +
-  "</div></section>";
+modules.operator = () => {
+  const active = state.plan === "active";
+  return '<section class="operator-command"><div class="operator-command-copy"><span class="eyebrow">✦ AI BUSINESS OPERATOR · DEMO</span><h2>' +
+    (active ? 'Your growth plan is running.' : 'I found 6 opportunities to close the revenue gap.') +
+    '</h2><p>' + (active ? 'Approved actions are executing inside your rules. Outcomes are measured and written back to Business Memory.' : 'I analyzed capacity, return cycles, churn risk and margin. One owner decision unlocks the plan.') +
+    '</p></div><div class="operator-goal-ring"><small>MONTHLY GOAL</small><b>'+money(state.target)+'</b><span>'+money(state.forecast)+' forecast</span></div></section>' +
+    '<div class="operator-command-metrics"><div><small>CURRENT</small><b>'+money(state.current)+'</b></div><div><small>FORECAST</small><b>'+money(state.forecast)+'</b></div><div><small>GAP</small><b class="'+(state.gap>0?'negative':'positive')+'">'+(state.gap>0?'−'+money(state.gap):'+'+money(Math.abs(state.gap)))+'</b></div><div><small>MODE</small><b>COPILOT</b></div></div>' +
+    '<section class="operator-priority"><div class="priority-head"><div><span>HIGHEST-IMPACT OPPORTUNITY</span><h3>Recover demand already inside the business</h3></div><span class="demo-chip">SIMULATED</span></div><div class="priority-body"><div class="priority-number"><small>EXPECTED IMPACT</small><b>+€540</b><span>12 high-value customers</span></div><div class="priority-why"><span>WHY NOW</span><p>47 customers are due to return and Tuesday–Thursday utilization is only 61%. Business Memory favors personalized rebooking over broad discounting.</p></div><div class="priority-confidence"><span>CONFIDENCE</span><b>82%</b><small>Low risk · €18 estimated cost</small></div></div></section>' +
+    '<section class="operator-opportunities"><div class="panel-head"><div><span class="eyebrow">OPPORTUNITY QUEUE</span><h2>6 opportunities ranked by expected business impact</h2></div><button class="text-btn" data-action="reasoning">How I ranked these →</button></div>' +
+    '<div class="opportunity-queue">' +
+    '<article class="op-row featured"><span class="op-rank">01</span><div><b>Reactivate high-value customers</b><small>12 customers · cycle-aware outreach · no broad discount</small></div><span class="op-signal">82% confidence</span><strong>+€540</strong></article>' +
+    '<article class="op-row"><span class="op-rank">02</span><div><b>Personalized rebooking</b><small>47 customers due to return · preferred barber/time considered</small></div><span class="op-signal">79% confidence</span><strong>+€390</strong></article>' +
+    '<article class="op-row"><span class="op-rank">03</span><div><b>Recover cancellations with smart waitlist</b><small>8 best-fit offers · no discount required</small></div><span class="op-signal">88% confidence</span><strong>+€280</strong></article>' +
+    '<article class="op-row"><span class="op-rank">04</span><div><b>Contextual service & product upsell</b><small>Only where purchase history indicates relevance</small></div><span class="op-signal">71% confidence</span><strong>+€170</strong></article>' +
+    '<article class="op-row"><span class="op-rank">05</span><div><b>Shift underperforming campaign budget</b><small>Move €47 toward the higher-converting segment</small></div><span class="op-signal">76% confidence</span><strong>+€120</strong></article>' +
+    '<article class="op-row quiet"><span class="op-rank">06</span><div><b>Protect two higher-risk bookings</b><small>Confirmation / pre-auth within existing policy</small></div><span class="op-signal">Risk reduction</span><strong>Protect</strong></article></div></section>' +
+    '<section class="operator-plan-dock"><div><small>PREPARED PLAN · 5 REVENUE ACTIONS</small><b>+€1,500 expected impact</b><span>€47 estimated cost · 78% plan confidence · Low risk</span></div><div class="plan-actions">' +
+    (active ? '<button class="primary" data-action="view-results">VIEW MEASURED IMPACT</button><button class="secondary" data-go="decisions">DECISION LOG</button>' : '<button class="primary" data-action="approve-plan">APPROVE & EXECUTE</button><button class="secondary" data-action="modify-plan">MODIFY</button><button class="secondary" data-action="reject-plan">REJECT</button><button class="text-btn" data-action="reasoning">SHOW REASONING</button>') +
+    '</div></section>' +
+    '<section class="operator-loop"><span><i>1</i><b>OBSERVE</b><small>Bookings · customers · staff</small></span><em>→</em><span><i>2</i><b>DETECT</b><small>Risks & opportunities</small></span><em>→</em><span><i>3</i><b>PLAN</b><small>Rank expected impact</small></span><em>→</em><span><i>4</i><b>ACT</b><small>Within permissions</small></span><em>→</em><span><i>5</i><b>MEASURE</b><small>Attribute outcomes</small></span><em>→</em><span><i>6</i><b>LEARN</b><small>Update Business Memory</small></span></section>';
+};
 modules.live = () =>
   '<div class="live-strip"><div><span>LIVE BUSINESS</span><b>3 staff · ' +
   (state.plan === "active" ? "22" : "17") +
