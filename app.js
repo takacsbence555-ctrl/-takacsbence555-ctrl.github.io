@@ -44,6 +44,8 @@ const state = {
   guestReview: false,
   guestMembership: false,
   guestGift: false,
+  guestLang: "DE",
+  cutMemory: { service:"Skin Fade", barber:"Demo Barber A", time:"16:15" },
   permissions: {
     marketing: true,
     discount: true,
@@ -1513,10 +1515,10 @@ $("#bookNext").onclick = () => {
   (id) => ($("#" + id).oninput = bookRefresh),
 );
 $('[data-action="repeat-cut"]').onclick = () => {
-  state.service = "Skin Fade";
+  state.service = state.cutMemory.service;
   state.price = 42;
-  state.barber = "Demo Barber A";
-  state.time = "16:15";
+  state.barber = state.cutMemory.barber;
+  state.time = state.cutMemory.time;
   $("#sumService").textContent = "Skin Fade";
   $("#sumBarber").textContent = "Demo Barber A";
   $("#sumTime").textContent = "Di, 22. Sep · 16:15";
@@ -1554,6 +1556,23 @@ function guestAction(a){
   if(a==="gift"){state.guestGift=true; return toast("Gift card created","DEMO €50 gift card · no real charge");}
 }
 bindGuestActions();
+function applyGuestLanguage(lang){
+  state.guestLang=lang;
+  const en=lang==="EN";
+  const dict={
+    ".booking-kicker":en?"PRIVATE BOOKING · NOIR DEMO":"PRIVATE BUCHUNG · NOIR DEMO",
+    ".booking-main>h1":en?"Your look.<br><em>Your appointment.</em>":"Dein Look.<br><em>Dein Termin.</em>",
+    ".booking-lead":en?"Premium grooming. Book in under a minute.":"Premium Grooming. In weniger als einer Minute gebucht."
+  };
+  Object.entries(dict).forEach(([s,v])=>{const n=$(s);if(n)n.innerHTML=v});
+  const heads=$(".section-title h2");
+  const labels=en?["Choose service","Choose professional","Choose time","Almost done"]:["Service wählen","Professional wählen","Zeit wählen","Fast geschafft"];
+  heads.forEach((n,i)=>{if(labels[i])n.textContent=labels[i]});
+  if($("#bookBack")) $("#bookBack").textContent=en?"Back":"Zurück";
+  if($("#bookNext")) $("#bookNext").textContent=state.bookStep===4?(en?"Pay €10 demo deposit":"€10 Demo-Deposit bezahlen"):(en?"Continue":"Weiter");
+  $(".lang [data-lang]").forEach(x=>x.classList.toggle("active",x.dataset.lang===lang));
+}
+$(".lang [data-lang]").forEach(b=>b.onclick=()=>{applyGuestLanguage(b.dataset.lang);toast(b.dataset.lang==="EN"?"Language changed":"Sprache geändert",b.dataset.lang)});
 bind();
 renderModule("home");
 bookRefresh();
