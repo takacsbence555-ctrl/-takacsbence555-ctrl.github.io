@@ -1217,7 +1217,7 @@ async function runLiveOperator(){
   await ownerRpc("owner_operator_execute",{p_decision_id:decisionId});
   await ownerRpc("owner_operator_measure",{p_decision_id:decisionId});
   await loadLiveOperator();await loadOwnerDashboard();renderModule("operator");
-  toast("Operator action executed","Decision Log updated · attribution measured conservatively");
+  toast("Operator action executed","Decision Log updated · "+(outreach?.prepared||0)+" outreach drafts prepared · no messages sent yet");
  }catch(e){console.error(e);toast("Operator action failed","No live action was applied.");}
 }
 function startExecution() {
