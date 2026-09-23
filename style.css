@@ -3937,3 +3937,9 @@ button {
 .live-booking-card input,.live-booking-card select{width:100%;box-sizing:border-box;padding:13px 14px;border:1px solid #d8d4cb;border-radius:11px;background:#faf9f6;font:inherit}
 .modal-close{position:absolute;right:16px;top:14px;border:0;background:transparent;font-size:28px;cursor:pointer}.modal-actions{display:flex;gap:10px;flex-wrap:wrap}.modal-actions button{flex:1;min-width:140px}
 #liveBookingStatus{font-size:13px;color:#666;min-height:18px}.guest-event[data-live-booking-id]{cursor:pointer}.guest-event[data-live-booking-id]:hover{background:rgba(0,0,0,.025)}
+
+.live-metric-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:0 0 14px}
+.live-metric-grid>div{background:#fff;border:1px solid rgba(16,17,20,.1);border-radius:16px;padding:16px;display:grid;gap:4px}
+.live-metric-grid small{font-size:10px;letter-spacing:.12em;font-weight:800;color:#777}.live-metric-grid b{font-size:25px}.live-metric-grid span{font-size:12px;color:#777}
+@media(max-width:900px){.live-metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.live-metric-grid>div:nth-child(3){grid-column:span 2}}
+@media(max-width:520px){.live-metric-grid{grid-template-columns:1fr 1fr}.live-metric-grid b{font-size:21px}}
