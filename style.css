@@ -3759,3 +3759,26 @@ button {
   #booking .slot-grid{grid-template-columns:repeat(2,1fr)}
   #booking .booking-summary{padding:24px 20px}
 }
+
+/* Premium guest demo map */
+#booking .guest-map-card{margin:22px 0;border-top:1px solid #30302c;border-bottom:1px solid #30302c;padding:20px 0}
+#booking .guest-map-head,#booking .guest-map-foot{display:flex;align-items:center;justify-content:space-between;gap:14px}
+#booking .guest-map-head small{display:block;color:#777a80;font-size:.58rem;letter-spacing:.18em;margin-bottom:5px}
+#booking .guest-map-head b{font-size:.8rem}
+#booking .guest-map-head>span{font-size:.55rem;letter-spacing:.12em;color:#85878c;border:1px solid #353630;padding:5px 7px}
+#booking .guest-map{height:190px;margin:16px 0;position:relative;overflow:hidden;background:#e9e6de}
+#booking .map-road{position:absolute;background:#f8f6f0;box-shadow:0 0 0 1px rgba(0,0,0,.05)}
+#booking .map-road.r1{width:130%;height:18px;left:-15%;top:48%;transform:rotate(-11deg)}
+#booking .map-road.r2{width:18px;height:130%;left:53%;top:-15%;transform:rotate(13deg)}
+#booking .map-road.r3{width:90%;height:10px;left:18%;top:24%;transform:rotate(7deg)}
+#booking .map-road.r4{width:10px;height:90%;left:23%;top:24%;transform:rotate(-18deg)}
+#booking .map-block{position:absolute;background:#d9d5cc;border:1px solid #d0ccc3}
+#booking .map-block.b1{width:82px;height:42px;left:8%;top:12%;transform:rotate(-4deg)}
+#booking .map-block.b2{width:72px;height:50px;right:7%;top:54%;transform:rotate(8deg)}
+#booking .map-block.b3{width:65px;height:38px;left:28%;bottom:7%;transform:rotate(-9deg)}
+#booking .map-pin{position:absolute;left:52%;top:48%;transform:translate(-50%,-50%);width:42px;height:42px;border-radius:50% 50% 50% 0;background:#11110f;color:#fff;display:grid;place-items:center;transform-origin:center;rotate:-45deg;box-shadow:0 8px 24px rgba(0,0,0,.22)}
+#booking .map-pin strong{rotate:45deg;font-family:Georgia,serif}
+#booking .map-label{position:absolute;color:#6e6b64;font-size:.58rem;font-weight:700}
+#booking .map-label.l1{left:8%;bottom:10%} #booking .map-label.l2{right:7%;top:10%}
+#booking .guest-map-foot{font-size:.64rem;color:#85878c}
+#booking .guest-map-foot button{border:0;background:transparent;color:#fff;padding:0;border-bottom:1px solid #686a6e;font-size:.66rem}
