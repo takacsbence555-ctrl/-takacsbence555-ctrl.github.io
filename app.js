@@ -1107,6 +1107,7 @@ function renderModule(id) {
   bind();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
+window.renderModule = renderModule;
 function bind() {
   $$("[data-go]").forEach(
     (b) => (b.onclick = () => renderModule(b.dataset.go)),
