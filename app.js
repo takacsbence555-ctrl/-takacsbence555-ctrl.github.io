@@ -139,6 +139,10 @@ function calendar() {
       row[col] = label;
     } else rows.push([hour,"",label,""]);
   }
+  if (state.futureBooking && state.futureBooking.status !== "Cancelled") {
+    const label = "FUTURE DEMO · " + state.futureBooking.service + " · €" + state.futureBooking.price;
+    rows.push(["20:00","",label,""]);
+  }
   let h =
     '<div class="calendar-grid"><div></div><div class="calhead"><b>Demo Barber B</b><small>84% · €248</small></div><div class="calhead"><b>Demo Barber A</b><small>91% · €294</small></div><div class="calhead"><b>Demo Barber C</b><small>72% · €142</small></div>';
   rows.forEach((r) => {
@@ -1077,9 +1081,14 @@ function renderModule(id) {
        id === "decisions" ? "Guest lifecycle audit trail" :
        "Guest booking added to calendar") +
       '</h3><p>' + b.service + ' · ' + b.barber + ' · ' + b.time +
-      ' · Total €' + b.price + ' · Deposit €10 · Remaining €' + b.remaining +
+      ' · Total €' + b.price + ' · Deposit €' + (b.deposit || 0) + ' · Remaining €' + b.remaining +
       '</p></div><b>' + (b.status === "Cancelled" ? "CANCELLED" : "CONFIRMED") + '</b>';
     $("#moduleContent").prepend(synced);
+    if(state.futureBooking && ["calendar","customers"].includes(id)){
+      const f=document.createElement("section"); f.className="synced-booking";
+      f.innerHTML='<div><span>FUTURE REBOOK · WORKING DEMO</span><h3>Next visit reserved</h3><p>'+state.futureBooking.service+' · '+state.futureBooking.barber+' · '+state.futureBooking.time+' · €'+state.futureBooking.price+'</p></div><b>CONFIRMED</b>';
+      $("#moduleContent").prepend(f);
+    }
     if(id==="decisions" && state.guestEvents.length){
       const trail=document.createElement("section"); trail.className="guest-audit-trail";
       trail.innerHTML='<div class="panel-head"><h2>Guest booking events</h2><span class="demo-chip">WORKING DEMO</span></div>'+
