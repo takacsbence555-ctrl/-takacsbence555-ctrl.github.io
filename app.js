@@ -1608,7 +1608,7 @@ function guestAction(a){
   if(a==="gift"){state.guestGift=true; saveDemoState();return toast("Gift card created","DEMO €50 gift card · no real charge");}
 }
 bindGuestActions();
-function applyGuestLanguage(lang){
+window.applyGuestLanguage = function applyGuestLanguage(lang){
   state.guestLang=lang;
   const en=lang==="EN";
   const dict={
@@ -1626,5 +1626,5 @@ function applyGuestLanguage(lang){
 }
 $$(".lang [data-lang]").forEach(b=>b.onclick=()=>{applyGuestLanguage(b.dataset.lang);toast(b.dataset.lang==="EN"?"Language changed":"Sprache geändert",b.dataset.lang)});
 bind();
-renderModule("home");
+renderModule(window.__pendingModule || "home");
 bookRefresh();
