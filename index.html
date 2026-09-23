@@ -9,6 +9,17 @@
       name="description"
       content="Goal-driven AI operating system demo for modern service businesses."
     />
+    <script>
+window.__pendingModule="home";
+window.__openModule=function(id){
+  window.__pendingModule=id;
+  if(typeof window.renderModule==="function"){ window.renderModule(id); }
+  document.querySelectorAll("[data-module]").forEach(function(b){b.classList.toggle("active",b.dataset.module===id)});
+};
+window.__guestLang=function(lang){
+  if(typeof window.applyGuestLanguage==="function") window.applyGuestLanguage(lang);
+};
+</script>
     <link rel="stylesheet" href="style.css?v=e1500191" />
   </head>
   <body>
@@ -36,7 +47,7 @@
             </div>
           </div>
           <div class="lang">
-            <button class="active" data-lang="DE">DE</button><button data-lang="EN">EN</button>
+            <button class="active" data-lang="DE" type="button" onclick="window.applyGuestLanguage&&window.applyGuestLanguage('DE')">DE</button><button data-lang="EN" type="button" onclick="window.applyGuestLanguage&&window.applyGuestLanguage('EN')">EN</button>
           </div>
         </header>
         <div class="booking-layout">
@@ -268,41 +279,41 @@
             <div>OPERATOR<small>NOIR · DEMO STUDIO</small></div>
           </div>
           <nav id="sideNav">
-            <button class="active" data-module="home" onclick="window.renderModule&&window.renderModule('home')">
+            <button class="active" data-module="home" onclick="window.__openModule('home')">
               <span>⌂</span>Home
             </button>
-            <button data-module="operator" onclick="window.renderModule&&window.renderModule('operator')">
+            <button data-module="operator" onclick="window.__openModule('operator')">
               <span>✦</span>AI Operator<i class="ai-dot"></i>
             </button>
-            <button data-module="live" onclick="window.renderModule&&window.renderModule('live')"><span>◉</span>Live Business</button>
-            <button data-module="calendar" onclick="window.renderModule&&window.renderModule('calendar')">
+            <button data-module="live" onclick="window.__openModule('live')"><span>◉</span>Live Business</button>
+            <button data-module="calendar" onclick="window.__openModule('calendar')">
               <span>▦</span>Calendar<i>17</i>
             </button>
-            <button data-module="customers" onclick="window.renderModule&&window.renderModule('customers')">
+            <button data-module="customers" onclick="window.__openModule('customers')">
               <span>◎</span>Customer Intel
             </button>
-            <button data-module="staff" onclick="window.renderModule&&window.renderModule('staff')"><span>♙</span>Staff Intel</button>
+            <button data-module="staff" onclick="window.__openModule('staff')"><span>♙</span>Staff Intel</button>
             <div class="nav-label">CONTROL</div>
-            <button data-module="goals" onclick="window.renderModule&&window.renderModule('goals')"><span>◇</span>Goals</button>
-            <button data-module="autopilot" onclick="window.renderModule&&window.renderModule('autopilot')"><span>⚡</span>Autopilot</button>
-            <button data-module="memory" onclick="window.renderModule&&window.renderModule('memory')"><span>◌</span>Business Memory</button>
-            <button data-module="simulator" onclick="window.renderModule&&window.renderModule('simulator')"><span>⌁</span>Simulator</button>
+            <button data-module="goals" onclick="window.__openModule('goals')"><span>◇</span>Goals</button>
+            <button data-module="autopilot" onclick="window.__openModule('autopilot')"><span>⚡</span>Autopilot</button>
+            <button data-module="memory" onclick="window.__openModule('memory')"><span>◌</span>Business Memory</button>
+            <button data-module="simulator" onclick="window.__openModule('simulator')"><span>⌁</span>Simulator</button>
             <div class="nav-label">BUSINESS CORE</div>
-            <button data-module="core" onclick="window.renderModule&&window.renderModule('core')">
+            <button data-module="core" onclick="window.__openModule('core')">
               <span>▤</span>Business Core<i class="core-count">42</i>
             </button>
-            <button data-module="money" onclick="window.renderModule&&window.renderModule('money')"><span>€</span>Money</button>
-            <button data-module="grow" onclick="window.renderModule&&window.renderModule('grow')">
+            <button data-module="money" onclick="window.__openModule('money')"><span>€</span>Money</button>
+            <button data-module="grow" onclick="window.__openModule('grow')">
               <span>↗</span>Grow<i class="pink">3</i>
             </button>
-            <button data-module="inventory" onclick="window.renderModule&&window.renderModule('inventory')">
+            <button data-module="inventory" onclick="window.__openModule('inventory')">
               <span>□</span>Inventory<i class="warn">2</i>
             </button>
-            <button data-module="locations" onclick="window.renderModule&&window.renderModule('locations')"><span>⌖</span>Locations</button>
+            <button data-module="locations" onclick="window.__openModule('locations')"><span>⌖</span>Locations</button>
             <div class="nav-label">ACCOUNTABILITY</div>
-            <button data-module="impact" onclick="window.renderModule&&window.renderModule('impact')"><span>↗</span>Impact</button>
-            <button data-module="decisions" onclick="window.renderModule&&window.renderModule('decisions')"><span>≡</span>Decision Log</button>
-            <button data-module="settings" onclick="window.renderModule&&window.renderModule('settings')"><span>⚙</span>Settings</button>
+            <button data-module="impact" onclick="window.__openModule('impact')"><span>↗</span>Impact</button>
+            <button data-module="decisions" onclick="window.__openModule('decisions')"><span>≡</span>Decision Log</button>
+            <button data-module="settings" onclick="window.__openModule('settings')"><span>⚙</span>Settings</button>
           </nav>
           <div class="sidebar-foot">
             <div class="owner">
@@ -545,6 +556,6 @@
       <span>✓</span>
       <div><b id="toastTitle">Done</b><small id="toastText"></small></div>
     </div>
-    <script src="app.js?v=fc1138f0"></script>
+    <script src="app.js?v=navfix2"></script>
   </body>
 </html>
