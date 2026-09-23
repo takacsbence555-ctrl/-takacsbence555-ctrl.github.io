@@ -1502,6 +1502,33 @@ function checkout() {
   if ($("#checkoutTotal")) $("#checkoutTotal").textContent = money(s);
   if ($("#payAmount")) $("#payAmount").textContent = money(t);
 }
+const SUPABASE_URL="https://lpnewhfsbpwyjgdpoxqj.supabase.co";
+const SUPABASE_KEY="sb_publishable_3FRbG5Y2r1K_iLK27KErIQ_1CMH1a0Q";
+const BOOKING_BUSINESS="demo-studio";
+const SERVICE_SLUGS={"Classic Cut":"classic-cut","Skin Fade":"skin-fade","Cut + Beard":"cut-beard","Beard Ritual":"beard-ritual"};
+const STAFF_SLUGS={"Demo Barber A":"demo-barber-a","Demo Barber B":"demo-barber-b","Demo Barber C":"demo-barber-c"};
+let bookingDate="2026-09-23";
+
+async function supabaseRpc(fn,params){
+  const res=await fetch(SUPABASE_URL+"/rest/v1/rpc/"+fn,{method:"POST",headers:{"apikey":SUPABASE_KEY,"Authorization":"Bearer "+SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify(params)});
+  const body=await res.text(); if(!res.ok) throw new Error(body||("HTTP "+res.status)); return body?JSON.parse(body):null;
+}
+function selectedStaffSlug(){return STAFF_SLUGS[state.barber]||"demo-barber-a"}
+function selectedServiceSlug(){return SERVICE_SLUGS[state.service]||"skin-fade"}
+async function refreshLiveAvailability(){
+  if(!state.service||!state.barber||state.barber==="First available") return;
+  try{
+    const slots=await supabaseRpc("get_public_availability",{p_business_slug:BOOKING_BUSINESS,p_staff_slug:selectedStaffSlug(),p_service_slug:selectedServiceSlug(),p_date:bookingDate});
+    const grid=$(".slot-grid"); if(!grid)return;
+    grid.innerHTML=(slots||[]).slice(0,12).map(t=>'<button data-time="'+t+'">'+t+'</button>').join("") || '<span class="muted">No available times</span>';
+    $("#booking .slot-grid [data-time]").forEach(b=>b.onclick=()=>{ $("#booking .slot-grid [data-time]").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");state.time=b.dataset.time;$("#sumTime").textContent=bookingDate+" · "+state.time;bookingChoiceConfirm(state.time+" selected");state.bookStep=4;bookRefresh();});
+  }catch(e){console.error("Live availability",e);}
+}
+async function createLiveBooking(guestName,guestPhone){
+  const startsAt=bookingDate+"T"+state.time+":00+02:00";
+  return await supabaseRpc("create_public_booking",{p_business_slug:BOOKING_BUSINESS,p_staff_slug:selectedStaffSlug(),p_service_slug:selectedServiceSlug(),p_starts_at:startsAt,p_display_name:guestName,p_email:null,p_phone:guestPhone});
+}
+
 function bookingChoiceConfirm(label) {
   let el = $("#bookingChoiceConfirm");
   if (!el) { el = document.createElement("div"); el.id="bookingChoiceConfirm"; el.className="choice-confirm"; $("#booking")?.appendChild(el); }
@@ -1558,29 +1585,29 @@ $("#bookBack").onclick = () => {
     bookRefresh();
   }
 };
-$("#bookNext").onclick = () => {
-  if (state.bookStep < 4) {
-    state.bookStep++;
-    bookRefresh();
-  } else {
-    const guestName = ($("#guestName")?.value || "Demo Guest").trim() || "Demo Guest";
-    state.guestDeposit = 10;
-    state.guestPaymentStatus = "simulated_paid";
-    state.guestBooking = {id:"DEMO-"+(state.appointments+1),customer:guestName,service:state.service,price:state.price,barber:state.barber,time:state.time,deposit:10,remaining:Math.max(0,state.price-10),status:"Confirmed"};
-    state.guestEvents.unshift({type:"BOOKING",result:"Confirmed · €"+state.price,detail:state.service+" · "+state.barber+" · "+state.time});
-    state.appointments++; state.forecast += state.price; state.current += 10; saveDemoState();
-    $$(".book-step").forEach(x=>x.classList.add("hidden"));
-    $("#bookActions").classList.add("hidden");
-    $("#bookingSuccess").classList.remove("hidden");
-    const p=$("#bookingSuccess p"); if(p)p.innerHTML="<b>DEMO / SIMULATED PAYMENT</b><br>€10 deposit recorded. Synced to Owner Calendar, Customer Intel and Money. Direct guest bookings are excluded from AI Impact.";
-    bindGuestActions();
-    toast("Demo-Zahlung erfolgreich","€10 simulated deposit · booking synced to Owner OS");
-  }
+$("#bookNext").onclick = async () => {
+  if (state.bookStep < 4) { state.bookStep++; bookRefresh(); return; }
+  const guestName=(($("#guestName")?.value)||"Guest").trim()||"Guest";
+  const guestPhone=(($("#guestPhone")?.value)||"").trim();
+  const btn=$("#bookNext"); if(btn){btn.disabled=true;btn.setAttribute("aria-busy","true");}
+  try{
+    const bookingId=await createLiveBooking(guestName,guestPhone);
+    state.guestDeposit=0; state.guestPaymentStatus="not_charged";
+    state.guestBooking={id:bookingId,customer:guestName,service:state.service,price:state.price,barber:state.barber,time:state.time,deposit:0,remaining:state.price,status:"Confirmed",backend:"supabase"};
+    state.guestEvents.unshift({type:"BOOKING",result:"Confirmed · €"+state.price,detail:"LIVE DATABASE · "+state.service+" · "+state.barber+" · "+state.time});
+    state.appointments++; state.forecast+=state.price; saveDemoState();
+    $(".book-step").forEach(x=>x.classList.add("hidden")); $("#bookActions")?.classList.add("hidden"); $("#bookingSuccess")?.classList.remove("hidden");
+    const p=$("#bookingSuccess p"); if(p)p.innerHTML="<b>BOOKING SAVED TO LIVE DATABASE</b><br>No real payment was charged. Payment remains simulated until a payment provider is connected.";
+    bindGuestActions(); toast(state.guestLang==="EN"?"Booking confirmed":"Buchung bestätigt","Saved to live booking database · no real charge");
+  }catch(e){
+    console.error(e); toast(state.guestLang==="EN"?"Time no longer available":"Termin nicht mehr verfügbar",state.guestLang==="EN"?"Choose another available time.":"Bitte wähle einen anderen freien Termin.");
+    state.bookStep=3; bookRefresh(); await refreshLiveAvailability();
+  }finally{if(btn){btn.removeAttribute("aria-busy");bookRefresh();}}
 };
 ["guestName", "guestPhone"].forEach(
   (id) => ($("#" + id).oninput = bookRefresh),
 );
-$('[data-action="repeat-cut"]').onclick = () => {
+$(`[data-action="repeat-cut"]`).forEach(btn=>btn.onclick = () => {
   state.service = state.cutMemory.service;
   state.price = 42;
   state.barber = state.cutMemory.barber;
@@ -1592,7 +1619,7 @@ $('[data-action="repeat-cut"]').onclick = () => {
   state.bookStep = 4;
   bookRefresh();
   toast(state.guestLang==="EN"?"Cut Memory loaded":"Cut Memory geladen", state.guestLang==="EN"?"Your usual service, professional and time are ready":"Dein üblicher Service, Professional und Termin sind bereit");
-};
+});
 $('[data-action="waitlist"]').onclick = () => {
   state.guestWaitlist = true; saveDemoState();
   toast(state.guestLang==="EN"?"Smart waitlist active":"Smart-Warteliste aktiv",state.guestLang==="EN"?"DEMO: automatic matching is enabled":"DEMO: automatisches Matching ist aktiviert");
