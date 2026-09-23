@@ -3930,3 +3930,10 @@ button {
 .owner-auth-card>small{letter-spacing:.14em;font-weight:800}.owner-auth-card h1{font-size:clamp(30px,5vw,48px);line-height:1;margin:0}.owner-auth-card p{margin:0;color:#666;line-height:1.55}
 .owner-auth-card label{display:grid;gap:8px;font-weight:700}.owner-auth-card input{width:100%;box-sizing:border-box;border:1px solid #d6d2c9;border-radius:12px;padding:14px 15px;font:inherit;background:#faf9f6}
 #ownerAuthStatus{min-height:20px;font-size:13px;color:#666}.owner-auth-card button{min-height:48px}
+
+.live-booking-modal{position:fixed;inset:0;background:rgba(0,0,0,.56);backdrop-filter:blur(8px);z-index:300;display:grid;place-items:center;padding:20px}
+.live-booking-card{position:relative;width:min(520px,100%);background:#fff;border-radius:22px;padding:28px;display:grid;gap:15px;box-shadow:0 30px 100px rgba(0,0,0,.28)}
+.live-booking-card h2{margin:0;font-size:30px}.live-booking-card>small{font-weight:800;letter-spacing:.14em}.live-booking-card label{display:grid;gap:7px;font-size:13px;font-weight:700}
+.live-booking-card input,.live-booking-card select{width:100%;box-sizing:border-box;padding:13px 14px;border:1px solid #d8d4cb;border-radius:11px;background:#faf9f6;font:inherit}
+.modal-close{position:absolute;right:16px;top:14px;border:0;background:transparent;font-size:28px;cursor:pointer}.modal-actions{display:flex;gap:10px;flex-wrap:wrap}.modal-actions button{flex:1;min-width:140px}
+#liveBookingStatus{font-size:13px;color:#666;min-height:18px}.guest-event[data-live-booking-id]{cursor:pointer}.guest-event[data-live-booking-id]:hover{background:rgba(0,0,0,.025)}
