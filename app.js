@@ -27,6 +27,8 @@ const state = {
   recoveredCustomers: 19,
   ownerHours: 13.8,
   liveSlotFilled: false,
+  waitlistInvited: false,
+  ownerPaymentRecorded: false,
   coreTab: "booking",
   recurringCreated: false,
   groupCreated: false,
@@ -61,7 +63,7 @@ const state = {
   },
 };
 
-const PERSIST_KEYS=["plan","target","current","forecast","gap","opportunity","impact","appointments","filled","recoveredCustomers","ownerHours","liveSlotFilled","recurringCreated","groupCreated","formSent","manualBooking","refundPending","poPrepared","loyaltyPoints","packageCredits","giftBalance","guestBooking","guestDeposit","guestPaymentStatus","guestWaitlist","guestReview","guestMembership","guestGift","guestLang","cutMemory","guestEvents"];
+const PERSIST_KEYS=["plan","target","current","forecast","gap","opportunity","impact","appointments","filled","recoveredCustomers","ownerHours","liveSlotFilled","waitlistInvited","ownerPaymentRecorded","recurringCreated","groupCreated","formSent","manualBooking","refundPending","poPrepared","loyaltyPoints","packageCredits","giftBalance","guestBooking","guestDeposit","guestPaymentStatus","guestWaitlist","guestReview","guestMembership","guestGift","guestLang","cutMemory","guestEvents"];
 function saveDemoState(){
   const safe={}; PERSIST_KEYS.forEach(k=>safe[k]=state[k]);
   try{localStorage.setItem("operator-demo-state-v1",JSON.stringify(safe))}catch(e){}
@@ -1397,10 +1399,10 @@ function act(a, e) {
     return renderModule("money");
   }
   if (a === "fill-gap") {
-    state.impact += 42;
-    toast("Empty slot filled", "Demo Waitlist Guest accepted the 15:30 appointment · +€42");
-    if (state.module === "impact") renderModule("impact");
-    return;
+    if(state.liveSlotFilled) return toast("Slot already filled","No duplicate booking created");
+    state.liveSlotFilled=true; state.appointments++; state.forecast+=42; state.impact+=42; state.filled++;
+    saveDemoState(); renderModule(state.module==="today"?"today":"live");
+    return toast("Empty slot filled","Demo Waitlist Guest accepted · +€42 forecast and attributed impact");
   }
   if (a === "run-brief") return renderModule("operator");
   if (a === "campaign") return renderModule("operator");
@@ -1423,15 +1425,18 @@ function act(a, e) {
     e.textContent = "Added";
     return checkout();
   }
-  if (a === "pay")
-    return toast(
-      "Payment complete",
-      $("#payAmount").textContent + " · Tap to Pay · receipt sent",
-    );
+  if (a === "pay") {
+    if(state.ownerPaymentRecorded) return toast("Payment already recorded","Duplicate demo charge prevented");
+    state.ownerPaymentRecorded=true; const amount=52+state.addon; state.current+=amount; saveDemoState();
+    return toast("SIMULATED payment recorded", money(amount)+" · no real charge · Money state updated");
+  }
   if (a === "message-client")
     return toast("Message prepared", "WhatsApp · owner approval not required");
-  if (a === "invite-waitlist")
-    return toast("Invite sent", "Slot reserved for Demo Waitlist Guest for 15 minutes");
+  if (a === "invite-waitlist") {
+    if(state.waitlistInvited) return toast("Invite already active","Demo slot remains reserved");
+    state.waitlistInvited=true; saveDemoState();
+    return toast("Demo waitlist invite sent","Slot reserved for Demo Waitlist Guest for 15 minutes");
+  }
   if (a === "reorder")
     return toast("Purchase order prepared", "Approval required above €50");
   if (a === "reviews")
