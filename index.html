@@ -271,8 +271,8 @@ window.__guestLang=function(lang){
       </div>
     </main>
 
-    <main id="hq" class="view">
-      <div class="app-shell">
+    <main id="hq" class="view">\n      <section id="ownerAuthGate" class="owner-auth-gate"><div class="owner-auth-card"><small>OWNER ACCESS · LIVE BACKEND</small><h1>Sign in to your business.</h1><p>Passwordless access. We send a secure magic link to the owner email.</p><label>Email<input id="ownerEmail" type="email" autocomplete="email" placeholder="owner@example.com"></label><button id="ownerLoginBtn" class="primary" type="button">Send secure sign-in link</button><span id="ownerAuthStatus"></span><button id="ownerDemoBtn" class="secondary" type="button">Continue with demo Owner OS</button></div></section>
+      <div id="ownerAppShell" class="app-shell hidden">
         <aside class="sidebar">
           <div class="brand">
             <span>O</span>
@@ -320,7 +320,7 @@ window.__guestLang=function(lang){
               <span class="avatar dark">BL</span>
               <div><b>Demo Owner</b><small>Owner · Pro plan</small></div>
             </div>
-            <button aria-label="More options">•••</button>
+            <button id="ownerSignOut" aria-label="Sign out" title="Sign out">•••</button>
           </div>
         </aside>
         <section class="workspace">
