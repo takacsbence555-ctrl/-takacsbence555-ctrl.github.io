@@ -1249,6 +1249,7 @@ function completePlan() {
 }
 function act(a, e) {
   if (a === "new-appointment") return act("manual-booking", e);
+  if (a === "demo-directions") return toast("Demo location", "Directions are simulated · no real address is exposed");
   if (a === "reschedule") return toast("Reschedule prepared", "DEMO: choose a new time from Calendar");
   if (a === "cancel-booking") { closeDrawer(); return toast("Cancellation prepared", "DEMO: no real booking affected"); }
   if (a === "add-walkin") return toast("Walk-in added", "DEMO queue updated");
