@@ -1122,7 +1122,7 @@ document.addEventListener("click", (e) => {
   const go = e.target.closest("[data-go]");
   if (go) { e.preventDefault(); return renderModule(go.dataset.go); }
 
-  const action = e.target.closest("[data-action]");
+  const action = e.target.closest("[data-action]");\n  if(action?.dataset.action==="new-appointment" && !ownerDemoMode && ownerDashboardData){e.preventDefault();ownerBookingModal("create");return;}
   if (action && !action.matches('[data-action="repeat-cut"],[data-action="waitlist"],[data-action="new-booking"]')) {
     e.preventDefault();
     return act(action.dataset.action, action);
@@ -1565,9 +1565,31 @@ async function sendOwnerMagicLink(){
  }catch(e){showOwnerGate("Could not send the sign-in link. Only provisioned owner accounts can sign in.");}
  finally{if(btn)btn.disabled=false;}
 }
+async function refreshOwnerLive(){ownerDashboardData=await loadOwnerDashboard();renderModule(state.module||"home")}
+function ownerBookingModal(mode,b=null){
+ if(ownerDemoMode||!ownerDashboardData)return toast("Live owner account required","Use secure owner sign-in to change live bookings.");
+ const staff=(ownerDashboardData.staff||[]).map(x=>'<option value="'+x.id+'" '+(b&&x.display_name===b.staff?"selected":"")+'>'+x.display_name+'</option>').join("");
+ const services=(ownerDashboardData.services||[]).map(x=>'<option value="'+x.id+'" '+(b&&x.name===b.service?"selected":"")+'>'+x.name+' · €'+(x.price_cents/100).toFixed(0)+'</option>').join("");
+ const start=b?new Date(b.starts_at).toISOString().slice(0,16):"";
+ const wrap=document.createElement("div");wrap.className="live-booking-modal";
+ wrap.innerHTML='<div class="live-booking-card"><button class="modal-close" type="button">×</button><small>LIVE DATABASE</small><h2>'+(mode==="create"?"New booking":"Manage booking")+'</h2>'+
+ (mode==="create"?'<label>Customer<input id="liveCustomer" value="Demo Guest"></label><label>Professional<select id="liveStaff">'+staff+'</select></label><label>Service<select id="liveService">'+services+'</select></label>':'<p><b>'+b.customer+'</b><br>'+b.service+' · '+b.staff+'</p>')+
+ '<label>Date & time<input id="liveStart" type="datetime-local" value="'+start+'"></label><div class="modal-actions">'+
+ (mode==="create"?'<button class="primary" id="liveSave">Create booking</button>':'<button class="primary" id="liveMove">Reschedule</button><button class="secondary" id="liveCancel">Cancel booking</button>')+'</div><span id="liveBookingStatus"></span></div>';
+ document.body.appendChild(wrap);wrap.querySelector(".modal-close").onclick=()=>wrap.remove();
+ const status=t=>{const s=wrap.querySelector("#liveBookingStatus");if(s)s.textContent=t};
+ if(mode==="create")wrap.querySelector("#liveSave").onclick=async()=>{try{status("Saving…");await ownerRpc("owner_create_booking",{p_business_id:ownerDashboardData.business.id,p_staff_id:wrap.querySelector("#liveStaff").value,p_service_id:wrap.querySelector("#liveService").value,p_starts_at:new Date(wrap.querySelector("#liveStart").value).toISOString(),p_customer_name:wrap.querySelector("#liveCustomer").value});wrap.remove();await refreshOwnerLive();toast("Booking created","Saved to live database");}catch(e){status(e.message.includes("SLOT_ALREADY_BOOKED")?"That time is already booked.":"Could not create booking.");}};
+ else{
+  wrap.querySelector("#liveMove").onclick=async()=>{try{status("Saving…");await ownerRpc("owner_reschedule_booking",{p_booking_id:b.id,p_starts_at:new Date(wrap.querySelector("#liveStart").value).toISOString()});wrap.remove();await refreshOwnerLive();toast("Booking rescheduled","Live database updated");}catch(e){status(e.message.includes("SLOT_ALREADY_BOOKED")?"That time is already booked.":"Could not reschedule booking.");}};
+  wrap.querySelector("#liveCancel").onclick=async()=>{try{status("Cancelling…");await ownerRpc("owner_cancel_booking",{p_booking_id:b.id});wrap.remove();await refreshOwnerLive();toast("Booking cancelled","Live database updated");}catch(e){status("Could not cancel booking.");}};
+ }
+}
+function bindLiveOwnerRows(){
+ $("[data-live-booking-id]").forEach(el=>el.onclick=()=>{const b=(ownerDashboardData?.bookings||[]).find(x=>x.id===el.dataset.liveBookingId);if(b)ownerBookingModal("manage",b)});
+}
 function liveOwnerPanel(){
  const d=ownerDashboardData;if(!d)return "";
- const rows=(d.bookings||[]).slice(0,8).map(b=>'<div class="guest-event"><b>'+new Date(b.starts_at).toLocaleString("en-GB",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})+'</b><span>'+b.customer+' · '+b.service+' · '+b.staff+'</span><strong>'+b.status.toUpperCase()+'</strong></div>').join("");
+ const rows=(d.bookings||[]).slice(0,8).map(b=>'<div class="guest-event" data-live-booking-id="'+b.id+'"><b>'+new Date(b.starts_at).toLocaleString("en-GB",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})+'</b><span>'+b.customer+' · '+b.service+' · '+b.staff+'</span><strong>'+b.status.toUpperCase()+'</strong></div>').join("");
  return '<section class="synced-booking"><div><span>LIVE BUSINESS DATA · SUPABASE</span><h3>'+d.business.name+'</h3><p>'+d.counts.bookings+' bookings · '+d.counts.customers+' customers · '+d.counts.staff+' staff · '+d.counts.services+' services</p></div><b>LIVE</b></section>'+(rows?'<section class="guest-audit-trail"><div class="panel-head"><h2>Live bookings</h2><span class="demo-chip">DATABASE</span></div>'+rows+'</section>':'');
 }
 parseAuthHash();
