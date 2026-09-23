@@ -1133,7 +1133,7 @@ document.addEventListener("click", (e) => {
     e.preventDefault();
     const out = $("#simulationResult");
     if (out) out.innerHTML = simulation(sim.dataset.sim);
-    $("[data-sim]").forEach(x => x.classList.toggle("active", x === sim));
+    $$("[data-sim]").forEach(x => x.classList.toggle("active", x === sim));
   }
 });
 
@@ -1517,19 +1517,19 @@ function bookRefresh() {
   $("#bookNext").textContent =
     state.bookStep === 4 ? "€10 Deposit bezahlen" : "Weiter";
 }
-$("[data-service]").forEach(b => b.onclick = () => {
-  $("[data-service]").forEach(x => x.classList.remove("selected"));
+$$("[data-service]").forEach(b => b.onclick = () => {
+  $$("[data-service]").forEach(x => x.classList.remove("selected"));
   b.classList.add("selected"); state.service=b.dataset.service; state.price=+b.dataset.price;
   $("#sumService").textContent=state.service; $("#sumPrice").textContent=money(state.price);
   state.bookStep=2; bookRefresh();
 });
-$("[data-barber]").forEach(b => b.onclick = () => {
-  $("[data-barber]").forEach(x => x.classList.remove("selected"));
+$$("[data-barber]").forEach(b => b.onclick = () => {
+  $$("[data-barber]").forEach(x => x.classList.remove("selected"));
   b.classList.add("selected"); state.barber=b.dataset.barber; $("#sumBarber").textContent=state.barber;
   state.bookStep=3; bookRefresh();
 });
-$("[data-time]").forEach(b => b.onclick = () => {
-  $("[data-time]").forEach(x => x.classList.remove("selected"));
+$$("[data-time]").forEach(b => b.onclick = () => {
+  $$("[data-time]").forEach(x => x.classList.remove("selected"));
   b.classList.add("selected"); state.time=b.dataset.time; $("#sumTime").textContent="Demo date · "+state.time;
   state.bookStep=4; bookRefresh();
 });
