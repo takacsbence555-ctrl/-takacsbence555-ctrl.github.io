@@ -18,9 +18,9 @@
         <div>OPERATOR<small>FULL DEMO · WORKING BRAND</small></div></a
       >
       <nav class="view-switch" aria-label="Demo views">
-        <button data-view="booking">Guest Booking</button>
-        <button class="active" data-view="hq">Owner OS</button>
-        <button data-view="master">Platform Admin</button>
+        <button data-view="booking" type="button" onclick="document.querySelectorAll('.view').forEach(v=>v.classList.toggle('hidden',v.id!=='booking'));document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view==='booking'))">Guest Booking</button>
+        <button class="active" data-view="hq" type="button" onclick="document.querySelectorAll('.view').forEach(v=>v.classList.toggle('hidden',v.id!=='hq'));document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view==='hq'))">Owner OS</button>
+        <button data-view="master" type="button" onclick="document.querySelectorAll('.view').forEach(v=>v.classList.toggle('hidden',v.id!=='master'));document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view==='master'))">Platform Admin</button>
       </nav>
       <div class="live-pill"><i></i> Demo active</div>
     </header>
