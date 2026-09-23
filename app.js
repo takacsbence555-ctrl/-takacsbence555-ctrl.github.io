@@ -110,13 +110,17 @@ function toast(t, x = "") {
   window.tt = setTimeout(() => e.classList.add("hidden"), 3400);
 }
 function setView(id) {
-  $$(".view").forEach((v) => v.classList.toggle("hidden", v.id !== id));
-  $$("[data-view]").forEach((b) =>
-    b.classList.toggle("active", b.dataset.view === id),
-  );
+  $(".view").forEach((v) => v.classList.toggle("hidden", v.id !== id));
+  $("[data-view]").forEach((b) => b.classList.toggle("active", b.dataset.view === id));
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
-$$("[data-view]").forEach((b) => (b.onclick = () => setView(b.dataset.view)));
+// Delegated navigation is resilient to rerenders and mobile Safari event quirks.
+document.addEventListener("click", (e) => {
+  const viewButton = e.target.closest("[data-view]");
+  if (viewButton) { e.preventDefault(); setView(viewButton.dataset.view); return; }
+  const moduleButton = e.target.closest("[data-module]");
+  if (moduleButton) { e.preventDefault(); renderModule(moduleButton.dataset.module); }
+});
 function schedule() {
   return '<div class="schedule"><div></div><div class="shead">Demo Barber B</div><div class="shead">Demo Barber A</div><div class="shead">Demo Barber C</div><div class="hour">10:00</div><div class="appt" data-action="appointment"><b>Demo Guest A · Cut</b><small>10:00–10:45</small></div><div></div><div class="appt blue" data-action="appointment"><b>Demo Risk Guest A · Fade</b><small>10:00–10:50</small></div><div class="hour">11:00</div><div></div><div class="appt sand" data-action="appointment"><b>Demo Guest B · Beard</b><small>11:15–11:45</small></div><div></div><div class="hour">12:00</div><div class="appt blue" data-action="appointment"><b>Demo Guest C · Combo</b><small>12:00–13:00</small></div><div></div><div class="appt" data-action="appointment"><b>Demo Guest D · Cut</b><small>12:15–13:00</small></div><div class="hour">14:00</div><div class="appt sand" data-action="appointment"><b>Demo Guest E · Fade</b><small>14:00–14:50</small></div><div class="appt blue" data-action="appointment"><b>Demo Guest F · Cut</b><small>14:00–14:45</small></div><div class="appt risk" data-action="appointment"><b>Demo Risk Guest · Combo</b><small>AI risk · 14:30</small></div></div>';
 }
@@ -1103,9 +1107,6 @@ function renderModule(id) {
   bind();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
-$$("[data-module]").forEach(
-  (b) => (b.onclick = () => renderModule(b.dataset.module)),
-);
 function bind() {
   $$("[data-go]").forEach(
     (b) => (b.onclick = () => renderModule(b.dataset.go)),
