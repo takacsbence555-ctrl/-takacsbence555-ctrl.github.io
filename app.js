@@ -1534,7 +1534,8 @@ $$("[data-service]").forEach(b => b.onclick = () => {
 $$("[data-barber]").forEach(b => b.onclick = () => {
   $$("[data-barber]").forEach(x => x.classList.remove("selected"));
   b.classList.add("selected"); state.barber=b.dataset.barber; $("#sumBarber").textContent=state.barber;
-  bookingChoiceConfirm(state.barber+" selected"); state.bookStep=3; bookRefresh();
+  const quickTime=b.querySelector(".next-slot strong")?.textContent?.match(/(\d{2}:\d{2})/)?.[1]; if(quickTime){state.time=quickTime; $("#sumTime").textContent="Demo date · "+state.time;}
+  bookingChoiceConfirm(state.barber+" · "+(quickTime||"selected")); state.bookStep=3; bookRefresh();
 });
 $$("[data-time]").forEach(b => b.onclick = () => {
   $$("[data-time]").forEach(x => x.classList.remove("selected"));
