@@ -64,15 +64,16 @@ const state = {
   },
 };
 
+const STORAGE_KEY="operator-demo-state-v2";
 const PERSIST_KEYS=["plan","target","current","forecast","gap","opportunity","impact","appointments","filled","recoveredCustomers","ownerHours","liveSlotFilled","waitlistInvited","ownerPaymentRecorded","recurringCreated","groupCreated","formSent","manualBooking","refundPending","poPrepared","loyaltyPoints","packageCredits","giftBalance","guestBooking","guestDeposit","guestPaymentStatus","guestWaitlist","guestReview","guestMembership","guestGift","futureBooking","guestLang","cutMemory","guestEvents"];
 function saveDemoState(){
   const safe={}; PERSIST_KEYS.forEach(k=>safe[k]=state[k]);
-  try{localStorage.setItem("operator-demo-state-v1",JSON.stringify(safe))}catch(e){}
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(safe))}catch(e){}
 }
 function loadDemoState(){
-  try{const saved=JSON.parse(localStorage.getItem("operator-demo-state-v1")||"null");if(saved)Object.assign(state,saved)}catch(e){}
+  try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||"null");if(saved)Object.assign(state,saved)}catch(e){}
 }
-function clearDemoState(){try{localStorage.removeItem("operator-demo-state-v1")}catch(e){}}
+function clearDemoState(){try{localStorage.removeItem(STORAGE_KEY);localStorage.removeItem("operator-demo-state-v1")}catch(e){}}
 loadDemoState();
 const titles = {
   home: ["Home", "Executive overview · September 2026"],
