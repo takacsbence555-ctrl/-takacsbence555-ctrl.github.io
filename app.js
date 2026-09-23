@@ -1239,6 +1239,7 @@ function act(a, e) {
       forecast: state.forecast + 42,
       gap: state.gap - 42,
     });
+    saveDemoState();
     closeDrawer();
     renderModule("calendar");
     return toast(
@@ -1253,6 +1254,7 @@ function act(a, e) {
       forecast: state.forecast + 168,
       gap: state.gap - 168,
     });
+    saveDemoState();
     renderModule("core");
     return toast(
       "Recurring series created",
@@ -1278,7 +1280,7 @@ function act(a, e) {
     );
   }
   if (a === "core-refund") {
-    state.refundPending = true;
+    state.refundPending = true; saveDemoState();
     renderModule("core");
     return toast(
       "Decision required",
@@ -1286,7 +1288,7 @@ function act(a, e) {
     );
   }
   if (a === "core-purchase") {
-    state.poPrepared = true;
+    state.poPrepared = true; saveDemoState();
     renderModule("core");
     return toast(
       "Purchase order prepared",
@@ -1354,6 +1356,7 @@ function act(a, e) {
       loyaltyPoints: 420,
       packageCredits: 3,
     });
+    clearDemoState(); saveDemoState();
     return renderModule("home");
   }
   if (a === "reasoning")
@@ -1376,11 +1379,10 @@ function act(a, e) {
     );
   }
   if (a === "fill-live-slot") {
-    state.liveSlotFilled = true;
-    state.forecast += 45;
-    state.impact += 45;
-    state.filled++;
-    return renderModule("live");
+    if(state.liveSlotFilled) return toast("Slot already recovered","Duplicate AI attribution prevented");
+    state.liveSlotFilled=true; state.appointments++; state.forecast+=45; state.gap=Math.max(0,state.gap-45); state.impact+=45; state.filled++;
+    saveDemoState(); renderModule("live");
+    return toast("Cancellation recovered","€45 forecast + AI-attributed impact recorded");
   }
   if (a === "impact-detail")
     return openDrawer(
@@ -1441,8 +1443,7 @@ function act(a, e) {
     return toast("Purchase order prepared", "Approval required above €50");
   if (a === "reviews")
     return toast("Review flow active", "14 requests scheduled");
-  if (a === "save-settings")
-    return toast("Settings saved", "Rules and channels synchronized");
+  if (a === "save-settings") { saveDemoState(); return toast("Settings saved", "Rules and channels synchronized"); }
   if (a === "master-apply")
     return toast(
       "Network playbook prepared",
