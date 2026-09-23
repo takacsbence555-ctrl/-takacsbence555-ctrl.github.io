@@ -1078,7 +1078,7 @@ function renderModule(id) {
   let t = titles[id];
   $("#pageTitle").textContent = t[0];
   $("#pageSub").textContent = t[1];
-  $("#moduleContent").innerHTML = modules[id]();\n  if (!ownerDemoMode && ownerDashboardData && ["home","calendar","customers"].includes(id)) { $("#moduleContent").insertAdjacentHTML("afterbegin",liveMetricsPanel()+liveOwnerPanel()+(id==="customers"||id==="home"?liveCrmPanel():"")); bindLiveCrm(); }\n  if (!ownerDemoMode && ownerAccessToken && id==="operator") { loadLiveOperator().then(()=>{ if(state.module==="operator" && liveOperatorSnapshot) $("#moduleContent").insertAdjacentHTML("afterbegin",liveOperatorBanner()); }); }\n  if (!ownerDemoMode && ownerAccessToken && ["impact","decisions"].includes(id)) { loadLiveOperator().then(()=>{ if(["impact","decisions"].includes(state.module) && liveOperatorSnapshot) $("#moduleContent").insertAdjacentHTML("afterbegin",liveOperatorBanner()); }); }
+  $("#moduleContent").innerHTML = modules[id]();\n  if (!ownerDemoMode && ownerDashboardData && ["home","calendar","customers"].includes(id)) { $("#moduleContent").insertAdjacentHTML("afterbegin",liveOnboardingPanel()+liveMetricsPanel()+liveOwnerPanel()+(id==="customers"||id==="home"?liveCrmPanel():"")); bindOnboarding(); bindLiveCrm(); }\n  if (!ownerDemoMode && ownerAccessToken && id==="operator") { loadLiveOperator().then(()=>{ if(state.module==="operator" && liveOperatorSnapshot) $("#moduleContent").insertAdjacentHTML("afterbegin",liveOperatorBanner()); }); }\n  if (!ownerDemoMode && ownerAccessToken && ["impact","decisions"].includes(id)) { loadLiveOperator().then(()=>{ if(["impact","decisions"].includes(state.module) && liveOperatorSnapshot) $("#moduleContent").insertAdjacentHTML("afterbegin",liveOperatorBanner()); }); }
   if (state.guestBooking && ["calendar","customers","money","impact","decisions"].includes(id)) {
     const b = state.guestBooking;
     const synced = document.createElement("section");
@@ -1552,7 +1552,7 @@ async function createLiveBooking(guestName,guestPhone){
   return await supabaseRpc("create_public_booking",{p_business_slug:BOOKING_BUSINESS,p_staff_slug:selectedStaffSlug(),p_service_slug:selectedServiceSlug(),p_starts_at:startsAt,p_display_name:guestName,p_email:null,p_phone:guestPhone});
 }
 
-let ownerAccessToken=null, ownerDashboardData=null, ownerMetrics=null, ownerCrm=[], ownerRebooking=[], ownerDemoMode=false;
+let ownerAccessToken=null, ownerDashboardData=null, ownerMetrics=null, ownerCrm=[], ownerRebooking=[], ownerOnboarding=null, ownerDemoMode=false;
 function ownerAuthHeaders(){return {"apikey":SUPABASE_KEY,"Authorization":"Bearer "+ownerAccessToken,"Content-Type":"application/json"}}
 function parseAuthHash(){
   const raw=(location.hash||"").replace(/^#/,""); if(!raw)return;
@@ -1569,7 +1569,7 @@ async function loadOwnerDashboard(){
 function showOwnerApp(demo=false){
  ownerDemoMode=demo; $("#ownerAuthGate")?.classList.add("hidden"); $("#ownerAppShell")?.classList.remove("hidden");
  if(demo){renderModule(window.__pendingModule||"home");return;}
- Promise.all([loadOwnerDashboard(),ownerRpc("owner_business_metrics",{}).catch(()=>null),ownerRpc("owner_customer_crm",{}).catch(()=>[]),ownerRpc("owner_rebooking_opportunities",{}).catch(()=>[])]).then(([data,metrics,crm,rebooking])=>{ ownerMetrics=metrics; ownerCrm=crm||[]; ownerRebooking=rebooking||[];
+ Promise.all([loadOwnerDashboard(),ownerRpc("owner_business_metrics",{}).catch(()=>null),ownerRpc("owner_customer_crm",{}).catch(()=>[]),ownerRpc("owner_rebooking_opportunities",{}).catch(()=>[]),ownerRpc("owner_onboarding_snapshot",{}).catch(()=>null)]).then(([data,metrics,crm,rebooking,onboarding])=>{ ownerMetrics=metrics; ownerCrm=crm||[]; ownerRebooking=rebooking||[]; ownerOnboarding=onboarding;
    if(!data){sessionStorage.removeItem("operator-owner-token");ownerAccessToken=null;showOwnerGate("This account is not connected to a business yet.");return;}
    const brand=$(".brand small");if(brand)brand.textContent=(data.business?.name||"BUSINESS")+" · LIVE";
    const owner=$(".owner small");if(owner)owner.textContent=(data.business?.role||"owner").toUpperCase()+" · LIVE BACKEND";
@@ -1588,7 +1588,7 @@ async function sendOwnerMagicLink(){
  }catch(e){showOwnerGate("Could not send the sign-in link. Only provisioned owner accounts can sign in.");}
  finally{if(btn)btn.disabled=false;}
 }
-async function refreshOwnerLive(){ownerDashboardData=await loadOwnerDashboard();try{[ownerMetrics,ownerCrm,ownerRebooking]=await Promise.all([ownerRpc("owner_business_metrics",{}),ownerRpc("owner_customer_crm",{}),ownerRpc("owner_rebooking_opportunities",{})])}catch(e){ownerMetrics=null}renderModule(state.module||"home")}
+async function refreshOwnerLive(){ownerDashboardData=await loadOwnerDashboard();try{[ownerMetrics,ownerCrm,ownerRebooking,ownerOnboarding]=await Promise.all([ownerRpc("owner_business_metrics",{}),ownerRpc("owner_customer_crm",{}),ownerRpc("owner_rebooking_opportunities",{}),ownerRpc("owner_onboarding_snapshot",{})])}catch(e){ownerMetrics=null}renderModule(state.module||"home")}
 function ownerBookingModal(mode,b=null){
  if(ownerDemoMode||!ownerDashboardData)return toast("Live owner account required","Use secure owner sign-in to change live bookings.");
  const staff=(ownerDashboardData.staff||[]).map(x=>'<option value="'+x.id+'" '+(b&&x.display_name===b.staff?"selected":"")+'>'+x.display_name+'</option>').join("");
@@ -1627,6 +1627,14 @@ function bindLiveCrm(){
   const days=prompt("Expected rebooking cycle (days)",String(c.rebook_interval_days||28)); if(days===null)return;
   ownerRpc("owner_save_cut_memory",{p_customer_id:c.id,p_notes:notes,p_rebook_interval_days:Number(days)||28}).then(()=>refreshOwnerLive()).then(()=>toast("Cut Memory saved","Rebooking intelligence updated")).catch(e=>toast("Could not save",e.message));
  });
+}
+function liveOnboardingPanel(){
+ if(ownerDemoMode||!ownerOnboarding||ownerOnboarding.ready)return "";
+ const o=ownerOnboarding;
+ return '<section class="pilot-ready"><small>PILOT SETUP</small><h3>Business setup</h3><p>Staff '+o.staff_count+' · Services '+o.service_count+' · Working-hour rules '+o.working_hours_count+'</p><button class="primary" id="completeOnboarding">Mark setup complete</button></section>';
+}
+function bindOnboarding(){
+ const b=$("#completeOnboarding");if(!b)return;b.onclick=async()=>{try{await ownerRpc("owner_complete_onboarding",{});ownerOnboarding.ready=true;b.closest(".pilot-ready").remove();toast("Business setup complete","Pilot workspace is ready");}catch(e){toast("Setup incomplete","Add staff, services and working hours first")}}
 }
 function liveMetricsPanel(){
  if(ownerDemoMode||!ownerMetrics)return "";
