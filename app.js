@@ -37,6 +37,9 @@ const state = {
   loyaltyPoints: 420,
   packageCredits: 3,
   giftBalance: 65,
+  guestBooking: null,
+  guestDeposit: 0,
+  guestPaymentStatus: "none",
   permissions: {
     marketing: true,
     discount: true,
@@ -93,19 +96,28 @@ function setView(id) {
 }
 $$("[data-view]").forEach((b) => (b.onclick = () => setView(b.dataset.view)));
 function schedule() {
-  return '<div class="schedule"><div></div><div class="shead">Demo Barber B</div><div class="shead">Demo Barber A</div><div class="shead">Demo Barber C</div><div class="hour">10:00</div><div class="appt" data-action="appointment"><b>Tom · Cut</b><small>10:00–10:45</small></div><div></div><div class="appt blue" data-action="appointment"><b>Demo Risk Guestn · Fade</b><small>10:00–10:50</small></div><div class="hour">11:00</div><div></div><div class="appt sand" data-action="appointment"><b>Paul · Beard</b><small>11:15–11:45</small></div><div></div><div class="hour">12:00</div><div class="appt blue" data-action="appointment"><b>Noah · Combo</b><small>12:00–13:00</small></div><div></div><div class="appt" data-action="appointment"><b>David · Cut</b><small>12:15–13:00</small></div><div class="hour">14:00</div><div class="appt sand" data-action="appointment"><b>Emil · Fade</b><small>14:00–14:50</small></div><div class="appt blue" data-action="appointment"><b>Max · Cut</b><small>14:00–14:45</small></div><div class="appt risk" data-action="appointment"><b>Demo Risk Guest · Combo</b><small>AI risk · 14:30</small></div></div>';
+  return '<div class="schedule"><div></div><div class="shead">Demo Barber B</div><div class="shead">Demo Barber A</div><div class="shead">Demo Barber C</div><div class="hour">10:00</div><div class="appt" data-action="appointment"><b>Demo Guest A · Cut</b><small>10:00–10:45</small></div><div></div><div class="appt blue" data-action="appointment"><b>Demo Risk Guestn · Fade</b><small>10:00–10:50</small></div><div class="hour">11:00</div><div></div><div class="appt sand" data-action="appointment"><b>Demo Guest B · Beard</b><small>11:15–11:45</small></div><div></div><div class="hour">12:00</div><div class="appt blue" data-action="appointment"><b>Demo Guest C · Combo</b><small>12:00–13:00</small></div><div></div><div class="appt" data-action="appointment"><b>Demo Guest D · Cut</b><small>12:15–13:00</small></div><div class="hour">14:00</div><div class="appt sand" data-action="appointment"><b>Demo Guest E · Fade</b><small>14:00–14:50</small></div><div class="appt blue" data-action="appointment"><b>Demo Guest F · Cut</b><small>14:00–14:45</small></div><div class="appt risk" data-action="appointment"><b>Demo Risk Guest · Combo</b><small>AI risk · 14:30</small></div></div>';
 }
 function calendar() {
   let rows = [
-    ["10:00", "Tom · Classic Cut", "", "Demo Risk Guestn · Skin Fade"],
-    ["11:00", "", "Paul · Beard", ""],
-    ["12:00", "Noah · Combo", "", "David · Cut"],
+    ["10:00", "Demo Guest A · Classic Cut", "", "Demo Risk Guestn · Skin Fade"],
+    ["11:00", "", "Demo Guest B · Beard", ""],
+    ["12:00", "Demo Guest C · Combo", "", "Demo Guest D · Cut"],
     ["13:00", "Lunch", "Lunch", "Lunch"],
-    ["14:00", "Emil · Skin Fade", "Max · Classic Cut", "Demo Risk Guest · Combo"],
-    ["15:00", "Anna · Undercut", "AI gap · €42", ""],
-    ["16:00", "Oskar · Cut", "Bence · Fade", "Mika · Beard"],
-    ["17:00", "", "Nico · Cut", "Jan · Combo"],
+    ["14:00", "Demo Guest E · Skin Fade", "Demo Guest F · Classic Cut", "Demo Risk Guest · Combo"],
+    ["15:00", "Demo Guest G · Undercut", "AI gap · €42", ""],
+    ["16:00", "Demo Guest H · Cut", "Demo Guest I · Fade", "Demo Guest J · Beard"],
+    ["17:00", "", "Demo Guest K · Cut", "Demo Guest L · Combo"],
   ];
+  if (state.guestBooking) {
+    const label = "DEMO GUEST · " + state.guestBooking.service + " · €" + state.guestBooking.price;
+    const hour = (state.guestBooking.time || "16:00").slice(0,2) + ":00";
+    const row = rows.find(r => r[0] === hour);
+    if (row) {
+      const col = state.guestBooking.barber.includes("B") ? 1 : state.guestBooking.barber.includes("C") ? 3 : 2;
+      row[col] = label;
+    } else rows.push([hour,"",label,""]);
+  }
   let h =
     '<div class="calendar-grid"><div></div><div class="calhead"><b>Demo Barber B</b><small>84% · €248</small></div><div class="calhead"><b>Demo Barber A</b><small>91% · €294</small></div><div class="calhead"><b>Demo Barber C</b><small>72% · €142</small></div>';
   rows.forEach((r) => {
@@ -115,7 +127,7 @@ function calendar() {
         ? '<div class="cal-card ' +
           (x.includes("gap") ? "gap" : i === 1 ? "blue" : "") +
           " " +
-          (x.includes("Demo Risk Guest") ? "risk" : "") +
+          (x.includes("Demo Risk Guest") ? "risk" : "") + (x.includes("DEMO GUEST") ? " demo-guest" : "") +
           '" data-action="' +
           (x.includes("gap") ? "fill-gap" : "appointment") +
           '"><b>' +
@@ -132,11 +144,11 @@ const modules = {
   today: () =>
     '<section class="ai-brief"><div><span class="spark">✦ AI DAILY BRIEF</span><h2>3 döntés ma +€286 bevételt védhet meg.</h2><p>A rendszer a foglalásokat, vendégciklusokat és üres székeket elemezte.</p></div><div class="brief-points"><span>15:30-as üres hely kitölthető a várólistáról</span><span>2 magas kockázatú foglalás megerősítést kér</span><span>14 vendég esedékes újrafoglalásra</span></div><button data-action="run-brief">Végrehajtási terv →</button></section><div class="grid-4"><article class="kpi"><span>MAI FOGLALÁSOK</span><b>17</b><small>+3 tegnaphoz képest</small></article><article class="kpi"><span>VÁRHATÓ BEVÉTEL</span><b>€684</b><small>82% kihasználtság</small></article><article class="kpi"><span>VISSZATÉRŐK</span><b>71%</b><small>+8% az előző hónaphoz</small></article><article class="kpi"><span>VÉDETT BEVÉTEL</span><b>€104</b><small>no-show védelem</small></article></div><div class="content-grid"><section class="panel"><div class="panel-head"><h2>Mai székterv</h2><button data-go="calendar">Teljes naptár →</button></div>' +
     schedule() +
-    '</section><div class="side-stack"><section class="panel opportunity"><small>ÜRES SZÉK LEHETŐSÉG</small><b class="amount">€42</b><p>Demo Barber A 15:30-as helyére 6 megfelelő vendég van a várólistán.</p><button data-action="fill-gap">Hely feltöltése AI-val</button></section><section class="panel"><div class="panel-head"><h2>Élő aktivitás</h2><small>most</small></div><div class="activity-list"><div class="activity-row"><i></i><div><b>Új foglalás</b><small>Max · Classic Cut · Demo Barber A</small></div><time>2p</time></div><div class="activity-row"><i></i><div><b>Kártya előhitelesítve</b><small>Demo Risk Guestn · magasabb kockázat</small></div><time>18p</time></div><div class="activity-row"><i></i><div><b>5★ értékelés</b><small>„Perfekt wie immer”</small></div><time>1ó</time></div></div></section><section class="panel"><div class="panel-head"><h2>Walk-in sor</h2><button data-action="add-walkin">+ Vendég</button></div><div class="walkin"><span><b>Jonas K.</b><small>Skin Fade · 12 perc</small></span><b>Demo Barber A</b></div><div class="walkin"><span><b>Walk-in #18</b><small>Classic Cut · 28 perc</small></span><b>Demo Barber B</b></div></section></div></div>',
+    '</section><div class="side-stack"><section class="panel opportunity"><small>ÜRES SZÉK LEHETŐSÉG</small><b class="amount">€42</b><p>Demo Barber A 15:30-as helyére 6 megfelelő vendég van a várólistán.</p><button data-action="fill-gap">Hely feltöltése AI-val</button></section><section class="panel"><div class="panel-head"><h2>Élő aktivitás</h2><small>most</small></div><div class="activity-list"><div class="activity-row"><i></i><div><b>Új foglalás</b><small>Demo Guest F · Classic Cut · Demo Barber A</small></div><time>2p</time></div><div class="activity-row"><i></i><div><b>Kártya előhitelesítve</b><small>Demo Risk Guestn · magasabb kockázat</small></div><time>18p</time></div><div class="activity-row"><i></i><div><b>5★ értékelés</b><small>„Perfekt wie immer”</small></div><time>1ó</time></div></div></section><section class="panel"><div class="panel-head"><h2>Walk-in sor</h2><button data-action="add-walkin">+ Vendég</button></div><div class="walkin"><span><b>Demo Walk-in A</b><small>Skin Fade · 12 perc</small></span><b>Demo Barber A</b></div><div class="walkin"><span><b>Walk-in #18</b><small>Classic Cut · 28 perc</small></span><b>Demo Barber B</b></div></section></div></div>',
   calendar: () =>
     '<div class="section-bar"><div><h2>Naptár · Szeptember 22.</h2><small class="muted">3 barber · 82% kihasználtság</small></div><div class="filters"><button class="active">Nap</button><button>Hét</button><button>Lista</button><button data-action="add-block">+ Blokk</button></div></div><div class="calendar-board">' +
     calendar() +
-    '</div><div class="content-grid"><section class="panel"><div class="panel-head"><h2>Intelligens várólista</h2><small>6 vendég · valós idejű rangsor</small></div><table class="table"><thead><tr><th>VENDÉG</th><th>SZOLGÁLTATÁS</th><th>ELÉRHETŐSÉG</th><th>AI MATCH</th><th></th></tr></thead><tbody><tr><td><b>Demo Waitlist Guest M.</b></td><td>Skin Fade</td><td>14:00–18:00</td><td><span class="badge">96%</span></td><td><button class="ghost" data-action="invite-waitlist">Meghívás</button></td></tr><tr><td><b>Lucas T.</b></td><td>Classic Cut</td><td>15:00 után</td><td><span class="badge">91%</span></td><td><button class="ghost" data-action="invite-waitlist">Meghívás</button></td></tr></tbody></table></section><section class="panel"><div class="panel-head"><h2>Kapacitásjelzés</h2><span class="badge blue">AI FORECAST</span></div><p class="muted">Péntek 16–19 óra túlfoglalt, szerda délelőtt 31% szabad kapacitás várható.</p><button class="primary small" data-action="capacity">Műszakjavaslat megnyitása</button></section></div>',
+    '</div><div class="content-grid"><section class="panel"><div class="panel-head"><h2>Intelligens várólista</h2><small>6 vendég · valós idejű rangsor</small></div><table class="table"><thead><tr><th>VENDÉG</th><th>SZOLGÁLTATÁS</th><th>ELÉRHETŐSÉG</th><th>AI MATCH</th><th></th></tr></thead><tbody><tr><td><b>Demo Waitlist Guest M.</b></td><td>Skin Fade</td><td>14:00–18:00</td><td><span class="badge">96%</span></td><td><button class="ghost" data-action="invite-waitlist">Meghívás</button></td></tr><tr><td><b>Demo Waitlist Guest B</b></td><td>Classic Cut</td><td>15:00 után</td><td><span class="badge">91%</span></td><td><button class="ghost" data-action="invite-waitlist">Meghívás</button></td></tr></tbody></table></section><section class="panel"><div class="panel-head"><h2>Kapacitásjelzés</h2><span class="badge blue">AI FORECAST</span></div><p class="muted">Péntek 16–19 óra túlfoglalt, szerda délelőtt 31% szabad kapacitás várható.</p><button class="primary small" data-action="capacity">Műszakjavaslat megnyitása</button></section></div>',
   customers: () =>
     '<div class="section-bar"><div><h2>Vendégek</h2><small class="muted">1 284 profil · 71% visszatérő</small></div><div class="filters"><button class="active">Mindenki</button><button>Esedékes 28</button><button>Kockázatos 9</button><button>VIP 42</button></div></div><div class="customer-layout"><section class="customer-list"><div class="list-search"><input placeholder="Vendég keresése…"></div><div class="client-row active"><span class="avatar dark">LM</span><div><b>Demo Customer</b><small>VIP · 12 látogatás · €624</small></div></div><div class="client-row"><span class="avatar lime">MF</span><div><b>Max Fischer</b><small>Esedékes 4 napja · €288</small></div></div><div class="client-row"><span class="avatar sand">PN</span><div><b>Paul Novak</b><small>At-risk · 9 hete nem járt</small></div></div><div class="client-row"><span class="avatar pale">JW</span><div><b>Jonas Weber</b><small>Új vendég · 1 látogatás</small></div></div></section><section class="customer-profile"><div class="profile-top"><div class="profile-name"><span class="avatar dark">LM</span><div><h2>Demo Customer</h2><p>VIP · Demo Barber A vendége · Utolsó látogatás: aug. 28.</p></div></div><div class="profile-actions"><button class="ghost" data-action="message-client">Üzenet</button><button class="primary small" data-action="rebook-client">Újrafoglalás</button></div></div><div class="profile-body"><div class="profile-stats"><div class="mini-stat"><span>LÁTOGATÁS</span><b>12</b></div><div class="mini-stat"><span>ÖSSZES KÖLTÉS</span><b>€624</b></div><div class="mini-stat"><span>ÁTLAG CIKLUS</span><b>25 nap</b></div><div class="mini-stat"><span>NO-SHOW</span><b>0</b></div></div><section class="cut-memory"><div class="cut-head"><div><span>✦ CUT MEMORY · AI ÖSSZEFOGLALÓ</span><h3>Demo Risk Guestn bevált vágása</h3></div><span>Frissítve aug. 28.</span></div><div class="cut-specs"><div><small>OLDAL</small><b>0 → 1.5 skin fade</b></div><div><small>TETŐ</small><b>5 cm, texturált</b></div><div><small>ÁTMENET</small><b>Low–mid, lágy</b></div><div><small>SZAKÁLL</small><b>6 mm, éles vonal</b></div><div><small>TERMÉK</small><b>Matte Clay</b></div><div><small>MEGJEGYZÉS</small><b>Bal forgót hagyni</b></div></div></section><div class="timeline"><h3>Látogatási idővonal</h3><div class="visit"><b>aug. 28.</b><span><b>Skin Fade + Beard · Demo Barber A</b><small>5★ · Matte Clay vásárlás</small></span><b>€64</b></div><div class="visit"><b>aug. 02.</b><span><b>Skin Fade · Demo Barber A</b><small>Cut Memory frissítve</small></span><b>€42</b></div></div></div></section></div>',
   staff: () =>
@@ -1031,6 +1043,21 @@ function renderModule(id) {
   $("#pageTitle").textContent = t[0];
   $("#pageSub").textContent = t[1];
   $("#moduleContent").innerHTML = modules[id]();
+  if (state.guestBooking && ["calendar","customers","money","impact"].includes(id)) {
+    const b = state.guestBooking;
+    const synced = document.createElement("section");
+    synced.className = "synced-booking";
+    synced.innerHTML =
+      '<div><span>SYNCED GUEST BOOKING · WORKING DEMO</span><h3>' +
+      (id === "money" ? "€10 simulated deposit recorded" :
+       id === "impact" ? "New confirmed booking · +€" + b.price :
+       id === "customers" ? "Demo Guest profile updated" :
+       "Guest booking added to calendar") +
+      '</h3><p>' + b.service + ' · ' + b.barber + ' · ' + b.time +
+      ' · Total €' + b.price + ' · Deposit €10 · Remaining €' + b.remaining +
+      '</p></div><b>CONFIRMED</b>';
+    $("#moduleContent").prepend(synced);
+  }
   $$("[data-module]").forEach((b) =>
     b.classList.toggle("active", b.dataset.module === id),
   );
