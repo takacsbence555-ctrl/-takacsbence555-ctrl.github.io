@@ -20,9 +20,26 @@ window.__guestLang=function(lang){
   if(typeof window.applyGuestLanguage==="function") window.applyGuestLanguage(lang);
 };
 </script>
-    <link rel="stylesheet" href="style.css?v=crm-rebooking-1" />
+    <link rel="stylesheet" href="style.css?v=sales-entry-1" />
   </head>
-  <body>
+  <body><section class="sales-entry" id="salesEntry">
+  <div class="sales-entry-inner">
+    <small>AI BUSINESS OPERATOR · PILOT DEMO</small>
+    <h1>Don't just manage bookings.<br><em>Recover revenue.</em></h1>
+    <p>See how OPERATOR detects empty capacity, customers due to return and potential lost revenue — then prepares the next action for the owner.</p>
+    <div class="sales-proof">
+      <div><b>01</b><span>Detect opportunity</span></div>
+      <div><b>02</b><span>Prepare action</span></div>
+      <div><b>03</b><span>Owner approves</span></div>
+      <div><b>04</b><span>Measure result</span></div>
+    </div>
+    <div class="sales-actions">
+      <button class="sales-primary" type="button" onclick="document.getElementById('salesEntry').classList.add('hidden');document.querySelector('[data-view=hq]').click();window.__openModule('operator')">See the AI Operator →</button>
+      <button class="sales-secondary" type="button" onclick="document.getElementById('salesEntry').classList.add('hidden');document.querySelector('[data-view=booking]').click()">See guest booking</button>
+    </div>
+    <p class="sales-note">SIMULATED SALES DEMO · No real messages or payments are sent.</p>
+  </div>
+</section>
     <header class="demo-header">
       <a class="demo-logo" href="#"
         ><span>O</span>
@@ -556,6 +573,6 @@ window.__guestLang=function(lang){
       <span>✓</span>
       <div><b id="toastTitle">Done</b><small id="toastText"></small></div>
     </div>
-    <script src="app.js?v=pilot-security-2"></script>
+    <script src="app.js?v=sales-entry-1"></script>
   </body>
 </html>
