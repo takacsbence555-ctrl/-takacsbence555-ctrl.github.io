@@ -1078,7 +1078,7 @@ function renderModule(id) {
   let t = titles[id];
   $("#pageTitle").textContent = t[0];
   $("#pageSub").textContent = t[1];
-  $("#moduleContent").innerHTML = modules[id]();\n  if (!ownerDemoMode && ownerDashboardData && ["home","calendar","customers"].includes(id)) $("#moduleContent").insertAdjacentHTML("afterbegin",liveOwnerPanel());\n  if (!ownerDemoMode && ownerAccessToken && id==="operator") { loadLiveOperator().then(()=>{ if(state.module==="operator" && liveOperatorSnapshot) $("#moduleContent").insertAdjacentHTML("afterbegin",liveOperatorBanner()); }); }\n  if (!ownerDemoMode && ownerAccessToken && ["impact","decisions"].includes(id)) { loadLiveOperator().then(()=>{ if(["impact","decisions"].includes(state.module) && liveOperatorSnapshot) $("#moduleContent").insertAdjacentHTML("afterbegin",liveOperatorBanner()); }); }
+  $("#moduleContent").innerHTML = modules[id]();\n  if (!ownerDemoMode && ownerDashboardData && ["home","calendar","customers"].includes(id)) $("#moduleContent").insertAdjacentHTML("afterbegin",liveMetricsPanel()+liveOwnerPanel());\n  if (!ownerDemoMode && ownerAccessToken && id==="operator") { loadLiveOperator().then(()=>{ if(state.module==="operator" && liveOperatorSnapshot) $("#moduleContent").insertAdjacentHTML("afterbegin",liveOperatorBanner()); }); }\n  if (!ownerDemoMode && ownerAccessToken && ["impact","decisions"].includes(id)) { loadLiveOperator().then(()=>{ if(["impact","decisions"].includes(state.module) && liveOperatorSnapshot) $("#moduleContent").insertAdjacentHTML("afterbegin",liveOperatorBanner()); }); }
   if (state.guestBooking && ["calendar","customers","money","impact","decisions"].includes(id)) {
     const b = state.guestBooking;
     const synced = document.createElement("section");
@@ -1552,7 +1552,7 @@ async function createLiveBooking(guestName,guestPhone){
   return await supabaseRpc("create_public_booking",{p_business_slug:BOOKING_BUSINESS,p_staff_slug:selectedStaffSlug(),p_service_slug:selectedServiceSlug(),p_starts_at:startsAt,p_display_name:guestName,p_email:null,p_phone:guestPhone});
 }
 
-let ownerAccessToken=null, ownerDashboardData=null, ownerDemoMode=false;
+let ownerAccessToken=null, ownerDashboardData=null, ownerMetrics=null, ownerDemoMode=false;
 function ownerAuthHeaders(){return {"apikey":SUPABASE_KEY,"Authorization":"Bearer "+ownerAccessToken,"Content-Type":"application/json"}}
 function parseAuthHash(){
   const raw=(location.hash||"").replace(/^#/,""); if(!raw)return;
@@ -1569,7 +1569,7 @@ async function loadOwnerDashboard(){
 function showOwnerApp(demo=false){
  ownerDemoMode=demo; $("#ownerAuthGate")?.classList.add("hidden"); $("#ownerAppShell")?.classList.remove("hidden");
  if(demo){renderModule(window.__pendingModule||"home");return;}
- loadOwnerDashboard().then(data=>{
+ Promise.all([loadOwnerDashboard(),ownerRpc("owner_business_metrics",{}).catch(()=>null)]).then(([data,metrics])=>{ ownerMetrics=metrics;
    if(!data){sessionStorage.removeItem("operator-owner-token");ownerAccessToken=null;showOwnerGate("This account is not connected to a business yet.");return;}
    const brand=$(".brand small");if(brand)brand.textContent=(data.business?.name||"BUSINESS")+" · LIVE";
    const owner=$(".owner small");if(owner)owner.textContent=(data.business?.role||"owner").toUpperCase()+" · LIVE BACKEND";
@@ -1588,7 +1588,7 @@ async function sendOwnerMagicLink(){
  }catch(e){showOwnerGate("Could not send the sign-in link. Only provisioned owner accounts can sign in.");}
  finally{if(btn)btn.disabled=false;}
 }
-async function refreshOwnerLive(){ownerDashboardData=await loadOwnerDashboard();renderModule(state.module||"home")}
+async function refreshOwnerLive(){ownerDashboardData=await loadOwnerDashboard();try{ownerMetrics=await ownerRpc("owner_business_metrics",{})}catch(e){ownerMetrics=null}renderModule(state.module||"home")}
 function ownerBookingModal(mode,b=null){
  if(ownerDemoMode||!ownerDashboardData)return toast("Live owner account required","Use secure owner sign-in to change live bookings.");
  const staff=(ownerDashboardData.staff||[]).map(x=>'<option value="'+x.id+'" '+(b&&x.display_name===b.staff?"selected":"")+'>'+x.display_name+'</option>').join("");
@@ -1598,17 +1598,22 @@ function ownerBookingModal(mode,b=null){
  wrap.innerHTML='<div class="live-booking-card"><button class="modal-close" type="button">×</button><small>LIVE DATABASE</small><h2>'+(mode==="create"?"New booking":"Manage booking")+'</h2>'+
  (mode==="create"?'<label>Customer<input id="liveCustomer" value="Demo Guest"></label><label>Professional<select id="liveStaff">'+staff+'</select></label><label>Service<select id="liveService">'+services+'</select></label>':'<p><b>'+b.customer+'</b><br>'+b.service+' · '+b.staff+'</p>')+
  '<label>Date & time<input id="liveStart" type="datetime-local" value="'+start+'"></label><div class="modal-actions">'+
- (mode==="create"?'<button class="primary" id="liveSave">Create booking</button>':'<button class="primary" id="liveMove">Reschedule</button><button class="secondary" id="liveCancel">Cancel booking</button>')+'</div><span id="liveBookingStatus"></span></div>';
+ (mode==="create"?'<button class="primary" id="liveSave">Create booking</button>':'<button class="primary" id="liveMove">Reschedule</button><button class="secondary" id="liveComplete">Complete</button><button class="secondary" id="liveNoShow">No-show</button><button class="secondary" id="liveCancel">Cancel booking</button>')+'</div><span id="liveBookingStatus"></span></div>';
  document.body.appendChild(wrap);wrap.querySelector(".modal-close").onclick=()=>wrap.remove();
  const status=t=>{const s=wrap.querySelector("#liveBookingStatus");if(s)s.textContent=t};
  if(mode==="create")wrap.querySelector("#liveSave").onclick=async()=>{try{status("Saving…");await ownerRpc("owner_create_booking",{p_business_id:ownerDashboardData.business.id,p_staff_id:wrap.querySelector("#liveStaff").value,p_service_id:wrap.querySelector("#liveService").value,p_starts_at:new Date(wrap.querySelector("#liveStart").value).toISOString(),p_customer_name:wrap.querySelector("#liveCustomer").value});wrap.remove();await refreshOwnerLive();toast("Booking created","Saved to live database");}catch(e){status(e.message.includes("SLOT_ALREADY_BOOKED")?"That time is already booked.":"Could not create booking.");}};
  else{
   wrap.querySelector("#liveMove").onclick=async()=>{try{status("Saving…");await ownerRpc("owner_reschedule_booking",{p_booking_id:b.id,p_starts_at:new Date(wrap.querySelector("#liveStart").value).toISOString()});wrap.remove();await refreshOwnerLive();toast("Booking rescheduled","Live database updated");}catch(e){status(e.message.includes("SLOT_ALREADY_BOOKED")?"That time is already booked.":"Could not reschedule booking.");}};
-  wrap.querySelector("#liveCancel").onclick=async()=>{try{status("Cancelling…");await ownerRpc("owner_cancel_booking",{p_booking_id:b.id});wrap.remove();await refreshOwnerLive();toast("Booking cancelled","Live database updated");}catch(e){status("Could not cancel booking.");}};
+  wrap.querySelector("#liveComplete").onclick=async()=>{try{status("Saving…");await ownerRpc("owner_update_booking_status",{p_booking_id:b.id,p_status:"completed"});wrap.remove();await refreshOwnerLive();toast("Appointment completed","Revenue is now verified in live metrics");}catch(e){status("Could not update booking.");}};\n  wrap.querySelector("#liveNoShow").onclick=async()=>{try{status("Saving…");await ownerRpc("owner_update_booking_status",{p_booking_id:b.id,p_status:"no_show"});wrap.remove();await refreshOwnerLive();toast("Marked as no-show","Live metrics updated");}catch(e){status("Could not update booking.");}};\n  wrap.querySelector("#liveCancel").onclick=async()=>{try{status("Cancelling…");await ownerRpc("owner_cancel_booking",{p_booking_id:b.id});wrap.remove();await refreshOwnerLive();toast("Booking cancelled","Live database updated");}catch(e){status("Could not cancel booking.");}};
  }
 }
 function bindLiveOwnerRows(){
  $("[data-live-booking-id]").forEach(el=>el.onclick=()=>{const b=(ownerDashboardData?.bookings||[]).find(x=>x.id===el.dataset.liveBookingId);if(b)ownerBookingModal("manage",b)});
+}
+function liveMetricsPanel(){
+ if(ownerDemoMode||!ownerMetrics)return "";
+ const m=ownerMetrics;
+ return '<section class="live-metric-grid"><div><small>TODAY</small><b>'+m.today_bookings+'</b><span>bookings</span></div><div><small>NEXT 7 DAYS</small><b>'+m.next_7_days+'</b><span>confirmed</span></div><div><small>BOOKED REVENUE</small><b>€'+((m.booked_revenue_cents||0)/100).toFixed(0)+'</b><span>this month</span></div><div><small>COMPLETED REVENUE</small><b>€'+((m.completed_revenue_cents||0)/100).toFixed(0)+'</b><span>verified</span></div><div><small>NO-SHOWS</small><b>'+m.no_shows_month+'</b><span>this month</span></div></section>';
 }
 function liveOwnerPanel(){
  const d=ownerDashboardData;if(!d)return "";
