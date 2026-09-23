@@ -1078,7 +1078,7 @@ function renderModule(id) {
   let t = titles[id];
   $("#pageTitle").textContent = t[0];
   $("#pageSub").textContent = t[1];
-  $("#moduleContent").innerHTML = modules[id]();\n  if (!ownerDemoMode && ownerDashboardData && ["home","calendar","customers"].includes(id)) $("#moduleContent").insertAdjacentHTML("afterbegin",liveMetricsPanel()+liveOwnerPanel());\n  if (!ownerDemoMode && ownerAccessToken && id==="operator") { loadLiveOperator().then(()=>{ if(state.module==="operator" && liveOperatorSnapshot) $("#moduleContent").insertAdjacentHTML("afterbegin",liveOperatorBanner()); }); }\n  if (!ownerDemoMode && ownerAccessToken && ["impact","decisions"].includes(id)) { loadLiveOperator().then(()=>{ if(["impact","decisions"].includes(state.module) && liveOperatorSnapshot) $("#moduleContent").insertAdjacentHTML("afterbegin",liveOperatorBanner()); }); }
+  $("#moduleContent").innerHTML = modules[id]();\n  if (!ownerDemoMode && ownerDashboardData && ["home","calendar","customers"].includes(id)) { $("#moduleContent").insertAdjacentHTML("afterbegin",liveMetricsPanel()+liveOwnerPanel()+(id==="customers"||id==="home"?liveCrmPanel():"")); bindLiveCrm(); }\n  if (!ownerDemoMode && ownerAccessToken && id==="operator") { loadLiveOperator().then(()=>{ if(state.module==="operator" && liveOperatorSnapshot) $("#moduleContent").insertAdjacentHTML("afterbegin",liveOperatorBanner()); }); }\n  if (!ownerDemoMode && ownerAccessToken && ["impact","decisions"].includes(id)) { loadLiveOperator().then(()=>{ if(["impact","decisions"].includes(state.module) && liveOperatorSnapshot) $("#moduleContent").insertAdjacentHTML("afterbegin",liveOperatorBanner()); }); }
   if (state.guestBooking && ["calendar","customers","money","impact","decisions"].includes(id)) {
     const b = state.guestBooking;
     const synced = document.createElement("section");
@@ -1552,7 +1552,7 @@ async function createLiveBooking(guestName,guestPhone){
   return await supabaseRpc("create_public_booking",{p_business_slug:BOOKING_BUSINESS,p_staff_slug:selectedStaffSlug(),p_service_slug:selectedServiceSlug(),p_starts_at:startsAt,p_display_name:guestName,p_email:null,p_phone:guestPhone});
 }
 
-let ownerAccessToken=null, ownerDashboardData=null, ownerMetrics=null, ownerDemoMode=false;
+let ownerAccessToken=null, ownerDashboardData=null, ownerMetrics=null, ownerCrm=[], ownerRebooking=[], ownerDemoMode=false;
 function ownerAuthHeaders(){return {"apikey":SUPABASE_KEY,"Authorization":"Bearer "+ownerAccessToken,"Content-Type":"application/json"}}
 function parseAuthHash(){
   const raw=(location.hash||"").replace(/^#/,""); if(!raw)return;
@@ -1569,7 +1569,7 @@ async function loadOwnerDashboard(){
 function showOwnerApp(demo=false){
  ownerDemoMode=demo; $("#ownerAuthGate")?.classList.add("hidden"); $("#ownerAppShell")?.classList.remove("hidden");
  if(demo){renderModule(window.__pendingModule||"home");return;}
- Promise.all([loadOwnerDashboard(),ownerRpc("owner_business_metrics",{}).catch(()=>null)]).then(([data,metrics])=>{ ownerMetrics=metrics;
+ Promise.all([loadOwnerDashboard(),ownerRpc("owner_business_metrics",{}).catch(()=>null),ownerRpc("owner_customer_crm",{}).catch(()=>[]),ownerRpc("owner_rebooking_opportunities",{}).catch(()=>[])]).then(([data,metrics,crm,rebooking])=>{ ownerMetrics=metrics; ownerCrm=crm||[]; ownerRebooking=rebooking||[];
    if(!data){sessionStorage.removeItem("operator-owner-token");ownerAccessToken=null;showOwnerGate("This account is not connected to a business yet.");return;}
    const brand=$(".brand small");if(brand)brand.textContent=(data.business?.name||"BUSINESS")+" · LIVE";
    const owner=$(".owner small");if(owner)owner.textContent=(data.business?.role||"owner").toUpperCase()+" · LIVE BACKEND";
@@ -1588,7 +1588,7 @@ async function sendOwnerMagicLink(){
  }catch(e){showOwnerGate("Could not send the sign-in link. Only provisioned owner accounts can sign in.");}
  finally{if(btn)btn.disabled=false;}
 }
-async function refreshOwnerLive(){ownerDashboardData=await loadOwnerDashboard();try{ownerMetrics=await ownerRpc("owner_business_metrics",{})}catch(e){ownerMetrics=null}renderModule(state.module||"home")}
+async function refreshOwnerLive(){ownerDashboardData=await loadOwnerDashboard();try{[ownerMetrics,ownerCrm,ownerRebooking]=await Promise.all([ownerRpc("owner_business_metrics",{}),ownerRpc("owner_customer_crm",{}),ownerRpc("owner_rebooking_opportunities",{})])}catch(e){ownerMetrics=null}renderModule(state.module||"home")}
 function ownerBookingModal(mode,b=null){
  if(ownerDemoMode||!ownerDashboardData)return toast("Live owner account required","Use secure owner sign-in to change live bookings.");
  const staff=(ownerDashboardData.staff||[]).map(x=>'<option value="'+x.id+'" '+(b&&x.display_name===b.staff?"selected":"")+'>'+x.display_name+'</option>').join("");
@@ -1609,6 +1609,23 @@ function ownerBookingModal(mode,b=null){
 }
 function bindLiveOwnerRows(){
  $("[data-live-booking-id]").forEach(el=>el.onclick=()=>{const b=(ownerDashboardData?.bookings||[]).find(x=>x.id===el.dataset.liveBookingId);if(b)ownerBookingModal("manage",b)});
+}
+function escLive(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function liveCrmPanel(){
+ if(ownerDemoMode||!ownerAccessToken)return "";
+ const due=(ownerRebooking||[]).slice(0,6);
+ const customers=(ownerCrm||[]).slice(0,8);
+ return '<section class="live-crm"><div class="live-crm-head"><div><small>LIVE CRM</small><h3>Customer Intelligence</h3></div><span>'+(ownerCrm||[]).length+' customers</span></div>'+
+ '<div class="crm-columns"><div><h4>Rebooking opportunities</h4>'+(due.length?due.map(x=>'<button class="crm-row" data-crm-customer="'+x.customer_id+'"><b>'+escLive(x.display_name)+'</b><span>'+escLive(x.service||"Service")+' · '+escLive(x.status)+'</span><em>'+escLive(x.reason)+'</em></button>').join(""):'<p class="muted">No due customers yet. Complete appointments to build rebooking intelligence.</p>')+'</div>'+
+ '<div><h4>Customer memory</h4>'+(customers.length?customers.map(x=>'<button class="crm-row" data-crm-customer="'+x.id+'"><b>'+escLive(x.display_name)+'</b><span>'+(x.visit_count||0)+' visits · €'+((x.lifetime_value_cents||0)/100).toFixed(0)+' LTV</span><em>'+escLive(x.cut_memory||x.preferred_service||"No Cut Memory yet")+'</em></button>').join(""):'<p class="muted">No live customer history yet.</p>')+'</div></div></section>';
+}
+function bindLiveCrm(){
+ $("#moduleContent [data-crm-customer]").forEach(btn=>btn.onclick=()=>{
+  const c=(ownerCrm||[]).find(x=>x.id===btn.dataset.crmCustomer); if(!c)return;
+  const notes=prompt("Cut Memory notes",c.cut_memory||""); if(notes===null)return;
+  const days=prompt("Expected rebooking cycle (days)",String(c.rebook_interval_days||28)); if(days===null)return;
+  ownerRpc("owner_save_cut_memory",{p_customer_id:c.id,p_notes:notes,p_rebook_interval_days:Number(days)||28}).then(()=>refreshOwnerLive()).then(()=>toast("Cut Memory saved","Rebooking intelligence updated")).catch(e=>toast("Could not save",e.message));
+ });
 }
 function liveMetricsPanel(){
  if(ownerDemoMode||!ownerMetrics)return "";
