@@ -1580,10 +1580,10 @@ $('[data-action="new-booking"]').onclick = () => {
   state.bookStep=1; state.service=""; state.price=0; state.barber=""; state.time="";
   $("#bookingSuccess").classList.add("hidden"); $("#bookActions").classList.remove("hidden");
   $("#sumService").textContent=$("#sumBarber").textContent=$("#sumTime").textContent=$("#sumPrice").textContent="—";
-  $(".selected").forEach(x=>x.classList.remove("selected")); bookRefresh();
+  $$(".selected").forEach(x=>x.classList.remove("selected")); bookRefresh();
 };
 function bindGuestActions(){
-  $("[data-guest-action]").forEach(b=>b.onclick=()=>guestAction(b.dataset.guestAction));
+  $$("[data-guest-action]").forEach(b=>b.onclick=()=>guestAction(b.dataset.guestAction));
 }
 function guestAction(a){
   saveDemoState();
@@ -1608,14 +1608,14 @@ function applyGuestLanguage(lang){
     ".booking-lead":en?"Premium grooming. Book in under a minute.":"Premium Grooming. In weniger als einer Minute gebucht."
   };
   Object.entries(dict).forEach(([s,v])=>{const n=$(s);if(n)n.innerHTML=v});
-  const heads=$(".section-title h2");
+  const heads=$$(".section-title h2");
   const labels=en?["Choose service","Choose professional","Choose time","Alnow done"]:["Service wählen","Professional wählen","Zeit wählen","Fast geschafft"];
   heads.forEach((n,i)=>{if(labels[i])n.textContent=labels[i]});
   if($("#bookBack")) $("#bookBack").textContent=en?"Back":"Zurück";
   if($("#bookNext")) $("#bookNext").textContent=state.bookStep===4?(en?"Pay €10 demo deposit":"€10 Demo-Deposit bezahlen"):(en?"Continue":"Weiter");
-  $(".lang [data-lang]").forEach(x=>x.classList.toggle("active",x.dataset.lang===lang));
+  $$(".lang [data-lang]").forEach(x=>x.classList.toggle("active",x.dataset.lang===lang));
 }
-$(".lang [data-lang]").forEach(b=>b.onclick=()=>{applyGuestLanguage(b.dataset.lang);toast(b.dataset.lang==="EN"?"Language changed":"Sprache geändert",b.dataset.lang)});
+$$(".lang [data-lang]").forEach(b=>b.onclick=()=>{applyGuestLanguage(b.dataset.lang);toast(b.dataset.lang==="EN"?"Language changed":"Sprache geändert",b.dataset.lang)});
 bind();
 renderModule("home");
 bookRefresh();
