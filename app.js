@@ -1078,7 +1078,7 @@ function renderModule(id) {
   let t = titles[id];
   $("#pageTitle").textContent = t[0];
   $("#pageSub").textContent = t[1];
-  $("#moduleContent").innerHTML = modules[id]();\n  if (!ownerDemoMode && ownerDashboardData && ["home","calendar","customers"].includes(id)) $("#moduleContent").insertAdjacentHTML("afterbegin",liveOwnerPanel());
+  $("#moduleContent").innerHTML = modules[id]();\n  if (!ownerDemoMode && ownerDashboardData && ["home","calendar","customers"].includes(id)) $("#moduleContent").insertAdjacentHTML("afterbegin",liveOwnerPanel());\n  if (!ownerDemoMode && ownerAccessToken && id==="operator") { loadLiveOperator().then(()=>{ if(state.module==="operator" && liveOperatorSnapshot) $("#moduleContent").insertAdjacentHTML("afterbegin",liveOperatorBanner()); }); }\n  if (!ownerDemoMode && ownerAccessToken && ["impact","decisions"].includes(id)) { loadLiveOperator().then(()=>{ if(["impact","decisions"].includes(state.module) && liveOperatorSnapshot) $("#moduleContent").insertAdjacentHTML("afterbegin",liveOperatorBanner()); }); }
   if (state.guestBooking && ["calendar","customers","money","impact","decisions"].includes(id)) {
     const b = state.guestBooking;
     const synced = document.createElement("section");
@@ -1196,6 +1196,29 @@ function appointment() {
   openDrawer(
     '<span class="drawer-kicker">BOOKING · TODAY 16:15</span><h2>Demo Customer</h2><p class="muted">Skin Fade + Beard · Demo Barber A · 60 min</p><div class="drawer-section"><div class="detail-grid"><div><small>STATUS</small><b>✓ Confirmed</b></div><div><small>PAYMENT</small><b>€52 on site</b></div><div><small>RISK</small><b>Low · 4%</b></div><div><small>CYCLE</small><b>Day 25 · on schedule</b></div></div></div><div class="drawer-section"><h3>✦ Cut Memory</h3><p>0 → 1.5 low–mid fade · 5 cm textured top · 6 mm beard · Matte Clay · keep natural crown.</p></div><div class="drawer-section"><h3>Customer history</h3><p>12 visits · €624 spend · 0 no-shows · 4.9 ★ average review</p></div><div class="drawer-actions"><button class="confirm" data-action="open-checkout">Open checkout</button><button data-action="message-client">Message</button><button data-action="reschedule">Reschedule</button><button class="danger" data-action="cancel-booking">Cancel</button></div>',
   );
+}
+let liveOperatorSnapshot=null;
+async function loadLiveOperator(){
+ if(ownerDemoMode||!ownerAccessToken)return null;
+ try{liveOperatorSnapshot=await ownerRpc("owner_operator_snapshot",{});return liveOperatorSnapshot}catch(e){console.error("Operator snapshot",e);return null}
+}
+function liveOperatorBanner(){
+ if(ownerDemoMode||!liveOperatorSnapshot)return "";
+ const s=liveOperatorSnapshot.signals||{},d=(liveOperatorSnapshot.decisions||[])[0];
+ return '<section class="synced-booking"><div><span>AI OPERATOR · LIVE BUSINESS SIGNALS</span><h3>'+s.cancelled_future+' cancelled future slots · '+s.upcoming_7d+' upcoming bookings</h3><p>Booked revenue in current month: €'+((s.booked_revenue_cents||0)/100).toFixed(0)+' · '+s.customers+' customers</p></div><b>LIVE</b></section>'+
+ (d?'<section class="guest-audit-trail"><div class="panel-head"><h2>Latest live decision</h2><span class="demo-chip">'+String(d.status).toUpperCase()+'</span></div><div class="guest-event"><b>'+d.kind+'</b><span>'+d.reason+'</span><strong>Expected €'+((d.expected_impact_cents||0)/100).toFixed(0)+'</strong></div></section>':'');
+}
+async function runLiveOperator(){
+ try{
+  const decisionId=await ownerRpc("owner_operator_prepare",{});
+  const prepared=await loadLiveOperator();renderModule("operator");
+  const ok=confirm("Approve this live Operator action? It will record and execute the decision in the business database. No external messages or payments will be sent.");
+  if(!ok){toast("Live plan prepared","Decision saved but not executed.");return;}
+  await ownerRpc("owner_operator_execute",{p_decision_id:decisionId});
+  await ownerRpc("owner_operator_measure",{p_decision_id:decisionId});
+  await loadLiveOperator();await loadOwnerDashboard();renderModule("operator");
+  toast("Operator action executed","Decision Log updated · attribution measured conservatively");
+ }catch(e){console.error(e);toast("Operator action failed","No live action was applied.");}
 }
 function startExecution() {
   state.plan = "executing";
@@ -1380,7 +1403,7 @@ function act(a, e) {
         '</h2><p class="muted">This control is discoverable in the complete platform layer. The Operator uses the same permissioned action when it can safely reduce owner workload.</p><button class="primary" data-action="close-drawer">DONE</button>',
     );
   }
-  if (a === "approve-plan") return startExecution();
+  if (a === "approve-plan") return (!ownerDemoMode && ownerAccessToken) ? runLiveOperator() : startExecution();
   if (a === "view-results") return renderModule("impact");
   if (a === "reset-demo") {
     Object.assign(state, {
