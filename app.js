@@ -40,6 +40,10 @@ const state = {
   guestBooking: null,
   guestDeposit: 0,
   guestPaymentStatus: "none",
+  guestWaitlist: false,
+  guestReview: false,
+  guestMembership: false,
+  guestGift: false,
   permissions: {
     marketing: true,
     discount: true,
@@ -1440,7 +1444,7 @@ function bookRefresh() {
   ][state.bookStep - 1];
   $("#bookNext").disabled = !ok;
   $("#bookNext").textContent =
-    state.bookStep === 4 ? "Kostenpflichtig buchen" : "Weiter";
+    state.bookStep === 4 ? "€10 Deposit bezahlen" : "Weiter";
 }
 $$("[data-service]").forEach(
   (b) =>
@@ -1492,13 +1496,17 @@ $("#bookNext").onclick = () => {
     state.bookStep++;
     bookRefresh();
   } else {
-    $$(".book-step").forEach((x) => x.classList.add("hidden"));
+    const guestName = ($("#guestName")?.value || "Demo Guest").trim() || "Demo Guest";
+    state.guestDeposit = 10;
+    state.guestPaymentStatus = "simulated_paid";
+    state.guestBooking = {id:"DEMO-"+(state.appointments+1),customer:guestName,service:state.service,price:state.price,barber:state.barber,time:state.time,deposit:10,remaining:Math.max(0,state.price-10),status:"Confirmed"};
+    state.appointments++; state.forecast += state.price; state.current += 10; state.impact += state.price;
+    $$(".book-step").forEach(x=>x.classList.add("hidden"));
     $("#bookActions").classList.add("hidden");
     $("#bookingSuccess").classList.remove("hidden");
-    toast(
-      "Foglalás bekerült a HQ-ba",
-      "SMS megerősítés és Cut Memory profil létrehozva",
-    );
+    const p=$("#bookingSuccess p"); if(p)p.innerHTML="<b>DEMO / SIMULATED PAYMENT</b><br>€10 deposit recorded. Synced to Owner Calendar, Customer Intel, Money and Impact.";
+    bindGuestActions();
+    toast("Demo-Zahlung erfolgreich","€10 simulated deposit · booking synced to Owner OS");
   }
 };
 ["guestName", "guestPhone"].forEach(
@@ -1520,12 +1528,32 @@ $('[data-action="repeat-cut"]').onclick = () => {
     "A legutóbbi vágás, barber és preferenciák készen állnak",
   );
 };
-$('[data-action="waitlist"]').onclick = () =>
-  toast(
-    "Várólista aktiválva",
-    "SMS-t kapsz, ha megfelelő időpont szabadul fel",
-  );
-$('[data-action="new-booking"]').onclick = () => location.reload();
+$('[data-action="waitlist"]').onclick = () => {
+  state.guestWaitlist = true;
+  toast("Smart waitlist active","DEMO: you will be matched automatically when a suitable slot opens");
+};
+$('[data-action="new-booking"]').onclick = () => {
+  state.bookStep=1; state.service=""; state.price=0; state.barber=""; state.time="";
+  $("#bookingSuccess").classList.add("hidden"); $("#bookActions").classList.remove("hidden");
+  $("#sumService").textContent=$("#sumBarber").textContent=$("#sumTime").textContent=$("#sumPrice").textContent="—";
+  $(".selected").forEach(x=>x.classList.remove("selected")); bookRefresh();
+};
+function bindGuestActions(){
+  $("[data-guest-action]").forEach(b=>b.onclick=()=>guestAction(b.dataset.guestAction));
+}
+function guestAction(a){
+  if(!state.guestBooking) return toast("No active demo booking");
+  const b=state.guestBooking;
+  if(a==="reschedule"){b.time=b.time==="16:15"?"17:45":"16:15"; $("#sumTime").textContent="Demo date · "+b.time; return toast("Booking rescheduled",b.time+" · Owner Calendar synced");}
+  if(a==="cancel"){b.status="Cancelled"; state.forecast-=b.price; state.impact=Math.max(0,state.impact-b.price); return toast("Booking cancelled","DEMO: calendar released · €10 refund simulated");}
+  if(a==="rebook"){state.appointments++; state.forecast+=b.price; return toast("Next visit reserved","DEMO: +1 future appointment · €"+b.price+" forecast");}
+  if(a==="pay-tip"){state.current+=b.remaining+5; b.remaining=0; return toast("Demo payment complete","Remaining balance + €5 tip recorded");}
+  if(a==="review"){state.guestReview=true; return toast("5★ demo review recorded","Review linked to customer timeline");}
+  if(a==="loyalty"){state.loyaltyPoints+=50; return toast("Loyalty updated","+50 demo points");}
+  if(a==="membership"){state.guestMembership=true; return toast("Membership activated","DEMO membership · no real charge");}
+  if(a==="gift"){state.guestGift=true; return toast("Gift card created","DEMO €50 gift card · no real charge");}
+}
+bindGuestActions();
 bind();
 renderModule("home");
 bookRefresh();
