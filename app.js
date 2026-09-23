@@ -1530,7 +1530,7 @@ const SUPABASE_KEY="sb_publishable_3FRbG5Y2r1K_iLK27KErIQ_1CMH1a0Q";
 const BOOKING_BUSINESS="demo-studio";
 const SERVICE_SLUGS={"Classic Cut":"classic-cut","Skin Fade":"skin-fade","Cut + Beard":"cut-beard","Beard Ritual":"beard-ritual"};
 const STAFF_SLUGS={"Demo Barber A":"demo-barber-a","Demo Barber B":"demo-barber-b","Demo Barber C":"demo-barber-c"};
-let bookingDate="2026-09-23";
+let bookingDate=new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Vienna",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
 
 async function supabaseRpc(fn,params){
   const res=await fetch(SUPABASE_URL+"/rest/v1/rpc/"+fn,{method:"POST",headers:{"apikey":SUPABASE_KEY,"Authorization":"Bearer "+SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify(params)});
@@ -1619,10 +1619,11 @@ function liveCrmPanel(){
  '<div class="crm-columns"><div><h4>Rebooking opportunities</h4>'+(due.length?due.map(x=>'<button class="crm-row" data-crm-customer="'+x.customer_id+'"><b>'+escLive(x.display_name)+'</b><span>'+escLive(x.service||"Service")+' · '+escLive(x.status)+'</span><em>'+escLive(x.reason)+'</em></button>').join(""):'<p class="muted">No due customers yet. Complete appointments to build rebooking intelligence.</p>')+'</div>'+
  '<div><h4>Customer memory</h4>'+(customers.length?customers.map(x=>'<button class="crm-row" data-crm-customer="'+x.id+'"><b>'+escLive(x.display_name)+'</b><span>'+(x.visit_count||0)+' visits · €'+((x.lifetime_value_cents||0)/100).toFixed(0)+' LTV</span><em>'+escLive(x.cut_memory||x.preferred_service||"No Cut Memory yet")+'</em></button>').join(""):'<p class="muted">No live customer history yet.</p>')+'</div></div></section>';
 }
+function downloadJson(name,data){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)}
 function bindLiveCrm(){
  $("#moduleContent [data-crm-customer]").forEach(btn=>btn.onclick=()=>{
   const c=(ownerCrm||[]).find(x=>x.id===btn.dataset.crmCustomer); if(!c)return;
-  const notes=prompt("Cut Memory notes",c.cut_memory||""); if(notes===null)return;
+  const action=prompt("Customer action: memory, consent, export, delete","memory"); if(action===null)return; if(action==="consent"){ownerRpc("owner_set_marketing_consent",{p_customer_id:c.id,p_consent:true}).then(()=>toast("Consent updated","Marketing consent enabled")).catch(e=>toast("Could not update",e.message));return} if(action==="export"){ownerRpc("owner_export_customer",{p_customer_id:c.id}).then(d=>downloadJson("customer-export.json",d)).catch(e=>toast("Could not export",e.message));return} if(action==="delete"){if(!confirm("Anonymize this customer and detach personal data?"))return;ownerRpc("owner_delete_customer_data",{p_customer_id:c.id}).then(()=>refreshOwnerLive()).then(()=>toast("Customer anonymized","Personal data removed")).catch(e=>toast("Could not delete",e.message));return} const notes=prompt("Cut Memory notes",c.cut_memory||""); if(notes===null)return;
   const days=prompt("Expected rebooking cycle (days)",String(c.rebook_interval_days||28)); if(days===null)return;
   ownerRpc("owner_save_cut_memory",{p_customer_id:c.id,p_notes:notes,p_rebook_interval_days:Number(days)||28}).then(()=>refreshOwnerLive()).then(()=>toast("Cut Memory saved","Rebooking intelligence updated")).catch(e=>toast("Could not save",e.message));
  });
