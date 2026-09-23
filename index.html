@@ -1,0 +1,569 @@
+<!doctype html>
+<html lang="hu">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#101114" />
+    <title>OPERATOR — Business Operating System Demo</title>
+    <meta
+      name="description"
+      content="Goal-driven AI operating system demo for modern service businesses."
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="demo-header">
+      <a class="demo-logo" href="#"
+        ><span>O</span>
+        <div>OPERATOR<small>FULL DEMO · WORKING BRAND</small></div></a
+      >
+      <nav class="view-switch" aria-label="Demo nézetek">
+        <button data-view="booking">Vendégfoglalás</button>
+        <button class="active" data-view="hq">Owner OS</button>
+        <button data-view="master">Platform Admin</button>
+      </nav>
+      <div class="live-pill"><i></i> Demo aktív</div>
+    </header>
+
+    <main id="booking" class="view hidden">
+      <div class="booking-page">
+        <header class="shop-head">
+          <div class="shop-brand">
+            <span class="shop-mark">N</span>
+            <div>
+              <strong>NOIR BARBER</strong
+              ><small>Burggasse 41 · 1070 Wien · 4,9 ★</small>
+            </div>
+          </div>
+          <div class="lang">
+            <button class="active">DE</button><button>EN</button
+            ><button>HU</button>
+          </div>
+        </header>
+        <div class="booking-layout">
+          <section class="booking-main">
+            <div class="booking-kicker">ONLINE BUCHEN · DIREKT BEI NOIR</div>
+            <h1>Dein nächster Schnitt.<br /><em>Ohne Warten.</em></h1>
+            <div class="stepper">
+              <span class="active">1</span><i></i><span>2</span><i></i
+              ><span>3</span><i></i><span>4</span>
+            </div>
+            <div id="bookStep1" class="book-step">
+              <div class="section-title">
+                <div>
+                  <small>SCHRITT 1</small>
+                  <h2>Service wählen</h2>
+                </div>
+                <button class="text-btn" data-action="repeat-cut">
+                  ↻ Letzten Schnitt wiederholen
+                </button>
+              </div>
+              <label class="location-select"
+                ><span>LOCATION</span
+                ><select>
+                  <option>NOIR · Vienna Neubau</option>
+                  <option>NOIR · Vienna Center</option>
+                  <option>NOIR · Vienna West</option>
+                </select></label
+              >
+              <div class="service-list">
+                <button
+                  class="service-card"
+                  data-service="Classic Cut"
+                  data-price="36"
+                  data-duration="45"
+                >
+                  <span
+                    ><b>Classic Cut</b
+                    ><small>Beratung, Schnitt & Styling · 45 Min</small></span
+                  ><strong>36 €</strong>
+                </button>
+                <button
+                  class="service-card"
+                  data-service="Skin Fade"
+                  data-price="42"
+                  data-duration="50"
+                >
+                  <span
+                    ><b>Skin Fade</b
+                    ><small>Präziser Übergang & Finish · 50 Min</small></span
+                  ><strong>42 €</strong>
+                </button>
+                <button
+                  class="service-card"
+                  data-service="Cut + Beard"
+                  data-price="52"
+                  data-duration="60"
+                >
+                  <span
+                    ><b>Cut + Beard</b
+                    ><small>Komplettes Grooming · 60 Min</small></span
+                  ><strong>52 €</strong>
+                </button>
+                <button
+                  class="service-card"
+                  data-service="Beard Ritual"
+                  data-price="28"
+                  data-duration="30"
+                >
+                  <span
+                    ><b>Beard Ritual</b
+                    ><small>Kontur, Hot Towel & Pflege · 30 Min</small></span
+                  ><strong>28 €</strong>
+                </button>
+              </div>
+            </div>
+            <div id="bookStep2" class="book-step hidden">
+              <div class="section-title">
+                <div>
+                  <small>SCHRITT 2</small>
+                  <h2>Barber wählen</h2>
+                </div>
+                <span class="ai-tag">AI MATCH</span>
+              </div>
+              <div class="barber-grid">
+                <button class="barber-card recommended" data-barber="Dani">
+                  <span class="recommend">98% MATCH</span
+                  ><span class="avatar lime">DS</span><b>Dani</b
+                  ><small>Fade Specialist · 4,9 ★</small
+                  ><span>Heute 16:15</span>
+                </button>
+                <button class="barber-card" data-barber="Marco">
+                  <span class="avatar dark">MK</span><b>Marco</b
+                  ><small>Senior Barber · 4,9 ★</small><span>Morgen 10:30</span>
+                </button>
+                <button class="barber-card" data-barber="Alex">
+                  <span class="avatar sand">AR</span><b>Alex</b
+                  ><small>Barber & Stylist · 4,8 ★</small
+                  ><span>Heute 17:45</span>
+                </button>
+                <button class="barber-card" data-barber="Erster verfügbarer">
+                  <span class="avatar pale">+</span><b>Erster verfügbarer</b
+                  ><small>Schnellster freier Termin</small
+                  ><span>Heute 15:30</span>
+                </button>
+              </div>
+            </div>
+            <div id="bookStep3" class="book-step hidden">
+              <div class="section-title">
+                <div>
+                  <small>SCHRITT 3</small>
+                  <h2>Zeit wählen</h2>
+                </div>
+                <span class="muted">Europe/Vienna</span>
+              </div>
+              <div class="date-strip">
+                <button class="active"><small>DI</small><b>22</b></button
+                ><button><small>MI</small><b>23</b></button
+                ><button><small>DO</small><b>24</b></button
+                ><button><small>FR</small><b>25</b></button
+                ><button><small>SA</small><b>26</b></button>
+              </div>
+              <div class="slot-label">NÄCHSTE FREIE TERMINE</div>
+              <div class="slot-grid">
+                <button data-time="15:30">15:30</button
+                ><button data-time="16:15">16:15</button
+                ><button data-time="17:00">17:00</button
+                ><button data-time="17:45">17:45</button
+                ><button data-time="18:30">18:30</button
+                ><button data-time="19:15">19:15</button>
+              </div>
+              <button class="waitlist-card" data-action="waitlist">
+                <span>Kein passender Termin?</span
+                ><strong>Auf die intelligente Warteliste →</strong>
+              </button>
+            </div>
+            <div id="bookStep4" class="book-step hidden">
+              <div class="section-title">
+                <div>
+                  <small>SCHRITT 4</small>
+                  <h2>Fast geschafft</h2>
+                </div>
+                <span class="safe">SICHERE BUCHUNG</span>
+              </div>
+              <div class="social-login">
+                <button>● Mit Apple fortfahren</button
+                ><button>G Mit Google fortfahren</button>
+              </div>
+              <div class="or"><span>oder ohne Konto buchen</span></div>
+              <div class="form-grid">
+                <label>Name<input id="guestName" value="Bence Takács" /></label
+                ><label
+                  >Telefon<input id="guestPhone" value="+43 660 123 4567"
+                /></label>
+              </div>
+              <div class="deposit-card">
+                <span
+                  ><b>Deposit required</b
+                  ><small
+                    >Secures this peak-time appointment · Apple Pay /
+                    card</small
+                  ></span
+                ><strong>€10</strong>
+              </div>
+              <div class="policy">
+                <input type="checkbox" checked />
+                <span
+                  >Kostenlose Stornierung bis 24 Stunden. Danach können 50%
+                  verrechnet werden.</span
+                >
+              </div>
+            </div>
+            <div id="bookingSuccess" class="booking-success hidden">
+              <span>✓</span><small>BESTÄTIGT</small>
+              <h2>Bis bald bei NOIR.</h2>
+              <p>
+                Bestätigung, Kalenderlink und Verwaltung wurden per SMS
+                gesendet.
+              </p>
+              <div class="post-booking-actions">
+                <button>Reschedule</button><button>Cancel</button
+                ><button>Rebook</button><button>Pay & tip</button
+                ><button>Review</button><button>Loyalty</button
+                ><button>Membership</button><button>Gift card</button>
+              </div>
+              <button class="primary" data-action="new-booking">
+                Neue Buchung
+              </button>
+            </div>
+            <div id="bookActions" class="book-actions">
+              <button id="bookBack" class="secondary" disabled>Zurück</button
+              ><button id="bookNext" class="primary" disabled>Weiter</button>
+            </div>
+          </section>
+          <aside class="booking-summary">
+            <div class="summary-visual">
+              <span>NOIR</span><small>VIENNA · EST. 2021</small>
+            </div>
+            <h3>Deine Buchung</h3>
+            <div class="sum-row">
+              <span>Service</span><b id="sumService">—</b>
+            </div>
+            <div class="sum-row">
+              <span>Barber</span><b id="sumBarber">—</b>
+            </div>
+            <div class="sum-row"><span>Termin</span><b id="sumTime">—</b></div>
+            <div class="sum-row total">
+              <span>Gesamt</span><b id="sumPrice">—</b>
+            </div>
+            <div class="feature-chips">
+              <span>SMS Erinnerung</span><span>Apple Pay</span
+              ><span>Online verwalten</span>
+            </div>
+            <div class="review-quote">
+              “Der beste Fade in Wien.”<small
+                >— Leon, verifizierter Kunde</small
+              >
+            </div>
+          </aside>
+        </div>
+      </div>
+    </main>
+
+    <main id="hq" class="view">
+      <div class="app-shell">
+        <aside class="sidebar">
+          <div class="brand">
+            <span>O</span>
+            <div>OPERATOR<small>NOIR · NEUBAU</small></div>
+          </div>
+          <nav id="sideNav">
+            <button class="active" data-module="home">
+              <span>⌂</span>Home
+            </button>
+            <button data-module="operator">
+              <span>✦</span>AI Operator<i class="ai-dot"></i>
+            </button>
+            <button data-module="live"><span>◉</span>Live Business</button>
+            <button data-module="calendar">
+              <span>▦</span>Calendar<i>17</i>
+            </button>
+            <button data-module="customers">
+              <span>◎</span>Customer Intel
+            </button>
+            <button data-module="staff"><span>♙</span>Staff Intel</button>
+            <div class="nav-label">CONTROL</div>
+            <button data-module="goals"><span>◇</span>Goals</button>
+            <button data-module="autopilot"><span>⚡</span>Autopilot</button>
+            <button data-module="memory"><span>◌</span>Business Memory</button>
+            <button data-module="simulator"><span>⌁</span>Simulator</button>
+            <div class="nav-label">BUSINESS CORE</div>
+            <button data-module="core">
+              <span>▤</span>Business Core<i class="core-count">42</i>
+            </button>
+            <button data-module="money"><span>€</span>Money</button>
+            <button data-module="grow">
+              <span>↗</span>Grow<i class="pink">3</i>
+            </button>
+            <button data-module="inventory">
+              <span>□</span>Inventory<i class="warn">2</i>
+            </button>
+            <button data-module="locations"><span>⌖</span>Locations</button>
+            <div class="nav-label">ACCOUNTABILITY</div>
+            <button data-module="impact"><span>↗</span>Impact</button>
+            <button data-module="decisions"><span>≡</span>Decision Log</button>
+            <button data-module="settings"><span>⚙</span>Settings</button>
+          </nav>
+          <div class="sidebar-foot">
+            <div class="owner">
+              <span class="avatar dark">BL</span>
+              <div><b>Benjamin Lang</b><small>Owner · Pro plan</small></div>
+            </div>
+            <button aria-label="További opciók">•••</button>
+          </div>
+        </aside>
+        <section class="workspace">
+          <header class="workspace-head">
+            <div>
+              <h1 id="pageTitle">Home</h1>
+              <p id="pageSub">Executive overview · September 2026</p>
+            </div>
+            <div class="head-actions">
+              <button class="search">
+                ⌕ <span>Keresés</span><kbd>⌘ K</kbd></button
+              ><button class="icon-btn" aria-label="Értesítések">
+                ♢<i></i></button
+              ><button class="primary small" data-action="new-appointment">
+                + Új foglalás
+              </button>
+            </div>
+          </header>
+          <div id="moduleContent" class="module-content"></div>
+        </section>
+      </div>
+    </main>
+
+    <main id="master" class="view hidden">
+      <div class="master-shell">
+        <header class="master-head">
+          <div class="master-brand">
+            <span>O</span>
+            <div>OPERATOR PLATFORM<small>ADMIN CONTROL CENTER</small></div>
+          </div>
+          <div class="master-actions">
+            <span><i></i> All systems operational</span
+            ><button>Command ⌘K</button>
+          </div>
+        </header>
+        <section class="network-hero">
+          <div>
+            <small>NETWORK REVENUE · LIVE</small>
+            <h1>€12,480 <em>MRR</em></h1>
+            <p>Across 42 active shops · 99.97% uptime</p>
+          </div>
+          <div class="pulse">
+            <span>+€1,284</span><small>AI recovered this month</small>
+          </div>
+        </section>
+        <div class="master-kpis">
+          <article>
+            <span>ACTIVE BUSINESSES</span><b>42</b
+            ><small>6 trials · 36 paid</small>
+          </article>
+          <article>
+            <span>MRR</span><b>€12,480</b><small>+18.6% this quarter</small>
+          </article>
+          <article>
+            <span>AI ACTIONS / 30D</span><b>3,841</b
+            ><small>91% within policy</small>
+          </article>
+          <article>
+            <span>PLATFORM COSTS</span><b>€1,284</b><small>10.3% of MRR</small>
+          </article>
+        </div>
+        <div class="master-grid">
+          <section class="dark-panel">
+            <header>
+              <h2>Salon network</h2>
+              <button>+ Provision shop</button>
+            </header>
+            <div class="network-table">
+              <div class="nrow head">
+                <span>SHOP</span><span>PLAN</span><span>USAGE</span
+                ><span>AI VALUE</span><span>STATUS</span>
+              </div>
+              <div class="nrow">
+                <b
+                  ><i>N</i
+                  ><span>NOIR Neubau<small>Vienna · 4 chairs</small></span></b
+                ><span>Pro · €79</span><span>84%</span><strong>€486</strong
+                ><em>● LIVE</em>
+              </div>
+              <div class="nrow">
+                <b
+                  ><i>K</i
+                  ><span>KINGS Cut<small>Vienna · 5 chairs</small></span></b
+                ><span>Pro · €79</span><span>76%</span><strong>€392</strong
+                ><em>● LIVE</em>
+              </div>
+              <div class="nrow">
+                <b
+                  ><i>B</i
+                  ><span>Bruder Barber<small>Vienna · 3 chairs</small></span></b
+                ><span>Pro · €79</span><span>91%</span><strong>€518</strong
+                ><em>● LIVE</em>
+              </div>
+              <div class="nrow">
+                <b
+                  ><i>O</i
+                  ><span>OAK Studio<small>Vienna · 2 chairs</small></span></b
+                ><span>Trial</span><span>58%</span><strong>€174</strong
+                ><em>● PILOT</em>
+              </div>
+            </div>
+          </section>
+          <aside class="dark-panel intelligence">
+            <header>
+              <h2>Network intelligence</h2>
+              <span>LIVE</span>
+            </header>
+            <div class="signal">
+              <i>✦</i>
+              <div>
+                <b>Retention pattern detected</b>
+                <p>
+                  Skin-fade clients rebook 19% more often after a day-24
+                  reminder.
+                </p>
+                <button data-action="master-apply">
+                  Deploy playbook to 42 shops
+                </button>
+              </div>
+            </div>
+            <div class="event">
+              <span>16:42</span>
+              <p><b>Empty chair recovered</b> · NOIR · +€42</p>
+            </div>
+            <div class="event">
+              <span>16:38</span>
+              <p><b>Risk pre-auth applied</b> · KINGS</p>
+            </div>
+            <div class="event">
+              <span>16:31</span>
+              <p><b>5★ review received</b> · Bruder</p>
+            </div>
+          </aside>
+        </div>
+        <div class="platform-grid">
+          <article>
+            <span>ACTIVATION</span><b>86%</b><small>trial → configured</small>
+          </article>
+          <article>
+            <span>BUSINESS RETENTION</span><b>97.2%</b
+            ><small>monthly logo retention</small>
+          </article>
+          <article>
+            <span>CHURN RISK</span><b>3</b
+            ><small>businesses need attention</small>
+          </article>
+          <article>
+            <span>MESSAGES / 30D</span><b>84,210</b
+            ><small>SMS · WhatsApp · email</small>
+          </article>
+          <article>
+            <span>FEATURE USAGE</span><b>72%</b
+            ><small>median core adoption</small>
+          </article>
+          <article>
+            <span>SUPPORT ISSUES</span><b>4</b
+            ><small>1 priority · 3 normal</small>
+          </article>
+        </div>
+        <section class="coverage-panel">
+          <header>
+            <div>
+              <small>INTERNAL · NOT A CUSTOMER-FACING CLAIM</small>
+              <h2>Competitive Coverage</h2>
+              <p>
+                Current official-source audit mapped to demonstrable product
+                states.
+              </p>
+            </div>
+            <span class="coverage-date">AUDITED · 22 SEP 2026</span>
+          </header>
+          <div class="coverage-kpis">
+            <article>
+              <span>TREATWELL RELEVANT COVERED</span><b>94%</b
+              ><small>working + simulated demo</small>
+            </article>
+            <article>
+              <span>FRESHA RELEVANT COVERED</span><b>91%</b
+              ><small>broadest parity target</small>
+            </article>
+            <article>
+              <span>BOOKSY RELEVANT COVERED</span><b>95%</b
+              ><small>barber-adjacent scope</small>
+            </article>
+            <article>
+              <span>AI-ENHANCED CAPABILITIES</span><b>46</b
+              ><small>Operator improves workflow</small>
+            </article>
+            <article>
+              <span>CRITICAL GAPS</span><b>0</b
+              ><small>in target architecture</small>
+            </article>
+            <article>
+              <span>IN DEVELOPMENT</span><b>18</b
+              ><small>P2 / P3 production depth</small>
+            </article>
+          </div>
+          <div class="coverage-table">
+            <div class="coverage-row head">
+              <span>CAPABILITY GROUP</span><span>DEMO COVERAGE</span
+              ><span>PRODUCT STATE</span><span>OPERATOR ADVANTAGE</span
+              ><span></span>
+            </div>
+            <div class="coverage-row">
+              <b>Booking, calendar & protection</b><span>24 / 25 relevant</span
+              ><em class="working">WORKING DEMO</em
+              ><span>Predictive waitlist · risk-based protection</span
+              ><button data-action="coverage-booking">Inspect</button>
+            </div>
+            <div class="coverage-row">
+              <b>CRM & customer intelligence</b><span>18 / 19 relevant</span
+              ><em class="enhanced">AI ENHANCED</em
+              ><span>Visit-cycle prediction · churn intervention</span
+              ><button data-action="coverage-crm">Inspect</button>
+            </div>
+            <div class="coverage-row">
+              <b>POS, payments & value programs</b><span>17 / 18 relevant</span
+              ><em class="simulated">SIMULATED FEATURE</em
+              ><span>Smart add-on · attributable margin impact</span
+              ><button data-action="coverage-payments">Inspect</button>
+            </div>
+            <div class="coverage-row">
+              <b>Staff, inventory & reporting</b><span>28 / 31 relevant</span
+              ><em class="planned">PLANNED PRODUCTION</em
+              ><span>Capacity plans · predictive purchase orders</span
+              ><button data-action="coverage-operations">Inspect</button>
+            </div>
+            <div class="coverage-row">
+              <b>Marketing, discovery & ecosystem</b
+              ><span>22 / 27 relevant</span
+              ><em class="simulated">SIMULATED FEATURE</em
+              ><span>Goal-driven growth · channel attribution</span
+              ><button data-action="coverage-growth">Inspect</button>
+            </div>
+          </div>
+          <footer>
+            <span><i class="working"></i> Working demo</span
+            ><span><i class="simulated"></i> Simulated feature</span
+            ><span><i class="planned"></i> Planned production feature</span
+            ><span><i class="live"></i> Live / implemented feature</span
+            ><b>No demo state is presented as production-ready.</b>
+          </footer>
+        </section>
+      </div>
+    </main>
+    <div id="drawer" class="drawer hidden" role="dialog" aria-modal="true">
+      <button class="drawer-close" data-action="close-drawer">×</button>
+      <div id="drawerContent"></div>
+    </div>
+    <div id="overlay" class="overlay hidden" data-action="close-drawer"></div>
+    <div id="toast" class="toast hidden">
+      <span>✓</span>
+      <div><b id="toastTitle">Kész</b><small id="toastText"></small></div>
+    </div>
+    <script src="app.js"></script>
+  </body>
+</html>
