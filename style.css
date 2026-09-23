@@ -3865,3 +3865,21 @@ button {
  #booking .book-actions button{width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important}
  #booking #bookBack::before,#booking #bookNext::before{font-size:20px}
 }
+
+/* Guest booking interaction polish */
+#booking .book-progress{font-size:.68rem;letter-spacing:.14em;color:#8d8b85;margin-right:2px;min-width:48px;text-align:right}
+#booking .book-step:not(.hidden){animation:bookingStepIn .32s cubic-bezier(.2,.75,.25,1) both}
+@keyframes bookingStepIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+#booking .choice-confirm{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translate(-50%,10px);z-index:90;background:#f4f1e9;color:#0b0b0b;padding:9px 14px;border-radius:999px;font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;opacity:0;pointer-events:none;transition:.2s ease;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+#booking .choice-confirm.show{opacity:1;transform:translate(-50%,0)}
+#booking .usual-card{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:18px 0 8px;padding:18px 20px;border:1px solid #30302f;background:#111;color:#f4f1e9}
+#booking .usual-card small{display:block;color:#8d8b85;font-size:.62rem;letter-spacing:.13em;text-transform:uppercase;margin-bottom:5px}
+#booking .usual-card b{display:block;font-family:Georgia,serif;font-size:1.08rem}
+#booking .usual-card span{display:block;color:#aaa69e;font-size:.72rem;margin-top:4px}
+#booking .usual-card button{flex:0 0 auto;border:1px solid #f4f1e9;background:#f4f1e9;color:#0b0b0b;padding:10px 14px;font-size:.68rem;font-weight:800}
+@media(max-width:600px){
+ #booking .book-progress{font-size:.62rem;min-width:43px}
+ #booking .usual-card{padding:15px 16px}
+ #booking .usual-card button{padding:9px 11px}
+ #booking .choice-confirm{bottom:calc(68px + env(safe-area-inset-bottom))}
+}
