@@ -1499,6 +1499,13 @@ function checkout() {
   if ($("#checkoutTotal")) $("#checkoutTotal").textContent = money(s);
   if ($("#payAmount")) $("#payAmount").textContent = money(t);
 }
+function bookingChoiceConfirm(label) {
+  let el = $("#bookingChoiceConfirm");
+  if (!el) { el = document.createElement("div"); el.id="bookingChoiceConfirm"; el.className="choice-confirm"; $("#booking")?.appendChild(el); }
+  el.textContent = "✓ " + label;
+  el.classList.remove("show"); void el.offsetWidth; el.classList.add("show");
+  clearTimeout(window.__bookingChoiceTimer); window.__bookingChoiceTimer=setTimeout(()=>el.classList.remove("show"),700);
+}
 function bookRefresh() {
   $$(".book-step").forEach((s, i) =>
     s.classList.toggle("hidden", i !== state.bookStep - 1),
@@ -1507,6 +1514,7 @@ function bookRefresh() {
     s.classList.toggle("active", i < state.bookStep),
   );
   $("#bookBack").disabled = state.bookStep === 1;
+  const progress=$("#bookProgress"); if(progress) progress.textContent=String(state.bookStep).padStart(2,"0")+" / 04";
   let ok = [
     state.service,
     state.barber,
@@ -1521,17 +1529,17 @@ $$("[data-service]").forEach(b => b.onclick = () => {
   $$("[data-service]").forEach(x => x.classList.remove("selected"));
   b.classList.add("selected"); state.service=b.dataset.service; state.price=+b.dataset.price;
   $("#sumService").textContent=state.service; $("#sumPrice").textContent=money(state.price);
-  state.bookStep=2; bookRefresh();
+  bookingChoiceConfirm(state.service+" selected"); state.bookStep=2; bookRefresh();
 });
 $$("[data-barber]").forEach(b => b.onclick = () => {
   $$("[data-barber]").forEach(x => x.classList.remove("selected"));
   b.classList.add("selected"); state.barber=b.dataset.barber; $("#sumBarber").textContent=state.barber;
-  state.bookStep=3; bookRefresh();
+  bookingChoiceConfirm(state.barber+" selected"); state.bookStep=3; bookRefresh();
 });
 $$("[data-time]").forEach(b => b.onclick = () => {
   $$("[data-time]").forEach(x => x.classList.remove("selected"));
   b.classList.add("selected"); state.time=b.dataset.time; $("#sumTime").textContent="Demo date · "+state.time;
-  state.bookStep=4; bookRefresh();
+  bookingChoiceConfirm(state.time+" selected"); state.bookStep=4; bookRefresh();
 });
 $$(".date-strip button").forEach(
   (b) =>
