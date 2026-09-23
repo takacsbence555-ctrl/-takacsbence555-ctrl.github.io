@@ -1249,6 +1249,19 @@ function completePlan() {
 }
 function act(a, e) {
   if (a === "new-appointment") return act("manual-booking", e);
+  if (a === "reschedule") return toast("Reschedule prepared", "DEMO: choose a new time from Calendar");
+  if (a === "cancel-booking") { closeDrawer(); return toast("Cancellation prepared", "DEMO: no real booking affected"); }
+  if (a === "add-walkin") return toast("Walk-in added", "DEMO queue updated");
+  if (a === "add-block") return toast("Calendar block created", "DEMO availability updated");
+  if (a === "capacity") return renderModule("operator");
+  if (a === "rebook-client") return renderModule("operator");
+  if (a === "add-staff") return toast("Staff draft created", "DEMO staff profile prepared");
+  if (a === "coach") return toast("Coaching plan prepared", "DEMO performance action created");
+  if (a === "new-campaign") return renderModule("operator");
+  if (a === "stock-order") { state.poPrepared=true; saveDemoState(); return toast("Stock order prepared", "DEMO purchase order awaiting approval"); }
+  if (a === "match") return toast("Match complete", "DEMO waitlist candidates ranked");
+  if (a === "content") return toast("Content prepared", "DEMO campaign copy generated");
+  if (a === "pricing") return toast("Pricing simulation ready", "DEMO only · no live prices changed");
   if (a === "coverage-booking") return renderModule("calendar");
   if (a === "coverage-crm") return renderModule("customers");
   if (a === "coverage-payments") return renderModule("money");
