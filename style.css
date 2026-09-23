@@ -3782,3 +3782,66 @@ button {
 #booking .map-label.l1{left:8%;bottom:10%} #booking .map-label.l2{right:7%;top:10%}
 #booking .guest-map-foot{font-size:.64rem;color:#85878c}
 #booking .guest-map-foot button{border:0;background:transparent;color:#fff;padding:0;border-bottom:1px solid #686a6e;font-size:.66rem}
+
+/* Guest Booking V5 — dark cinematic redesign */
+#booking{background:#0b0b0b!important;color:#f4f1e9!important}
+#booking .booking-page{max-width:1500px;padding:28px clamp(18px,5vw,76px) 90px}
+#booking .shop-head{border-bottom:1px solid #292929;margin-bottom:50px}
+#booking .shop-mark{background:#f4f1e9;color:#0b0b0b}
+#booking .shop-brand small,#booking .booking-lead,#booking .booking-kicker,#booking .section-title small,#booking .slot-label{color:#8d8b85}
+#booking .lang button{color:#8d8b85}
+#booking .lang button.active{background:#f4f1e9;color:#0b0b0b}
+#booking .booking-main>h1{color:#f4f1e9;max-width:900px}
+#booking .booking-main h1 em{color:#b8b2a6}
+#booking .stepper{display:none!important}
+#booking .book-step{margin-top:58px}
+#booking .section-title{border-bottom:1px solid #30302f;padding-bottom:18px}
+#booking .section-title h2{font-size:clamp(2rem,4vw,3.4rem);color:#f4f1e9}
+#booking button,#booking select,#booking input{color:inherit}
+#booking .text-btn{color:#d9d4ca;border-color:#69655e}
+#booking .location-select{border-color:#30302f;color:#8d8b85}
+#booking .location-select select{color:#f4f1e9}
+#booking .service-list{border-top:0}
+#booking .service-card{color:#f4f1e9!important;border-color:#30302f;background:transparent;padding:28px 4px;min-height:108px}
+#booking .service-card small{color:#88857e}
+#booking .service-card:hover{background:#151515;padding-left:18px}
+#booking .service-card.selected{background:#f4f1e9;color:#0b0b0b!important;padding-left:18px}
+#booking .service-card.selected small{color:#6e6b64}
+#booking .barber-card{background:#111;border-color:#30302f;color:#f4f1e9!important;min-height:210px}
+#booking .barber-card:hover{background:#181818}
+#booking .barber-card.selected{background:#f4f1e9;color:#0b0b0b!important}
+#booking .recommend{background:#f4f1e9;color:#0b0b0b}
+#booking .barber-card.selected .recommend{background:#0b0b0b;color:#fff}
+#booking .date-strip button,#booking .slot-grid button{background:#111;border-color:#30302f;color:#f4f1e9!important}
+#booking .date-strip button.active,#booking .slot-grid button.selected{background:#f4f1e9;color:#0b0b0b!important}
+#booking .waitlist-card{color:#f4f1e9;border-color:#30302f}
+#booking .booking-summary{background:#f1eee6;color:#11110f;box-shadow:none}
+#booking .summary-visual{background:#11110f;color:#fff;border:0}
+#booking .sum-row{border-color:#d4d0c7}
+#booking .sum-row span{color:#77736b}
+#booking .feature-chips span{background:#11110f;color:#d8d4cc;border:0}
+#booking .guest-map-card{border-color:#d4d0c7}
+#booking .guest-map-head>span{color:#77736b;border-color:#ccc7bd}
+#booking .guest-map-foot{color:#77736b}
+#booking .guest-map-foot button{color:#11110f;border-color:#77736b}
+#booking .book-actions{border-color:#30302f}
+#booking .book-actions .primary{background:#f4f1e9;color:#0b0b0b;border-color:#f4f1e9}
+#booking .book-actions .secondary{color:#aaa69e;border-color:#3a3936}
+#booking .deposit-card{background:#f4f1e9;color:#0b0b0b}
+#booking .form-grid input{color:#f4f1e9;border-color:#56534e}
+#booking .social-login button{background:#151515;color:#777;border-color:#30302f}
+#booking .policy{color:#aaa69e}
+@media(max-width:900px){
+ #booking .booking-layout{display:flex;flex-direction:column}
+ #booking .booking-summary{width:100%}
+ #booking .book-step{margin-top:42px}
+}
+@media(max-width:600px){
+ #booking .shop-head{margin-bottom:34px}
+ #booking .booking-main>h1{font-size:clamp(3.5rem,16vw,5rem);line-height:.88}
+ #booking .booking-lead{font-size:1rem;line-height:1.55}
+ #booking .book-step{margin-top:44px}
+ #booking .service-card{padding:24px 8px}
+ #booking .book-actions{position:sticky;bottom:0;background:#0b0b0b;padding:16px 0 10px;z-index:10}
+ #booking .book-actions .primary{min-height:58px}
+}
