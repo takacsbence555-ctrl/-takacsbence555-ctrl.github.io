@@ -46,6 +46,7 @@ const state = {
   guestReview: false,
   guestMembership: false,
   guestGift: false,
+  futureBooking: null,
   guestEvents: [],
   guestLang: "DE",
   cutMemory: { service:"Skin Fade", barber:"Demo Barber A", time:"16:15" },
@@ -63,7 +64,7 @@ const state = {
   },
 };
 
-const PERSIST_KEYS=["plan","target","current","forecast","gap","opportunity","impact","appointments","filled","recoveredCustomers","ownerHours","liveSlotFilled","waitlistInvited","ownerPaymentRecorded","recurringCreated","groupCreated","formSent","manualBooking","refundPending","poPrepared","loyaltyPoints","packageCredits","giftBalance","guestBooking","guestDeposit","guestPaymentStatus","guestWaitlist","guestReview","guestMembership","guestGift","guestLang","cutMemory","guestEvents"];
+const PERSIST_KEYS=["plan","target","current","forecast","gap","opportunity","impact","appointments","filled","recoveredCustomers","ownerHours","liveSlotFilled","waitlistInvited","ownerPaymentRecorded","recurringCreated","groupCreated","formSent","manualBooking","refundPending","poPrepared","loyaltyPoints","packageCredits","giftBalance","guestBooking","guestDeposit","guestPaymentStatus","guestWaitlist","guestReview","guestMembership","guestGift","futureBooking","guestLang","cutMemory","guestEvents"];
 function saveDemoState(){
   const safe={}; PERSIST_KEYS.forEach(k=>safe[k]=state[k]);
   try{localStorage.setItem("operator-demo-state-v1",JSON.stringify(safe))}catch(e){}
@@ -1077,7 +1078,7 @@ function renderModule(id) {
        "Guest booking added to calendar") +
       '</h3><p>' + b.service + ' · ' + b.barber + ' · ' + b.time +
       ' · Total €' + b.price + ' · Deposit €10 · Remaining €' + b.remaining +
-      '</p></div><b>CONFIRMED</b>';
+      '</p></div><b>' + (b.status === "Cancelled" ? "CANCELLED" : "CONFIRMED") + '</b>';
     $("#moduleContent").prepend(synced);
     if(id==="decisions" && state.guestEvents.length){
       const trail=document.createElement("section"); trail.className="guest-audit-trail";
@@ -1222,6 +1223,7 @@ function completePlan() {
   state.filled = 17;
   state.recoveredCustomers = 31;
   state.ownerHours = 19.4;
+  saveDemoState();
   $("#moduleContent").innerHTML =
     '<section class="plan-activated"><div class="activation-check">✓</div><span>PLAN ACTIVATED</span><h2>Revenue goal is back on track.</h2><p>The Operator updated capacity, customer outreach and forecast across the system.</p><div class="activation-metrics"><div><small>FORECAST</small><b>€23,680 → €25,180</b></div><div><small>NEW BOOKINGS</small><b>+5</b></div><div><small>EXPECTED IMPACT</small><b>+€1,500</b></div></div><div class="plan-actions"><button class="primary" data-go="calendar">VIEW UPDATED CALENDAR</button><button class="secondary" data-go="impact">VIEW IMPACT</button><button class="secondary" data-go="decisions">DECISION LOG</button></div></section>';
   bind();
@@ -1273,11 +1275,12 @@ function act(a, e) {
       forecast: state.forecast + 156,
       gap: state.gap - 156,
     });
+    saveDemoState();
     renderModule("core");
     return toast("Group booking reserved", "3 customers · 2 resources · +€156");
   }
   if (a === "core-form") {
-    state.formSent = true;
+    state.formSent = true; saveDemoState();
     renderModule("core");
     return toast(
       "Consultation completed",
@@ -1582,7 +1585,7 @@ function guestAction(a){
   const b=state.guestBooking;
   if(a==="reschedule"){b.time=b.time==="16:15"?"17:45":"16:15"; state.guestEvents.unshift({type:"RESCHEDULE",result:"Moved to "+b.time,detail:"Owner Calendar synced"}); $("#sumTime").textContent="Demo date · "+b.time; saveDemoState();return toast("Booking rescheduled",b.time+" · Owner Calendar synced");}
   if(a==="cancel"){if(b.status==="Cancelled")return toast("Already cancelled");b.status="Cancelled";state.forecast=Math.max(0,state.forecast-b.price);if(state.guestPaymentStatus==="simulated_paid"&&state.guestDeposit>0){state.current=Math.max(0,state.current-state.guestDeposit);state.guestPaymentStatus="simulated_refunded";b.deposit=0;state.guestDeposit=0;}state.guestEvents.unshift({type:"CANCEL",result:"Slot released",detail:"€10 simulated refund"});saveDemoState();return toast("Booking cancelled","DEMO: calendar released · €10 refund simulated");}
-  if(a==="rebook"){state.appointments++;state.forecast+=b.price;state.guestEvents.unshift({type:"REBOOK",result:"+€"+b.price+" forecast",detail:"Future visit reserved"});saveDemoState();return toast("Next visit reserved","DEMO: +1 future appointment · €"+b.price+" forecast");}
+  if(a==="rebook"){if(state.futureBooking)return toast("Next visit already reserved",state.futureBooking.time+" · duplicate prevented");state.futureBooking={service:b.service,price:b.price,barber:b.barber,time:"Demo future visit · 16:15",status:"Confirmed"};state.appointments++;state.forecast+=b.price;state.guestEvents.unshift({type:"REBOOK",result:"+€"+b.price+" forecast",detail:"Future visit reserved"});saveDemoState();return toast("Next visit reserved","DEMO: +1 future appointment · €"+b.price+" forecast");}
   if(a==="pay-tip"){if(b.remaining===0)return toast("Balance already paid");const paid=b.remaining+5;state.current+=paid;b.remaining=0;state.guestEvents.unshift({type:"PAYMENT",result:"€"+paid+" recorded",detail:"Includes €5 demo tip"});saveDemoState();return toast("Demo payment complete","Remaining balance + €5 tip recorded");}
   if(a==="review"){state.guestReview=true;state.guestEvents.unshift({type:"REVIEW",result:"5★ recorded",detail:"Linked to customer timeline"});saveDemoState();return toast("5★ demo review recorded","Review linked to customer timeline");}
   if(a==="loyalty"){state.loyaltyPoints+=50; saveDemoState();return toast("Loyalty updated","+50 demo points");}
