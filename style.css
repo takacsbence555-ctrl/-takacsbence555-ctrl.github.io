@@ -3845,3 +3845,23 @@ button {
  #booking .book-actions{position:sticky;bottom:0;background:#0b0b0b;padding:16px 0 10px;z-index:10}
  #booking .book-actions .primary{min-height:58px}
 }
+
+/* Guest booking compact corner navigation */
+#booking .book-actions{
+  position:fixed!important;right:clamp(16px,3vw,32px)!important;bottom:calc(18px + env(safe-area-inset-bottom))!important;
+  left:auto!important;top:auto!important;width:auto!important;margin:0!important;padding:0!important;border:0!important;
+  background:transparent!important;z-index:80!important;display:flex!important;gap:10px!important;align-items:center!important;
+}
+#booking .book-actions button{
+  width:46px!important;height:46px!important;min-width:46px!important;min-height:46px!important;padding:0!important;
+  border-radius:50%!important;font-size:0!important;display:grid!important;place-items:center!important;
+  box-shadow:0 8px 28px rgba(0,0,0,.28)!important;
+}
+#booking #bookBack::before{content:"←";font-size:22px;line-height:1}
+#booking #bookNext::before{content:"→";font-size:22px;line-height:1}
+#booking .book-actions button:disabled{opacity:.28!important;box-shadow:none!important}
+@media(max-width:600px){
+ #booking .book-actions{right:16px!important;bottom:calc(14px + env(safe-area-inset-bottom))!important;padding:0!important;background:transparent!important}
+ #booking .book-actions button{width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important}
+ #booking #bookBack::before,#booking #bookNext::before{font-size:20px}
+}
