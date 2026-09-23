@@ -1071,7 +1071,7 @@ function renderModule(id) {
     synced.innerHTML =
       '<div><span>SYNCED GUEST BOOKING · WORKING DEMO</span><h3>' +
       (id === "money" ? "€10 simulated deposit recorded" :
-       id === "impact" ? "New confirmed booking · +€" + b.price :
+       id === "impact" ? "Direct booking · excluded from AI attribution" :
        id === "customers" ? "Demo Guest profile updated" :
        id === "decisions" ? "Guest lifecycle audit trail" :
        "Guest booking added to calendar") +
@@ -1529,11 +1529,11 @@ $("#bookNext").onclick = () => {
     state.guestPaymentStatus = "simulated_paid";
     state.guestBooking = {id:"DEMO-"+(state.appointments+1),customer:guestName,service:state.service,price:state.price,barber:state.barber,time:state.time,deposit:10,remaining:Math.max(0,state.price-10),status:"Confirmed"};
     state.guestEvents.unshift({type:"BOOKING",result:"Confirmed · €"+state.price,detail:state.service+" · "+state.barber+" · "+state.time});
-    state.appointments++; state.forecast += state.price; state.current += 10; state.impact += state.price; saveDemoState();
+    state.appointments++; state.forecast += state.price; state.current += 10; saveDemoState();
     $$(".book-step").forEach(x=>x.classList.add("hidden"));
     $("#bookActions").classList.add("hidden");
     $("#bookingSuccess").classList.remove("hidden");
-    const p=$("#bookingSuccess p"); if(p)p.innerHTML="<b>DEMO / SIMULATED PAYMENT</b><br>€10 deposit recorded. Synced to Owner Calendar, Customer Intel, Money and Impact.";
+    const p=$("#bookingSuccess p"); if(p)p.innerHTML="<b>DEMO / SIMULATED PAYMENT</b><br>€10 deposit recorded. Synced to Owner Calendar, Customer Intel and Money. Direct guest bookings are excluded from AI Impact.";
     bindGuestActions();
     toast("Demo-Zahlung erfolgreich","€10 simulated deposit · booking synced to Owner OS");
   }
@@ -1575,7 +1575,7 @@ function guestAction(a){
   if(!state.guestBooking) return toast("No active demo booking");
   const b=state.guestBooking;
   if(a==="reschedule"){b.time=b.time==="16:15"?"17:45":"16:15"; state.guestEvents.unshift({type:"RESCHEDULE",result:"Moved to "+b.time,detail:"Owner Calendar synced"}); $("#sumTime").textContent="Demo date · "+b.time; saveDemoState();return toast("Booking rescheduled",b.time+" · Owner Calendar synced");}
-  if(a==="cancel"){if(b.status==="Cancelled")return toast("Already cancelled");b.status="Cancelled";state.forecast-=b.price;state.impact=Math.max(0,state.impact-b.price);state.guestEvents.unshift({type:"CANCEL",result:"Slot released",detail:"€10 simulated refund"});saveDemoState();return toast("Booking cancelled","DEMO: calendar released · €10 refund simulated");}
+  if(a==="cancel"){if(b.status==="Cancelled")return toast("Already cancelled");b.status="Cancelled";state.forecast=Math.max(0,state.forecast-b.price);if(state.guestPaymentStatus==="simulated_paid"&&state.guestDeposit>0){state.current=Math.max(0,state.current-state.guestDeposit);state.guestPaymentStatus="simulated_refunded";b.deposit=0;state.guestDeposit=0;}state.guestEvents.unshift({type:"CANCEL",result:"Slot released",detail:"€10 simulated refund"});saveDemoState();return toast("Booking cancelled","DEMO: calendar released · €10 refund simulated");}
   if(a==="rebook"){state.appointments++;state.forecast+=b.price;state.guestEvents.unshift({type:"REBOOK",result:"+€"+b.price+" forecast",detail:"Future visit reserved"});saveDemoState();return toast("Next visit reserved","DEMO: +1 future appointment · €"+b.price+" forecast");}
   if(a==="pay-tip"){if(b.remaining===0)return toast("Balance already paid");const paid=b.remaining+5;state.current+=paid;b.remaining=0;state.guestEvents.unshift({type:"PAYMENT",result:"€"+paid+" recorded",detail:"Includes €5 demo tip"});saveDemoState();return toast("Demo payment complete","Remaining balance + €5 tip recorded");}
   if(a==="review"){state.guestReview=true;state.guestEvents.unshift({type:"REVIEW",result:"5★ recorded",detail:"Linked to customer timeline"});saveDemoState();return toast("5★ demo review recorded","Review linked to customer timeline");}
