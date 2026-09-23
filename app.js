@@ -60,6 +60,17 @@ const state = {
     price: false,
   },
 };
+
+const PERSIST_KEYS=["plan","target","current","forecast","gap","opportunity","impact","appointments","filled","recoveredCustomers","ownerHours","liveSlotFilled","recurringCreated","groupCreated","formSent","manualBooking","refundPending","poPrepared","loyaltyPoints","packageCredits","giftBalance","guestBooking","guestDeposit","guestPaymentStatus","guestWaitlist","guestReview","guestMembership","guestGift","guestLang","cutMemory","guestEvents"];
+function saveDemoState(){
+  const safe={}; PERSIST_KEYS.forEach(k=>safe[k]=state[k]);
+  try{localStorage.setItem("operator-demo-state-v1",JSON.stringify(safe))}catch(e){}
+}
+function loadDemoState(){
+  try{const saved=JSON.parse(localStorage.getItem("operator-demo-state-v1")||"null");if(saved)Object.assign(state,saved)}catch(e){}
+}
+function clearDemoState(){try{localStorage.removeItem("operator-demo-state-v1")}catch(e){}}
+loadDemoState();
 const titles = {
   home: ["Home", "Executive overview · September 2026"],
   operator: ["AI Operator", "Goal-driven plan · owner approval required"],
@@ -84,7 +95,7 @@ const titles = {
   locations: ["Locations", "Owner-level multi-location intelligence"],
   impact: ["Impact", "Traceable attributed business outcomes"],
   decisions: ["Decision Log", "Every AI action, reason, cost and result"],
-  settings: ["Settings", "Business core, integrations and data protection"],
+  settings: ["Settings", "Business core, integrations and data protection · demo state persists locally"],
 };
 function toast(t, x = "") {
   let e = $("#toast");
@@ -116,7 +127,7 @@ function calendar() {
     ["16:00", "Demo Guest H · Cut", "Demo Guest I · Fade", "Demo Guest J · Beard"],
     ["17:00", "", "Demo Guest K · Cut", "Demo Guest L · Combo"],
   ];
-  if (state.guestBooking) {
+  if (state.guestBooking && state.guestBooking.status !== "Cancelled") {
     const label = "DEMO GUEST · " + state.guestBooking.service + " · €" + state.guestBooking.price;
     const hour = (state.guestBooking.time || "16:00").slice(0,2) + ":00";
     const row = rows.find(r => r[0] === hour);
@@ -1046,6 +1057,7 @@ modules.impact = () =>
   ' h</b><span>estimated from automated work</span></article></div><section class="attribution-table"><div class="panel-head"><h2>Attribution trail</h2><span class="demo-chip">CLICKABLE DEMO DATA</span></div><div data-action="impact-detail"><span>Cycle-aware reactivation plan</span><b>12 customers</b><strong>+€540</strong><em>View →</em></div><div data-action="impact-detail"><span>Cancellation / waitlist recovery</span><b>8 offers · 3 bookings</b><strong>+€280</strong><em>View →</em></div><div data-action="impact-detail"><span>Personalized rebooking</span><b>47 messages · 9 bookings</b><strong>+€390</strong><em>View →</em></div><div data-action="impact-detail"><span>No-show protection</span><b>5 protected bookings</b><strong>+€238</strong><em>View →</em></div></section>';
 function renderModule(id) {
   state.module = id;
+  saveDemoState();
   let t = titles[id];
   $("#pageTitle").textContent = t[0];
   $("#pageSub").textContent = t[1];
@@ -1294,7 +1306,7 @@ function act(a, e) {
   if (a === "core-loyalty") {
     state.loyaltyPoints += 50;
     renderModule("core");
-    return toast("Loyalty updated", "Visit completed · +50 points");
+    saveDemoState();return toast("Loyalty updated", "Visit completed · +50 points");
   }
   if (a === "core-report-plan") return renderModule("operator");
   if (a === "core-guest") return setView("booking");
@@ -1512,7 +1524,7 @@ $("#bookNext").onclick = () => {
     state.guestPaymentStatus = "simulated_paid";
     state.guestBooking = {id:"DEMO-"+(state.appointments+1),customer:guestName,service:state.service,price:state.price,barber:state.barber,time:state.time,deposit:10,remaining:Math.max(0,state.price-10),status:"Confirmed"};
     state.guestEvents.unshift({type:"BOOKING",result:"Confirmed · €"+state.price,detail:state.service+" · "+state.barber+" · "+state.time});
-    state.appointments++; state.forecast += state.price; state.current += 10; state.impact += state.price;
+    state.appointments++; state.forecast += state.price; state.current += 10; state.impact += state.price; saveDemoState();
     $$(".book-step").forEach(x=>x.classList.add("hidden"));
     $("#bookActions").classList.add("hidden");
     $("#bookingSuccess").classList.remove("hidden");
@@ -1554,16 +1566,17 @@ function bindGuestActions(){
   $("[data-guest-action]").forEach(b=>b.onclick=()=>guestAction(b.dataset.guestAction));
 }
 function guestAction(a){
+  saveDemoState();
   if(!state.guestBooking) return toast("No active demo booking");
   const b=state.guestBooking;
-  if(a==="reschedule"){b.time=b.time==="16:15"?"17:45":"16:15"; state.guestEvents.unshift({type:"RESCHEDULE",result:"Moved to "+b.time,detail:"Owner Calendar synced"}); $("#sumTime").textContent="Demo date · "+b.time; return toast("Booking rescheduled",b.time+" · Owner Calendar synced");}
-  if(a==="cancel"){if(b.status==="Cancelled")return toast("Already cancelled");b.status="Cancelled";state.forecast-=b.price;state.impact=Math.max(0,state.impact-b.price);state.guestEvents.unshift({type:"CANCEL",result:"Slot released",detail:"€10 simulated refund"});return toast("Booking cancelled","DEMO: calendar released · €10 refund simulated");}
-  if(a==="rebook"){state.appointments++;state.forecast+=b.price;state.guestEvents.unshift({type:"REBOOK",result:"+€"+b.price+" forecast",detail:"Future visit reserved"});return toast("Next visit reserved","DEMO: +1 future appointment · €"+b.price+" forecast");}
-  if(a==="pay-tip"){if(b.remaining===0)return toast("Balance already paid");const paid=b.remaining+5;state.current+=paid;b.remaining=0;state.guestEvents.unshift({type:"PAYMENT",result:"€"+paid+" recorded",detail:"Includes €5 demo tip"});return toast("Demo payment complete","Remaining balance + €5 tip recorded");}
-  if(a==="review"){state.guestReview=true;state.guestEvents.unshift({type:"REVIEW",result:"5★ recorded",detail:"Linked to customer timeline"});return toast("5★ demo review recorded","Review linked to customer timeline");}
-  if(a==="loyalty"){state.loyaltyPoints+=50; return toast("Loyalty updated","+50 demo points");}
-  if(a==="membership"){state.guestMembership=true; return toast("Membership activated","DEMO membership · no real charge");}
-  if(a==="gift"){state.guestGift=true; return toast("Gift card created","DEMO €50 gift card · no real charge");}
+  if(a==="reschedule"){b.time=b.time==="16:15"?"17:45":"16:15"; state.guestEvents.unshift({type:"RESCHEDULE",result:"Moved to "+b.time,detail:"Owner Calendar synced"}); $("#sumTime").textContent="Demo date · "+b.time; saveDemoState();return toast("Booking rescheduled",b.time+" · Owner Calendar synced");}
+  if(a==="cancel"){if(b.status==="Cancelled")return toast("Already cancelled");b.status="Cancelled";state.forecast-=b.price;state.impact=Math.max(0,state.impact-b.price);state.guestEvents.unshift({type:"CANCEL",result:"Slot released",detail:"€10 simulated refund"});saveDemoState();return toast("Booking cancelled","DEMO: calendar released · €10 refund simulated");}
+  if(a==="rebook"){state.appointments++;state.forecast+=b.price;state.guestEvents.unshift({type:"REBOOK",result:"+€"+b.price+" forecast",detail:"Future visit reserved"});saveDemoState();return toast("Next visit reserved","DEMO: +1 future appointment · €"+b.price+" forecast");}
+  if(a==="pay-tip"){if(b.remaining===0)return toast("Balance already paid");const paid=b.remaining+5;state.current+=paid;b.remaining=0;state.guestEvents.unshift({type:"PAYMENT",result:"€"+paid+" recorded",detail:"Includes €5 demo tip"});saveDemoState();return toast("Demo payment complete","Remaining balance + €5 tip recorded");}
+  if(a==="review"){state.guestReview=true;state.guestEvents.unshift({type:"REVIEW",result:"5★ recorded",detail:"Linked to customer timeline"});saveDemoState();return toast("5★ demo review recorded","Review linked to customer timeline");}
+  if(a==="loyalty"){state.loyaltyPoints+=50; saveDemoState();return toast("Loyalty updated","+50 demo points");}
+  if(a==="membership"){state.guestMembership=true; saveDemoState();return toast("Membership activated","DEMO membership · no real charge");}
+  if(a==="gift"){state.guestGift=true; saveDemoState();return toast("Gift card created","DEMO €50 gift card · no real charge");}
 }
 bindGuestActions();
 function applyGuestLanguage(lang){
