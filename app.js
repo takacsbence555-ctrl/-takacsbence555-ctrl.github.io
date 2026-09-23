@@ -1078,7 +1078,7 @@ function renderModule(id) {
   let t = titles[id];
   $("#pageTitle").textContent = t[0];
   $("#pageSub").textContent = t[1];
-  $("#moduleContent").innerHTML = modules[id]();
+  $("#moduleContent").innerHTML = modules[id]();\n  if (!ownerDemoMode && ownerDashboardData && ["home","calendar","customers"].includes(id)) $("#moduleContent").insertAdjacentHTML("afterbegin",liveOwnerPanel());
   if (state.guestBooking && ["calendar","customers","money","impact","decisions"].includes(id)) {
     const b = state.guestBooking;
     const synced = document.createElement("section");
@@ -1528,6 +1528,56 @@ async function createLiveBooking(guestName,guestPhone){
   const startsAt=bookingDate+"T"+state.time+":00+02:00";
   return await supabaseRpc("create_public_booking",{p_business_slug:BOOKING_BUSINESS,p_staff_slug:selectedStaffSlug(),p_service_slug:selectedServiceSlug(),p_starts_at:startsAt,p_display_name:guestName,p_email:null,p_phone:guestPhone});
 }
+
+let ownerAccessToken=null, ownerDashboardData=null, ownerDemoMode=false;
+function ownerAuthHeaders(){return {"apikey":SUPABASE_KEY,"Authorization":"Bearer "+ownerAccessToken,"Content-Type":"application/json"}}
+function parseAuthHash(){
+  const raw=(location.hash||"").replace(/^#/,""); if(!raw)return;
+  const q=new URLSearchParams(raw); const token=q.get("access_token"); if(token){ownerAccessToken=token;sessionStorage.setItem("operator-owner-token",token);history.replaceState(null,"",location.pathname+location.search);}
+}
+async function ownerRpc(fn,params={}){
+ const res=await fetch(SUPABASE_URL+"/rest/v1/rpc/"+fn,{method:"POST",headers:ownerAuthHeaders(),body:JSON.stringify(params)});
+ if(res.status===401)throw new Error("AUTH_REQUIRED"); const t=await res.text();if(!res.ok)throw new Error(t||("HTTP "+res.status));return t?JSON.parse(t):null;
+}
+async function loadOwnerDashboard(){
+ if(!ownerAccessToken)return null;
+ const data=await ownerRpc("owner_dashboard",{}); ownerDashboardData=data; return data;
+}
+function showOwnerApp(demo=false){
+ ownerDemoMode=demo; $("#ownerAuthGate")?.classList.add("hidden"); $("#ownerAppShell")?.classList.remove("hidden");
+ if(demo){renderModule(window.__pendingModule||"home");return;}
+ loadOwnerDashboard().then(data=>{
+   if(!data){sessionStorage.removeItem("operator-owner-token");ownerAccessToken=null;showOwnerGate("This account is not connected to a business yet.");return;}
+   const brand=$(".brand small");if(brand)brand.textContent=(data.business?.name||"BUSINESS")+" · LIVE";
+   const owner=$(".owner small");if(owner)owner.textContent=(data.business?.role||"owner").toUpperCase()+" · LIVE BACKEND";
+   renderModule(window.__pendingModule||"home");
+ }).catch(()=>{sessionStorage.removeItem("operator-owner-token");ownerAccessToken=null;showOwnerGate("Sign-in expired. Request a new secure link.");});
+}
+function showOwnerGate(message=""){
+ $("#ownerAppShell")?.classList.add("hidden");$("#ownerAuthGate")?.classList.remove("hidden");const s=$("#ownerAuthStatus");if(s)s.textContent=message;
+}
+async function sendOwnerMagicLink(){
+ const email=$("#ownerEmail")?.value?.trim();if(!email)return showOwnerGate("Enter your owner email.");
+ const btn=$("#ownerLoginBtn");if(btn)btn.disabled=true;
+ try{
+  const res=await fetch(SUPABASE_URL+"/auth/v1/otp",{method:"POST",headers:{"apikey":SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify({email,create_user:false,gotrue_meta_security:{captcha_token:null}})});
+  if(!res.ok)throw new Error(await res.text());showOwnerGate("Secure sign-in link sent. Open it on this device.");
+ }catch(e){showOwnerGate("Could not send the sign-in link. Only provisioned owner accounts can sign in.");}
+ finally{if(btn)btn.disabled=false;}
+}
+function liveOwnerPanel(){
+ const d=ownerDashboardData;if(!d)return "";
+ const rows=(d.bookings||[]).slice(0,8).map(b=>'<div class="guest-event"><b>'+new Date(b.starts_at).toLocaleString("en-GB",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})+'</b><span>'+b.customer+' · '+b.service+' · '+b.staff+'</span><strong>'+b.status.toUpperCase()+'</strong></div>').join("");
+ return '<section class="synced-booking"><div><span>LIVE BUSINESS DATA · SUPABASE</span><h3>'+d.business.name+'</h3><p>'+d.counts.bookings+' bookings · '+d.counts.customers+' customers · '+d.counts.staff+' staff · '+d.counts.services+' services</p></div><b>LIVE</b></section>'+(rows?'<section class="guest-audit-trail"><div class="panel-head"><h2>Live bookings</h2><span class="demo-chip">DATABASE</span></div>'+rows+'</section>':'');
+}
+parseAuthHash();
+ownerAccessToken=ownerAccessToken||sessionStorage.getItem("operator-owner-token");
+document.addEventListener("DOMContentLoaded",()=>{
+ $("#ownerLoginBtn")?.addEventListener("click",sendOwnerMagicLink);
+ $("#ownerDemoBtn")?.addEventListener("click",()=>showOwnerApp(true));
+ $("#ownerSignOut")?.addEventListener("click",()=>{sessionStorage.removeItem("operator-owner-token");ownerAccessToken=null;ownerDashboardData=null;showOwnerGate("Signed out.");});
+ if(ownerAccessToken)showOwnerApp(false);else showOwnerGate();
+});
 
 function bookingChoiceConfirm(label) {
   let el = $("#bookingChoiceConfirm");
