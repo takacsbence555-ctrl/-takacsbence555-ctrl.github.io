@@ -1389,7 +1389,7 @@ function act(a, e) {
     return toast("Plan rebuilt", "Goals and constraints preserved");
   }
   if (a === "reject-plan") {
-    state.plan = "rejected";
+    state.plan = "rejected"; saveDemoState();
     return toast(
       "Plan rejected",
       "No actions were executed. Reason saved for learning.",
@@ -1456,8 +1456,7 @@ function act(a, e) {
     state.waitlistInvited=true; saveDemoState();
     return toast("Demo waitlist invite sent","Slot reserved for Demo Waitlist Guest for 15 minutes");
   }
-  if (a === "reorder")
-    return toast("Purchase order prepared", "Approval required above €50");
+  if (a === "reorder") { state.poPrepared=true; saveDemoState(); return toast("Purchase order prepared", "Approval required above €50"); }
   if (a === "reviews")
     return toast("Review flow active", "14 requests scheduled");
   if (a === "save-settings") { saveDemoState(); return toast("Settings saved", "Rules and channels synchronized"); }
@@ -1570,14 +1569,11 @@ $('[data-action="repeat-cut"]').onclick = () => {
   $("#sumPrice").textContent = "€42";
   state.bookStep = 4;
   bookRefresh();
-  toast(
-    "Cut Memory betöltve",
-    "A legutóbbi cut, barber és preferenciák készen állnak",
-  );
+  toast(state.guestLang==="EN"?"Cut Memory loaded":"Cut Memory geladen", state.guestLang==="EN"?"Your usual service, professional and time are ready":"Dein üblicher Service, Professional und Termin sind bereit");
 };
 $('[data-action="waitlist"]').onclick = () => {
-  state.guestWaitlist = true;
-  toast("Smart waitlist active","DEMO: you will be matched automatically when a suitable slot opens");
+  state.guestWaitlist = true; saveDemoState();
+  toast(state.guestLang==="EN"?"Smart waitlist active":"Smart-Warteliste aktiv",state.guestLang==="EN"?"DEMO: automatic matching is enabled":"DEMO: automatisches Matching ist aktiviert");
 };
 $('[data-action="new-booking"]').onclick = () => {
   state.bookStep=1; state.service=""; state.price=0; state.barber=""; state.time="";
