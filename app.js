@@ -116,11 +116,13 @@ function setView(id) {
 }
 // Delegated navigation is resilient to rerenders and mobile Safari event quirks.
 document.addEventListener("click", (e) => {
-  const viewButton = e.target.closest("[data-view]");
+  const target = e.target instanceof Element ? e.target : e.target.parentElement;
+  if (!target) return;
+  const viewButton = target.closest("[data-view]");
   if (viewButton) { e.preventDefault(); setView(viewButton.dataset.view); return; }
-  const moduleButton = e.target.closest("[data-module]");
-  if (moduleButton) { e.preventDefault(); renderModule(moduleButton.dataset.module); }
-});
+  const moduleButton = target.closest("[data-module]");
+  if (moduleButton) { e.preventDefault(); renderModule(moduleButton.dataset.module); return; }
+}, true);
 function schedule() {
   return '<div class="schedule"><div></div><div class="shead">Demo Barber B</div><div class="shead">Demo Barber A</div><div class="shead">Demo Barber C</div><div class="hour">10:00</div><div class="appt" data-action="appointment"><b>Demo Guest A · Cut</b><small>10:00–10:45</small></div><div></div><div class="appt blue" data-action="appointment"><b>Demo Risk Guest A · Fade</b><small>10:00–10:50</small></div><div class="hour">11:00</div><div></div><div class="appt sand" data-action="appointment"><b>Demo Guest B · Beard</b><small>11:15–11:45</small></div><div></div><div class="hour">12:00</div><div class="appt blue" data-action="appointment"><b>Demo Guest C · Combo</b><small>12:00–13:00</small></div><div></div><div class="appt" data-action="appointment"><b>Demo Guest D · Cut</b><small>12:15–13:00</small></div><div class="hour">14:00</div><div class="appt sand" data-action="appointment"><b>Demo Guest E · Fade</b><small>14:00–14:50</small></div><div class="appt blue" data-action="appointment"><b>Demo Guest F · Cut</b><small>14:00–14:45</small></div><div class="appt risk" data-action="appointment"><b>Demo Risk Guest · Combo</b><small>AI risk · 14:30</small></div></div>';
 }
@@ -1515,38 +1517,22 @@ function bookRefresh() {
   $("#bookNext").textContent =
     state.bookStep === 4 ? "€10 Deposit bezahlen" : "Weiter";
 }
-$$("[data-service]").forEach(
-  (b) =>
-    (b.onclick = () => {
-      $$("[data-service]").forEach((x) => x.classList.remove("selected"));
-      b.classList.add("selected");
-      state.service = b.dataset.service;
-      state.price = +b.dataset.price;
-      $("#sumService").textContent = state.service;
-      $("#sumPrice").textContent = money(state.price);
-      bookRefresh();
-    }),
-);
-$$("[data-barber]").forEach(
-  (b) =>
-    (b.onclick = () => {
-      $$("[data-barber]").forEach((x) => x.classList.remove("selected"));
-      b.classList.add("selected");
-      state.barber = b.dataset.barber;
-      $("#sumBarber").textContent = state.barber;
-      bookRefresh();
-    }),
-);
-$$("[data-time]").forEach(
-  (b) =>
-    (b.onclick = () => {
-      $$("[data-time]").forEach((x) => x.classList.remove("selected"));
-      b.classList.add("selected");
-      state.time = b.dataset.time;
-      $("#sumTime").textContent = "Di, 22. Sep · " + state.time;
-      bookRefresh();
-    }),
-);
+$("[data-service]").forEach(b => b.onclick = () => {
+  $("[data-service]").forEach(x => x.classList.remove("selected"));
+  b.classList.add("selected"); state.service=b.dataset.service; state.price=+b.dataset.price;
+  $("#sumService").textContent=state.service; $("#sumPrice").textContent=money(state.price);
+  state.bookStep=2; bookRefresh();
+});
+$("[data-barber]").forEach(b => b.onclick = () => {
+  $("[data-barber]").forEach(x => x.classList.remove("selected"));
+  b.classList.add("selected"); state.barber=b.dataset.barber; $("#sumBarber").textContent=state.barber;
+  state.bookStep=3; bookRefresh();
+});
+$("[data-time]").forEach(b => b.onclick = () => {
+  $("[data-time]").forEach(x => x.classList.remove("selected"));
+  b.classList.add("selected"); state.time=b.dataset.time; $("#sumTime").textContent="Demo date · "+state.time;
+  state.bookStep=4; bookRefresh();
+});
 $$(".date-strip button").forEach(
   (b) =>
     (b.onclick = () => {
