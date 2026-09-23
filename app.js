@@ -1228,6 +1228,11 @@ function completePlan() {
 }
 function act(a, e) {
   if (a === "new-appointment") return act("manual-booking", e);
+  if (a === "coverage-booking") return renderModule("calendar");
+  if (a === "coverage-crm") return renderModule("customers");
+  if (a === "coverage-payments") return renderModule("money");
+  if (a === "coverage-operations") return renderModule("live");
+  if (a === "coverage-growth") return renderModule("operator");
   if (a === "manual-booking")
     return openDrawer(
       '<span class="drawer-kicker">MANUAL CONTROL · WORKING DEMO</span><h2>Create appointment</h2><p class="muted">The Operator can do this from a goal, but full manual control remains available.</p><div class="drawer-section"><div class="detail-grid"><div><small>CUSTOMER</small><b>Demo Customer A</b></div><div><small>SERVICE</small><b>Classic Cut · €42</b></div><div><small>STAFF</small><b>Demo Barber B</b></div><div><small>TIME</small><b>Today · 18:00</b></div></div></div><button class="primary" data-action="confirm-manual">CREATE BOOKING</button>',
@@ -1446,8 +1451,8 @@ function act(a, e) {
   if (a === "save-settings") { saveDemoState(); return toast("Settings saved", "Rules and channels synchronized"); }
   if (a === "master-apply")
     return toast(
-      "Network playbook prepared",
-      "Approval queued for 42 businesses",
+      "SIMULATED network playbook",
+      "Demo approval scenario prepared · no real businesses affected",
     );
   if (a) return toast("Demo feature", "This control is intentionally simulated in the current product demo.");
 }
