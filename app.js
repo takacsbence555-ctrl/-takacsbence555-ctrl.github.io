@@ -1108,27 +1108,34 @@ function renderModule(id) {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 window.renderModule = renderModule;
+window.act = act;
+window.openDrawer = openDrawer;
+window.closeDrawer = closeDrawer;
+
+// One delegated controller for dynamic Owner OS controls. It survives every innerHTML rerender.
+document.addEventListener("click", (e) => {
+  const go = e.target.closest("[data-go]");
+  if (go) { e.preventDefault(); return renderModule(go.dataset.go); }
+
+  const action = e.target.closest("[data-action]");
+  if (action && !action.matches('[data-action="repeat-cut"],[data-action="waitlist"],[data-action="new-booking"]')) {
+    e.preventDefault();
+    return act(action.dataset.action, action);
+  }
+
+  const coreTab = e.target.closest("[data-core-tab]");
+  if (coreTab) { e.preventDefault(); state.coreTab = coreTab.dataset.coreTab; return renderModule("core"); }
+
+  const sim = e.target.closest("[data-sim]");
+  if (sim) {
+    e.preventDefault();
+    const out = $("#simulationResult");
+    if (out) out.innerHTML = simulation(sim.dataset.sim);
+    $("[data-sim]").forEach(x => x.classList.toggle("active", x === sim));
+  }
+});
+
 function bind() {
-  $$("[data-go]").forEach(
-    (b) => (b.onclick = () => renderModule(b.dataset.go)),
-  );
-  $$("[data-action]").forEach(
-    (b) => (b.onclick = () => act(b.dataset.action, b)),
-  );
-  $$("[data-core-tab]").forEach(
-    (b) =>
-      (b.onclick = () => {
-        state.coreTab = b.dataset.coreTab;
-        renderModule("core");
-      }),
-  );
-  $$("[data-sim]").forEach(
-    (b) =>
-      (b.onclick = () => {
-        $("#simulationResult").innerHTML = simulation(b.dataset.sim);
-        $$("[data-sim]").forEach((x) => x.classList.toggle("active", x === b));
-      }),
-  );
   $$("[data-permission]").forEach(
     (s) =>
       (s.onchange = () => {
