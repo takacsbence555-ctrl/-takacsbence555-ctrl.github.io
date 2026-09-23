@@ -3600,3 +3600,12 @@ button {
     margin-left: 0;
   }
 }
+
+/* Shared end-to-end demo state */
+.synced-booking{display:flex;justify-content:space-between;gap:20px;align-items:center;background:#111;color:#fff;border-left:4px solid var(--lime);padding:16px 18px;margin-bottom:14px}
+.synced-booking span{color:var(--lime);font-size:.58rem;font-weight:900;letter-spacing:.12em}
+.synced-booking h3{margin:4px 0;font-size:1rem}.synced-booking p{margin:0;color:#a9abb1;font-size:.72rem}
+.synced-booking>b{font-size:.62rem;background:var(--lime);color:#111;padding:7px 9px}
+.cal-card.demo-guest{background:#171a14!important;color:#fff;border-left-color:var(--lime)!important}
+.cal-card.demo-guest small{color:#b8c4aa}
+@media(max-width:600px){.synced-booking{display:block}.synced-booking>b{display:inline-block;margin-top:10px}}
