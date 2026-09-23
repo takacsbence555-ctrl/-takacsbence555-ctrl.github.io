@@ -110,8 +110,8 @@ function toast(t, x = "") {
   window.tt = setTimeout(() => e.classList.add("hidden"), 3400);
 }
 function setView(id) {
-  $(".view").forEach((v) => v.classList.toggle("hidden", v.id !== id));
-  $("[data-view]").forEach((b) => b.classList.toggle("active", b.dataset.view === id));
+  $$(".view").forEach((v) => v.classList.toggle("hidden", v.id !== id));
+  $$("[data-view]").forEach((b) => b.classList.toggle("active", b.dataset.view === id));
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 // Delegated navigation is resilient to rerenders and mobile Safari event quirks.
