@@ -20,7 +20,7 @@ window.__guestLang=function(lang){
   if(typeof window.applyGuestLanguage==="function") window.applyGuestLanguage(lang);
 };
 </script>
-    <link rel="stylesheet" href="style.css?v=sales-entry-2" />
+    <link rel="stylesheet" href="style.css?v=checkout-lang-1" />
   </head>
   <body><section class="sales-entry" id="salesEntry">
   <div class="sales-entry-inner">
@@ -231,7 +231,22 @@ window.__guestLang=function(lang){
                 >
               </div>
             </div>
-            <div id="bookingSuccess" class="booking-success hidden">
+            <div id="demoCheckout" class="demo-checkout hidden" role="dialog" aria-modal="true">
+  <div class="demo-checkout-card">
+    <button id="checkoutClose" class="checkout-close" type="button" aria-label="Close">×</button>
+    <small id="checkoutKicker">SECURE DEMO CHECKOUT</small>
+    <h2 id="checkoutTitle">Pay €10 deposit</h2>
+    <p id="checkoutIntro">This is a simulated checkout. No real money will be charged.</p>
+    <div class="checkout-order"><span id="checkoutOrderLabel">Appointment deposit</span><b>€10</b></div>
+    <button id="demoApplePay" class="apple-pay-demo" type="button"> Pay</button>
+    <div class="checkout-or"><span id="checkoutOr">or pay by card</span></div>
+    <label><span id="cardNumberLabel">Card number</span><input inputmode="numeric" value="4242 4242 4242 4242" readonly></label>
+    <div class="checkout-fields"><label><span id="expiryLabel">Expiry</span><input value="12/30" readonly></label><label><span>CVC</span><input value="123" readonly></label></div>
+    <button id="demoCardPay" class="primary" type="button">Pay €10 demo deposit</button>
+    <small id="checkoutFoot">DEMO ONLY · No payment provider is connected.</small>
+  </div>
+</div>
+<div id="bookingSuccess" class="booking-success hidden">
               <span>✓</span><small>BESTÄTIGT</small>
               <h2>Bis bald bei NOIR.</h2>
               <p>
@@ -278,7 +293,7 @@ window.__guestLang=function(lang){
   <div class="guest-map-foot"><span>Exact address hidden in demo</span><button type="button" data-action="demo-directions">Directions ↗</button></div>
 </div>
 <div class="feature-chips">
-              <span>Demo reminder</span><span>Simulated payment</span><span>Online verwalten</span>
+              <span>Demo reminder</span><button type="button" id="summaryPayDemo">Pay €10 deposit</button><span>Online verwalten</span>
             </div>
             <div class="review-quote">
               “Illustrative demo review.”<small>— Demo Guest</small>
@@ -573,6 +588,6 @@ window.__guestLang=function(lang){
       <span>✓</span>
       <div><b id="toastTitle">Done</b><small id="toastText"></small></div>
     </div>
-    <script src="app.js?v=ui-repair-1"></script>
+    <script src="app.js?v=checkout-lang-1"></script>
   </body>
 </html>
