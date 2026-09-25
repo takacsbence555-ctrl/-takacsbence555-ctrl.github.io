@@ -1719,6 +1719,7 @@ $("#bookBack").onclick = () => {
 };
 $("#bookNext").onclick = async () => {
   if (state.bookStep < 4) { state.bookStep++; bookRefresh(); return; }
+  openDemoCheckout(); return;
   const guestName=(($("#guestName")?.value)||"Guest").trim()||"Guest";
   const guestPhone=(($("#guestPhone")?.value)||"").trim();
   const btn=$("#bookNext"); if(btn){btn.disabled=true;btn.setAttribute("aria-busy","true");}
@@ -1779,22 +1780,23 @@ function guestAction(a){
   if(a==="gift"){state.guestGift=true; saveDemoState();return toast("Gift card created","DEMO €50 gift card · no real charge");}
 }
 bindGuestActions();
-window.applyGuestLanguage = function applyGuestLanguage(lang){
-  state.guestLang=lang;
-  const en=lang==="EN";
-  const dict={
-    ".booking-kicker":en?"PRIVATE BOOKING · NOIR DEMO":"PRIVATE BUCHUNG · NOIR DEMO",
-    ".booking-main>h1":en?"Your look.<br><em>Your appointment.</em>":"Dein Look.<br><em>Dein Termin.</em>",
-    ".booking-lead":en?"Premium grooming. Book in under a minute.":"Premium Grooming. In weniger als einer Minute gebucht."
-  };
-  Object.entries(dict).forEach(([s,v])=>{const n=$(s);if(n)n.innerHTML=v});
-  const heads=$$(".section-title h2");
-  const labels=en?["Choose service","Choose professional","Choose time","Alnow done"]:["Service wählen","Professional wählen","Zeit wählen","Fast geschafft"];
-  heads.forEach((n,i)=>{if(labels[i])n.textContent=labels[i]});
-  if($("#bookBack")) $("#bookBack").textContent=en?"Back":"Zurück";
-  if($("#bookNext")) $("#bookNext").textContent=state.bookStep===4?(en?"Pay €10 demo deposit":"€10 Demo-Deposit bezahlen"):(en?"Continue":"Weiter");
-  $$(".lang [data-lang]").forEach(x=>x.classList.toggle("active",x.dataset.lang===lang));
+window.applyGuestLanguage = function openDemoCheckout(){if(!state.service||!state.barber||!state.time){toast(state.guestLang==="EN"?"Complete your booking first":"Buchung zuerst vervollständigen");return;}$("#demoCheckout")?.classList.remove("hidden");}
+function closeDemoCheckout(){$("#demoCheckout")?.classList.add("hidden");}
+async function finishDemoCheckout(method){
+ const guestName=(($("#guestName")?.value)||"Guest").trim()||"Guest", guestPhone=(($("#guestPhone")?.value)||"").trim();
+ try{const bookingId=await createLiveBooking(guestName,guestPhone);state.guestDeposit=10;state.guestPaymentStatus="simulated_paid";state.guestBooking={id:bookingId,customer:guestName,service:state.service,price:state.price,barber:state.barber,time:state.time,deposit:10,remaining:Math.max(0,state.price-10),status:"Confirmed",backend:"supabase"};state.guestEvents.unshift({type:"PAYMENT",result:"€10 simulated deposit",detail:method+" · DEMO ONLY · no real charge"});state.appointments++;state.forecast+=state.price;saveDemoState();closeDemoCheckout();$$(".book-step").forEach(x=>x.classList.add("hidden"));$("#bookActions")?.classList.add("hidden");$("#bookingSuccess")?.classList.remove("hidden");const p=$("#bookingSuccess p");if(p)p.innerHTML=state.guestLang==="EN"?"<b>BOOKING CONFIRMED</b><br>€10 demo deposit approved. No real money was charged.":"<b>BUCHUNG BESTÄTIGT</b><br>€10 Demo-Anzahlung bestätigt. Es wurde kein echtes Geld abgebucht.";bindGuestActions();applyGuestLanguage(state.guestLang);toast(state.guestLang==="EN"?"Demo payment approved":"Demo-Zahlung bestätigt",state.guestLang==="EN"?"No real money was charged":"Es wurde kein echtes Geld abgebucht");}catch(e){console.error(e);closeDemoCheckout();state.bookStep=3;bookRefresh();await refreshLiveAvailability();toast(state.guestLang==="EN"?"Time no longer available":"Termin nicht mehr verfügbar");}}
+$("#checkoutClose")?.addEventListener("click",closeDemoCheckout);$("#demoCheckout")?.addEventListener("click",e=>{if(e.target.id==="demoCheckout")closeDemoCheckout()});$("#demoApplePay")?.addEventListener("click",()=>finishDemoCheckout("Apple Pay"));$("#demoCardPay")?.addEventListener("click",()=>finishDemoCheckout("Card"));$("#summaryPayDemo")?.addEventListener("click",()=>{if(state.bookStep!==4)return toast(state.guestLang==="EN"?"Finish the booking details first":"Bitte zuerst die Buchungsdetails ausfüllen");openDemoCheckout();});
+function applyGuestLanguage(lang){
+ state.guestLang=lang;saveDemoState();const en=lang==="EN";const set=(sel,html)=>{const n=$(sel);if(n)n.innerHTML=html};
+ set(".booking-kicker",en?"PRIVATE BOOKING · NOIR DEMO":"PRIVATE BUCHUNG · NOIR DEMO");set(".booking-main>h1",en?"Your look.<br><em>Your appointment.</em>":"Dein Look.<br><em>Dein Termin.</em>");set(".booking-lead",en?"Premium grooming. Book in under a minute.":"Premium Grooming. In weniger als einer Minute gebucht.");
+ const heads=$$(".section-title h2"),labels=en?["Choose service","Choose professional","Choose time","Almost done"]:["Service wählen","Professional wählen","Zeit wählen","Fast geschafft"];heads.forEach((n,i)=>{if(labels[i])n.textContent=labels[i]});
+ if($("#bookBack"))$("#bookBack").textContent=en?"Back":"Zurück";if($("#bookNext"))$("#bookNext").textContent=state.bookStep===4?(en?"Pay €10 deposit":"€10 Anzahlung bezahlen"):(en?"Continue":"Weiter");
+ set(".booking-summary>h3",en?"Your booking":"Deine Buchung");const sl=en?["Service","Professional","Appointment","Total"]:["Service","Barber","Termin","Gesamt"];$$(".booking-summary .sum-row>span").forEach((n,i)=>{if(sl[i])n.textContent=sl[i]});
+ if($("#summaryPayDemo"))$("#summaryPayDemo").textContent=en?"Pay €10 deposit":"€10 Anzahlung bezahlen";if($("#checkoutTitle"))$("#checkoutTitle").textContent=en?"Pay €10 deposit":"€10 Anzahlung bezahlen";if($("#checkoutIntro"))$("#checkoutIntro").textContent=en?"This is a simulated checkout. No real money will be charged.":"Dies ist ein simulierter Checkout. Es wird kein echtes Geld abgebucht.";if($("#checkoutOrderLabel"))$("#checkoutOrderLabel").textContent=en?"Appointment deposit":"Termin-Anzahlung";if($("#checkoutOr"))$("#checkoutOr").textContent=en?"or pay by card":"oder mit Karte bezahlen";if($("#cardNumberLabel"))$("#cardNumberLabel").textContent=en?"Card number":"Kartennummer";if($("#expiryLabel"))$("#expiryLabel").textContent=en?"Expiry":"Gültig bis";if($("#demoCardPay"))$("#demoCardPay").textContent=en?"Pay €10 demo deposit":"€10 Demo-Anzahlung bezahlen";if($("#checkoutFoot"))$("#checkoutFoot").textContent=en?"DEMO ONLY · No payment provider is connected.":"NUR DEMO · Kein Zahlungsanbieter verbunden.";
+ const success=$("#bookingSuccess");if(success&&!success.classList.contains("hidden")){const sm=success.querySelector("small"),hh=success.querySelector("h2"),nb=success.querySelector('[data-action="new-booking"]');if(sm)sm.textContent=en?"CONFIRMED":"BESTÄTIGT";if(hh)hh.textContent=en?"See you soon at NOIR.":"Bis bald bei NOIR.";if(nb)nb.textContent=en?"New booking":"Neue Buchung";}
+ $$(".lang [data-lang]").forEach(x=>x.classList.toggle("active",x.dataset.lang===lang));
 }
+window.applyGuestLanguage=applyGuestLanguage;
 $$(".lang [data-lang]").forEach(b=>b.onclick=()=>{applyGuestLanguage(b.dataset.lang);toast(b.dataset.lang==="EN"?"Language changed":"Sprache geändert",b.dataset.lang)});
 bind();
 renderModule(window.__pendingModule || "home");
