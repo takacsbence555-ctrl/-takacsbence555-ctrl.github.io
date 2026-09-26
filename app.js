@@ -1714,14 +1714,14 @@ $$("[data-service]").forEach(b => b.onclick = () => {
   b.classList.add("selected"); state.service=b.dataset.service; state.price=+b.dataset.price;
   const ss=$("#sumService"),sp=$("#sumPrice");if(ss)ss.textContent=state.service;if(sp)sp.textContent=money(state.price);
   bookingChoiceConfirm(state.service+" selected"); state.bookStep=2; bookRefresh();
-  requestAnimationFrame(()=>document.querySelector("#bookStep2")?.scrollIntoView({behavior:"smooth",block:"start"}));
+  requestAnimationFrame(()=>{const el=document.querySelector("#bookStep2");if(el){const y=el.getBoundingClientRect().top+window.scrollY-110;window.scrollTo({top:Math.max(0,y),behavior:"smooth"});}});
 });
 $$("[data-barber]").forEach(b => b.onclick = () => {
   $$("[data-barber]").forEach(x => x.classList.remove("selected"));
   b.classList.add("selected"); state.barber=b.dataset.barber; $("#sumBarber").textContent=state.barber;
   state.time=""; const st=$("#sumTime");if(st)st.textContent="—";
   bookingChoiceConfirm(state.barber+" selected"); state.bookStep=3; bookRefresh(); refreshLiveAvailability();
-  requestAnimationFrame(()=>document.querySelector("#bookStep3")?.scrollIntoView({behavior:"smooth",block:"start"}));
+  requestAnimationFrame(()=>{const el=document.querySelector("#bookStep3");if(el){const y=el.getBoundingClientRect().top+window.scrollY-110;window.scrollTo({top:Math.max(0,y),behavior:"smooth"});}});
 });
 $$("[data-time]").forEach(b => b.onclick = () => {
   $$("[data-time]").forEach(x => x.classList.remove("selected"));
