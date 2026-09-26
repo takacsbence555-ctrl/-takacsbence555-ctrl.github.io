@@ -1630,6 +1630,30 @@ function showOwnerApp(demo=false){
 function showOwnerGate(message=""){
  $("#ownerAppShell")?.classList.add("hidden");$("#ownerAuthGate")?.classList.remove("hidden");const s=$("#ownerAuthStatus");if(s)s.textContent=message;
 }
+async function startOwnerTrial(){
+ const email=$("#ownerEmail")?.value?.trim();
+ if(!email)return showOwnerGate("Enter your email first, then start the free trial.");
+ const btn=$("#ownerTrialBtn");if(btn)btn.disabled=true;
+ try{
+  const redirect=location.origin+location.pathname+"?new_business=1";
+  const res=await fetch(SUPABASE_URL+"/auth/v1/otp",{method:"POST",headers:{"apikey":SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify({email,create_user:true,email_redirect_to:redirect})});
+  if(!res.ok)throw new Error(await res.text());
+  showOwnerGate("Trial link sent. Open the email on this device to create your salon.");
+ }catch(e){showOwnerGate("Could not start the trial. Please try again.");}
+ finally{if(btn)btn.disabled=false;}
+}
+function openBusinessSetup(){
+ const wrap=document.createElement("div");wrap.className="live-booking-modal";
+ wrap.innerHTML='<div class="live-booking-card"><small>ZELORA · NEW BUSINESS</small><h2>Create your salon</h2><p>14 days free · no card required</p><label>Business name<input id="setupBusiness" placeholder="Studio name"></label><label>Booking link<input id="setupSlug" placeholder="studio-name"></label><label>Your / first staff name<input id="setupStaff" placeholder="Your name"></label><label>First service<input id="setupService" placeholder="Haircut"></label><label>Duration (minutes)<input id="setupDuration" type="number" min="5" value="45"></label><label>Price (€)<input id="setupPrice" type="number" min="0" step="1" value="45"></label><button class="primary" id="setupCreate">Create business & start trial</button><span id="setupStatus"></span></div>';
+ document.body.appendChild(wrap);
+ wrap.querySelector("#setupCreate").onclick=async()=>{
+  const st=wrap.querySelector("#setupStatus");st.textContent="Creating your Zelora workspace…";
+  try{
+   const out=await ownerRpc("create_owner_business",{p_name:wrap.querySelector("#setupBusiness").value,p_public_slug:wrap.querySelector("#setupSlug").value,p_staff_name:wrap.querySelector("#setupStaff").value,p_service_name:wrap.querySelector("#setupService").value,p_duration_minutes:Number(wrap.querySelector("#setupDuration").value),p_price_cents:Math.round(Number(wrap.querySelector("#setupPrice").value)*100)});
+   wrap.remove();history.replaceState(null,"",location.pathname);await showOwnerApp(false);toast("Zelora workspace created","Your 14-day free trial is active · booking link: ?salon="+out.public_slug);
+  }catch(e){st.textContent=e.message.includes("SLUG_TAKEN")?"That booking link is already taken.":e.message.includes("BUSINESS_ALREADY_EXISTS")?"This account already has a business.":"Check the fields and try again.";}
+ };
+}
 async function sendOwnerMagicLink(){
  const email=$("#ownerEmail")?.value?.trim();if(!email)return showOwnerGate("Enter your owner email.");
  const btn=$("#ownerLoginBtn");if(btn)btn.disabled=true;
@@ -1712,8 +1736,9 @@ ownerAccessToken=ownerAccessToken||sessionStorage.getItem("operator-owner-token"
 document.addEventListener("DOMContentLoaded",()=>{
  $("#ownerLoginBtn")?.addEventListener("click",sendOwnerMagicLink);
  $("#ownerDemoBtn")?.addEventListener("click",()=>showOwnerApp(true));
+ $("#ownerTrialBtn")?.addEventListener("click",startOwnerTrial);
  $("#ownerSignOut")?.addEventListener("click",()=>{sessionStorage.removeItem("operator-owner-token");ownerAccessToken=null;ownerDashboardData=null;showOwnerGate("Signed out.");});
- if(ownerAccessToken)showOwnerApp(false);else showOwnerGate();
+ if(ownerAccessToken){ if(new URLSearchParams(location.search).get("new_business")==="1") openBusinessSetup(); else showOwnerApp(false); }else showOwnerGate();
 });
 
 function bookingChoiceConfirm(label) {
