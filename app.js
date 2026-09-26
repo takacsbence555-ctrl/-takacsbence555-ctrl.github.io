@@ -1080,6 +1080,7 @@ function renderModule(id) {
   $("#pageSub").textContent = t[1];
   $("#moduleContent").innerHTML = modules[id]();
   if (!ownerDemoMode && ownerDashboardData && ["home","calendar","customers"].includes(id)) { $("#moduleContent").insertAdjacentHTML("afterbegin",liveSubscriptionPanel()+liveOnboardingPanel()+liveMetricsPanel()+liveOwnerPanel()+(id==="customers"||id==="home"?liveCrmPanel():"")); bindOnboarding(); bindLiveCrm(); }
+  if (!ownerDemoMode && ownerAccessToken && id==="settings" && ownerBusinessSettings) { $("#moduleContent").insertAdjacentHTML("afterbegin",liveSettingsPanel()); }
   if (!ownerDemoMode && ownerAccessToken && id==="operator") { loadLiveOperator().then(()=>{ if(state.module==="operator" && liveOperatorSnapshot) $("#moduleContent").insertAdjacentHTML("afterbegin",liveOperatorBanner()); }); }
   if (!ownerDemoMode && ownerAccessToken && ["impact","decisions"].includes(id)) { loadLiveOperator().then(()=>{ if(["impact","decisions"].includes(state.module) && liveOperatorSnapshot) $("#moduleContent").insertAdjacentHTML("afterbegin",liveOperatorBanner()); }); }
   if (state.guestBooking && ["calendar","customers","money","impact","decisions"].includes(id)) {
@@ -1128,6 +1129,12 @@ document.addEventListener("click", (e) => {
   if (go) { e.preventDefault(); return renderModule(go.dataset.go); }
 
   const action = target?.closest("[data-action]");
+  if(action?.dataset.action==="edit-live-settings" && !ownerDemoMode){e.preventDefault();openLiveSettings();return;}
+  if(action?.dataset.action==="save-live-settings" && !ownerDemoMode){
+    e.preventDefault();
+    const val=id=>$("#"+id)?.value||"";
+    ownerRpc("owner_update_business_settings",{p_contact_email:val("lsEmail"),p_contact_phone:val("lsPhone"),p_address:val("lsAddress"),p_cancellation_window_hours:Number(val("lsCancel")),p_deposit_percent:Number(val("lsDeposit")),p_no_show_policy:val("lsPolicy"),p_privacy_url:val("lsPrivacy"),p_terms_url:val("lsTerms")}).then(x=>{ownerBusinessSettings=x;closeDrawer();renderModule("settings");toast("Live settings saved","Booking policy updated.");}).catch(()=>toast("Could not save","Check the policy values and try again."));return;
+  }
   if(action?.dataset.action==="new-appointment" && !ownerDemoMode && ownerDashboardData){e.preventDefault();ownerBookingModal("create");return;}
   if (action && !action.matches('[data-action="repeat-cut"],[data-action="waitlist"],[data-action="new-booking"]')) {
     e.preventDefault();
@@ -1603,7 +1610,7 @@ async function createLiveBooking(guestName,guestPhone){
   return await supabaseRpc("create_public_booking",{p_business_slug:BOOKING_BUSINESS,p_staff_slug:selectedStaffSlug(),p_service_slug:selectedServiceSlug(),p_starts_at:startsAt,p_display_name:guestName,p_email:null,p_phone:guestPhone});
 }
 
-let ownerAccessToken=null, ownerDashboardData=null, ownerMetrics=null, ownerCrm=[], ownerRebooking=[], ownerOnboarding=null, ownerSubscription=null, ownerDemoMode=false;
+let ownerAccessToken=null, ownerDashboardData=null, ownerMetrics=null, ownerCrm=[], ownerRebooking=[], ownerOnboarding=null, ownerSubscription=null, ownerBusinessSettings=null, ownerDemoMode=false;
 function ownerAuthHeaders(){return {"apikey":SUPABASE_KEY,"Authorization":"Bearer "+ownerAccessToken,"Content-Type":"application/json"}}
 function parseAuthHash(){
   const raw=(location.hash||"").replace(/^#/,""); if(!raw)return;
@@ -1620,7 +1627,7 @@ async function loadOwnerDashboard(){
 function showOwnerApp(demo=false){
  ownerDemoMode=demo; $("#ownerAuthGate")?.classList.add("hidden"); $("#ownerAppShell")?.classList.remove("hidden");
  if(demo){renderModule(window.__pendingModule||"home");return;}
- Promise.all([loadOwnerDashboard(),ownerRpc("owner_business_metrics",{}).catch(()=>null),ownerRpc("owner_customer_crm",{}).catch(()=>[]),ownerRpc("owner_rebooking_opportunities",{}).catch(()=>[]),ownerRpc("owner_onboarding_snapshot",{}).catch(()=>null),ownerRpc("owner_subscription_snapshot",{}).catch(()=>null)]).then(([data,metrics,crm,rebooking,onboarding,subscription])=>{ ownerMetrics=metrics; ownerCrm=crm||[]; ownerRebooking=rebooking||[]; ownerOnboarding=onboarding; ownerSubscription=subscription;
+ Promise.all([loadOwnerDashboard(),ownerRpc("owner_business_metrics",{}).catch(()=>null),ownerRpc("owner_customer_crm",{}).catch(()=>[]),ownerRpc("owner_rebooking_opportunities",{}).catch(()=>[]),ownerRpc("owner_onboarding_snapshot",{}).catch(()=>null),ownerRpc("owner_subscription_snapshot",{}).catch(()=>null),ownerRpc("owner_business_settings",{}).catch(()=>null)]).then(([data,metrics,crm,rebooking,onboarding,subscription,businessSettings])=>{ ownerMetrics=metrics; ownerCrm=crm||[]; ownerRebooking=rebooking||[]; ownerOnboarding=onboarding; ownerSubscription=subscription; ownerBusinessSettings=businessSettings;
    if(!data){sessionStorage.removeItem("operator-owner-token");ownerAccessToken=null;showOwnerGate("This account is not connected to a business yet.");return;}
    const brand=$(".brand small");if(brand)brand.textContent=(data.business?.name||"BUSINESS")+" · LIVE";
    const owner=$(".owner small");if(owner)owner.textContent=(data.business?.role||"owner").toUpperCase()+" · LIVE BACKEND";
@@ -1704,6 +1711,15 @@ function bindLiveCrm(){
   const days=prompt("Expected rebooking cycle (days)",String(c.rebook_interval_days||28)); if(days===null)return;
   ownerRpc("owner_save_cut_memory",{p_customer_id:c.id,p_notes:notes,p_rebook_interval_days:Number(days)||28}).then(()=>refreshOwnerLive()).then(()=>toast("Cut Memory saved","Rebooking intelligence updated")).catch(e=>toast("Could not save",e.message));
  });
+}
+function liveSettingsPanel(){
+ if(ownerDemoMode||!ownerBusinessSettings)return "";
+ const x=ownerBusinessSettings;
+ return '<section class="pilot-ready"><small>LIVE BUSINESS SETTINGS</small><h3>Booking protection & compliance</h3><div class="detail-grid"><div><small>CANCELLATION WINDOW</small><b>'+x.cancellation_window_hours+' h</b></div><div><small>DEPOSIT</small><b>'+x.deposit_percent+'%</b></div><div><small>PRIVACY</small><b>'+(x.privacy_url?'Configured':'Needs URL')+'</b></div><div><small>TERMS</small><b>'+(x.terms_url?'Configured':'Needs URL')+'</b></div></div><p>'+x.no_show_policy+'</p><button class="primary small" data-action="edit-live-settings">Edit live settings</button></section>';
+}
+function openLiveSettings(){
+ const x=ownerBusinessSettings||{};
+ openDrawer('<span class="drawer-kicker">ZELORA · LIVE SETTINGS</span><h2>Booking policy</h2><label>Contact email<input id="lsEmail" value="'+(x.contact_email||'')+'"></label><label>Contact phone<input id="lsPhone" value="'+(x.contact_phone||'')+'"></label><label>Business address<input id="lsAddress" value="'+(x.address||'')+'"></label><label>Cancellation window (hours)<input id="lsCancel" type="number" min="0" max="336" value="'+(x.cancellation_window_hours??24)+'"></label><label>Deposit (%)<input id="lsDeposit" type="number" min="0" max="100" value="'+(x.deposit_percent??20)+'"></label><label>No-show policy<textarea id="lsPolicy">'+(x.no_show_policy||'')+'</textarea></label><label>Privacy policy URL<input id="lsPrivacy" value="'+(x.privacy_url||'')+'"></label><label>Terms URL<input id="lsTerms" value="'+(x.terms_url||'')+'"></label><button class="primary" data-action="save-live-settings">Save live settings</button>');
 }
 function liveSubscriptionPanel(){
  if(ownerDemoMode||!ownerSubscription)return "";
