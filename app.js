@@ -1683,9 +1683,7 @@ function bookRefresh() {
     state.time,
     ($("#guestName")?.value||"").trim() && ($("#guestPhone")?.value||"").trim(),
   ][state.bookStep - 1];
-  $("#bookNext").disabled = !ok;
-  $("#bookNext").textContent =
-    state.bookStep === 4 ? "€10 Deposit bezahlen" : "Weiter";
+  const next=$("#bookNext"); if(next){ next.disabled=!ok; next.textContent=state.bookStep===4?(state.guestLang==="EN"?"Pay €10 deposit":"€10 Anzahlung bezahlen"):(state.guestLang==="EN"?"Continue":"Weiter"); }
 }
 $$("[data-service]").forEach(b => b.onclick = () => {
   $$("[data-service]").forEach(x => x.classList.remove("selected"));
