@@ -1282,7 +1282,7 @@ function completePlan() {
   bind();
 }
 function act(a, e) {
-  if (a === "start-pilot") return openDrawer('<span class="drawer-kicker">FOUNDING PILOT · VIENNA</span><h2>Start with €0 for 3 months.</h2><p class="muted">Founding pilot offer for the first partner businesses.</p><div class="drawer-section"><div class="detail-grid"><div><small>FIRST 3 MONTHS</small><b>€0</b></div><div><small>AFTER PILOT</small><b>€79 / month</b></div><div><small>SETUP FEE</small><b>€0</b></div><div><small>PRICE</small><b>€79 while subscribed</b></div></div></div><p class="muted">This demo does not start a subscription or charge money. Pilot activation is confirmed separately with the business owner.</p><button class="primary" data-action="close-drawer">GOT IT</button>');
+  if (a === "start-pilot") return openDrawer('<span class="drawer-kicker">ZELORA PRO · FREE TRIAL</span><h2>14 days free. No card required.</h2><p class="muted">Use the complete Zelora Pro experience before deciding.</p><div class="drawer-section"><div class="detail-grid"><div><small>FREE TRIAL</small><b>14 days</b></div><div><small>AFTER TRIAL</small><b>€79 / month</b></div><div><small>SETUP FEE</small><b>€0</b></div><div><small>BOOKING COMMISSION</small><b>€0</b></div></div></div><p class="muted">Cancel anytime. The demo does not charge money; live billing is enabled only after payment setup is connected.</p><button class="primary" data-action="close-drawer">CONTINUE</button>');
   if (a === "new-appointment") return act("manual-booking", e);
   if (a === "demo-directions") return toast("Demo location", "Directions are simulated · no real address is exposed");
   if (a === "reschedule") return toast("Reschedule prepared", "DEMO: choose a new time from Calendar");
