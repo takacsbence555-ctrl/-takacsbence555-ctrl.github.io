@@ -1289,7 +1289,7 @@ function completePlan() {
   bind();
 }
 function act(a, e) {
-  if (a === "start-pilot") return openDrawer('<span class="drawer-kicker">ZELORA PRO · FREE TRIAL</span><h2>14 days free. No card required.</h2><p class="muted">Use the complete Zelora Pro experience before deciding.</p><div class="drawer-section"><div class="detail-grid"><div><small>FREE TRIAL</small><b>14 days</b></div><div><small>AFTER TRIAL</small><b>€49 / month</b></div><div><small>SETUP FEE</small><b>€0</b></div><div><small>BOOKING COMMISSION</small><b>€0</b></div></div></div><p class="muted">Cancel anytime. The demo does not charge money; live billing is enabled only after payment setup is connected.</p><button class="primary" data-action="close-drawer">CONTINUE</button>');
+  if (a === "start-pilot") return openDrawer('<span class="drawer-kicker">KAVELYQ PRO · FREE TRIAL</span><h2>14 days free. No card required.</h2><p class="muted">Use the complete Kavelyq Pro experience before deciding.</p><div class="drawer-section"><div class="detail-grid"><div><small>FREE TRIAL</small><b>14 days</b></div><div><small>AFTER TRIAL</small><b>€49 / month</b></div><div><small>SETUP FEE</small><b>€0</b></div><div><small>BOOKING COMMISSION</small><b>€0</b></div></div></div><p class="muted">Cancel anytime. The demo does not charge money; live billing is enabled only after payment setup is connected.</p><button class="primary" data-action="close-drawer">CONTINUE</button>');
   if (a === "new-appointment") return act("manual-booking", e);
   if (a === "demo-directions") return toast("Demo location", "Directions are simulated · no real address is exposed");
   if (a === "reschedule") return toast("Reschedule prepared", "DEMO: choose a new time from Calendar");
@@ -1651,13 +1651,13 @@ async function startOwnerTrial(){
 }
 function openBusinessSetup(){
  const wrap=document.createElement("div");wrap.className="live-booking-modal";
- wrap.innerHTML='<div class="live-booking-card"><small>ZELORA · NEW BUSINESS</small><h2>Create your salon</h2><p>14 days free · no card required</p><label>Business name<input id="setupBusiness" placeholder="Studio name"></label><label>Booking link<input id="setupSlug" placeholder="studio-name"></label><label>Your / first staff name<input id="setupStaff" placeholder="Your name"></label><label>First service<input id="setupService" placeholder="Haircut"></label><label>Duration (minutes)<input id="setupDuration" type="number" min="5" value="45"></label><label>Price (€)<input id="setupPrice" type="number" min="0" step="1" value="45"></label><button class="primary" id="setupCreate">Create business & start trial</button><span id="setupStatus"></span></div>';
+ wrap.innerHTML='<div class="live-booking-card"><small>KAVELYQ · NEW BUSINESS</small><h2>Create your salon</h2><p>14 days free · no card required</p><label>Business name<input id="setupBusiness" placeholder="Studio name"></label><label>Booking link<input id="setupSlug" placeholder="studio-name"></label><label>Your / first staff name<input id="setupStaff" placeholder="Your name"></label><label>First service<input id="setupService" placeholder="Haircut"></label><label>Duration (minutes)<input id="setupDuration" type="number" min="5" value="45"></label><label>Price (€)<input id="setupPrice" type="number" min="0" step="1" value="45"></label><button class="primary" id="setupCreate">Create business & start trial</button><span id="setupStatus"></span></div>';
  document.body.appendChild(wrap);
  wrap.querySelector("#setupCreate").onclick=async()=>{
-  const st=wrap.querySelector("#setupStatus");st.textContent="Creating your Zelora workspace…";
+  const st=wrap.querySelector("#setupStatus");st.textContent="Creating your Kavelyq workspace…";
   try{
    const out=await ownerRpc("create_owner_business",{p_name:wrap.querySelector("#setupBusiness").value,p_public_slug:wrap.querySelector("#setupSlug").value,p_staff_name:wrap.querySelector("#setupStaff").value,p_service_name:wrap.querySelector("#setupService").value,p_duration_minutes:Number(wrap.querySelector("#setupDuration").value),p_price_cents:Math.round(Number(wrap.querySelector("#setupPrice").value)*100)});
-   wrap.remove();history.replaceState(null,"",location.pathname);await showOwnerApp(false);toast("Zelora workspace created","Your 14-day free trial is active · booking link: ?salon="+out.public_slug);
+   wrap.remove();history.replaceState(null,"",location.pathname);await showOwnerApp(false);toast("Kavelyq workspace created","Your 14-day free trial is active · booking link: ?salon="+out.public_slug);
   }catch(e){st.textContent=e.message.includes("SLUG_TAKEN")?"That booking link is already taken.":e.message.includes("BUSINESS_ALREADY_EXISTS")?"This account already has a business.":"Check the fields and try again.";}
  };
 }
@@ -1719,14 +1719,14 @@ function liveSettingsPanel(){
 }
 function openLiveSettings(){
  const x=ownerBusinessSettings||{};
- openDrawer('<span class="drawer-kicker">ZELORA · LIVE SETTINGS</span><h2>Booking policy</h2><label>Contact email<input id="lsEmail" value="'+(x.contact_email||'')+'"></label><label>Contact phone<input id="lsPhone" value="'+(x.contact_phone||'')+'"></label><label>Business address<input id="lsAddress" value="'+(x.address||'')+'"></label><label>Cancellation window (hours)<input id="lsCancel" type="number" min="0" max="336" value="'+(x.cancellation_window_hours??24)+'"></label><label>Deposit (%)<input id="lsDeposit" type="number" min="0" max="100" value="'+(x.deposit_percent??20)+'"></label><label>No-show policy<textarea id="lsPolicy">'+(x.no_show_policy||'')+'</textarea></label><label>Privacy policy URL<input id="lsPrivacy" value="'+(x.privacy_url||'')+'"></label><label>Terms URL<input id="lsTerms" value="'+(x.terms_url||'')+'"></label><button class="primary" data-action="save-live-settings">Save live settings</button>');
+ openDrawer('<span class="drawer-kicker">KAVELYQ · LIVE SETTINGS</span><h2>Booking policy</h2><label>Contact email<input id="lsEmail" value="'+(x.contact_email||'')+'"></label><label>Contact phone<input id="lsPhone" value="'+(x.contact_phone||'')+'"></label><label>Business address<input id="lsAddress" value="'+(x.address||'')+'"></label><label>Cancellation window (hours)<input id="lsCancel" type="number" min="0" max="336" value="'+(x.cancellation_window_hours??24)+'"></label><label>Deposit (%)<input id="lsDeposit" type="number" min="0" max="100" value="'+(x.deposit_percent??20)+'"></label><label>No-show policy<textarea id="lsPolicy">'+(x.no_show_policy||'')+'</textarea></label><label>Privacy policy URL<input id="lsPrivacy" value="'+(x.privacy_url||'')+'"></label><label>Terms URL<input id="lsTerms" value="'+(x.terms_url||'')+'"></label><button class="primary" data-action="save-live-settings">Save live settings</button>');
 }
 function liveSubscriptionPanel(){
  if(ownerDemoMode||!ownerSubscription)return "";
  const x=ownerSubscription, days=Math.max(0,Number(x.trial_days_remaining||0)), trial=x.status==="trialing";
  const label=trial?(days+" DAYS LEFT"):(String(x.status||"").toUpperCase());
- return '<section class="pilot-ready"><small>ZELORA PRO · SUBSCRIPTION</small><h3>'+label+'</h3><p>'+(trial?'Your full 14-day trial is active. No card is required during the trial.':'Subscription status: '+x.status)+
- '</p><div class="detail-grid"><div><small>PLAN</small><b>Zelora Pro</b></div><div><small>PRICE</small><b>€49 / month</b></div><div><small>BOOKING COMMISSION</small><b>€0</b></div><div><small>SETUP</small><b>€0</b></div></div>'+
+ return '<section class="pilot-ready"><small>KAVELYQ PRO · SUBSCRIPTION</small><h3>'+label+'</h3><p>'+(trial?'Your full 14-day trial is active. No card is required during the trial.':'Subscription status: '+x.status)+
+ '</p><div class="detail-grid"><div><small>PLAN</small><b>Kavelyq Pro</b></div><div><small>PRICE</small><b>€49 / month</b></div><div><small>BOOKING COMMISSION</small><b>€0</b></div><div><small>SETUP</small><b>€0</b></div></div>'+
  (trial&&days===0?'<p><b>Trial ended.</b> Connect billing to continue live owner operations.</p>':'')+'</section>';
 }
 function liveOnboardingPanel(){
