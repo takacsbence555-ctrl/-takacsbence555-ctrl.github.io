@@ -3994,3 +3994,12 @@ button {
    grid-template-columns:1fr auto auto!important;
  }
 }
+
+
+/* Mobile guest location: keep the map visible below the booking flow */
+@media(max-width:900px){
+ #booking .booking-summary{display:block!important;width:100%!important;margin-top:28px!important}
+ #booking .booking-summary> *{display:none!important}
+ #booking .booking-summary>.guest-map-card{display:block!important}
+ #booking .guest-map-card{margin:0!important}
+}
