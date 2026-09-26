@@ -36,7 +36,9 @@ window.__guestLang=function(lang){
     <div class="sales-actions">
       <button class="sales-primary" type="button" onclick="document.getElementById('salesEntry').classList.add('hidden');document.querySelector('[data-view=hq]').click();window.__openModule('operator')">See the AI Operator →</button>
       <button class="sales-secondary" type="button" onclick="document.getElementById('salesEntry').classList.add('hidden');document.querySelector('[data-view=booking]').click()">See guest booking</button>
-    <button class="sales-secondary pilot-cta" type="button" data-action="start-pilot">Start free pilot</button>\n    </div>\n    <p class="sales-note">SIMULATED SALES DEMO · No real messages or payments are sent.</p>
+    <button class="sales-secondary pilot-cta" type="button" data-action="start-pilot">Start free pilot</button>
+    </div>
+    <p class="sales-note">SIMULATED SALES DEMO · No real messages or payments are sent.</p>
   </div>
 </section>
     <header class="demo-header">
@@ -302,7 +304,8 @@ window.__guestLang=function(lang){
       </div>
     </main>
 
-    <main id="hq" class="view">\n      <section id="ownerAuthGate" class="owner-auth-gate"><div class="owner-auth-card"><small>OWNER ACCESS · LIVE BACKEND</small><h1>Sign in to your business.</h1><p>Passwordless access. We send a secure magic link to the owner email.</p><label>Email<input id="ownerEmail" type="email" autocomplete="email" placeholder="owner@example.com"></label><button id="ownerLoginBtn" class="primary" type="button">Send secure sign-in link</button><span id="ownerAuthStatus"></span><button id="ownerDemoBtn" class="secondary" type="button">Continue with demo Owner OS</button></div></section>
+    <main id="hq" class="view">
+      <section id="ownerAuthGate" class="owner-auth-gate"><div class="owner-auth-card"><small>OWNER ACCESS · LIVE BACKEND</small><h1>Sign in to your business.</h1><p>Passwordless access. We send a secure magic link to the owner email.</p><label>Email<input id="ownerEmail" type="email" autocomplete="email" placeholder="owner@example.com"></label><button id="ownerLoginBtn" class="primary" type="button">Send secure sign-in link</button><span id="ownerAuthStatus"></span><button id="ownerDemoBtn" class="secondary" type="button">Continue with demo Owner OS</button></div></section>
       <div id="ownerAppShell" class="app-shell hidden">
         <aside class="sidebar">
           <div class="brand">
@@ -587,6 +590,6 @@ window.__guestLang=function(lang){
       <span>✓</span>
       <div><b id="toastTitle">Done</b><small id="toastText"></small></div>
     </div>
-    <script src="app.js?v=date-qa-1"></script>
+    <script src="app.js?v=demo-ready-3"></script>
   </body>
 </html>
