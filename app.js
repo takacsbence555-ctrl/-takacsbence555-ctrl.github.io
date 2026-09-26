@@ -1569,13 +1569,34 @@ async function supabaseRpc(fn,params){
 function selectedStaffSlug(){return STAFF_SLUGS[state.barber]||"demo-barber-a"}
 function selectedServiceSlug(){return SERVICE_SLUGS[state.service]||"skin-fade"}
 async function refreshLiveAvailability(){
-  if(!state.service||!state.barber||state.barber==="First available") return;
+  if(!state.service||!state.barber) return;
+  const dateButtons=$$(".date-strip button");
+  const grid=$(".slot-grid"); if(!grid)return;
+  grid.innerHTML='<span class="muted">Loading available times…</span>';
   try{
-    const slots=await supabaseRpc("get_public_availability",{p_business_slug:BOOKING_BUSINESS,p_staff_slug:selectedStaffSlug(),p_service_slug:selectedServiceSlug(),p_date:bookingDate});
-    const grid=$(".slot-grid"); if(!grid)return;
-    grid.innerHTML=(slots||[]).slice(0,12).map(t=>'<button data-time="'+t+'">'+t+'</button>').join("") || '<span class="muted">No available times</span>';
+    let chosenDate=bookingDate, chosenSlots=[];
+    const staffSlugs=state.barber==="First available"?Object.values(STAFF_SLUGS):[selectedStaffSlug()];
+    for(let day=0;day<dateButtons.length;day++){
+      const date=viennaISODate(day);
+      let slots=[];
+      for(const staffSlug of staffSlugs){
+        const result=await supabaseRpc("get_public_availability",{p_business_slug:BOOKING_BUSINESS,p_staff_slug:staffSlug,p_service_slug:selectedServiceSlug(),p_date:date});
+        slots.push(...(result||[]));
+      }
+      slots=[...new Set(slots)].sort().slice(0,12);
+      const btn=dateButtons[day];
+      btn.dataset.date=date;
+      btn.classList.toggle("has-slots",slots.length>0);
+      btn.disabled=slots.length===0;
+      if(date===bookingDate && slots.length){chosenDate=date;chosenSlots=slots;}
+      if(!chosenSlots.length && slots.length){chosenDate=date;chosenSlots=slots;}
+    }
+    bookingDate=chosenDate;
+    dateButtons.forEach(b=>b.classList.toggle("active",b.dataset.date===bookingDate));
+    if(!chosenSlots.length){grid.innerHTML='<span class="muted">No available times on these days</span>';return;}
+    grid.innerHTML=chosenSlots.map(t=>'<button data-time="'+t+'">'+t+'</button>').join("");
     $$("#booking .slot-grid [data-time]").forEach(b=>b.onclick=()=>{ $$("#booking .slot-grid [data-time]").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");state.time=b.dataset.time;$("#sumTime").textContent=bookingDate+" · "+state.time;bookingChoiceConfirm(state.time+" selected");state.bookStep=4;bookRefresh();});
-  }catch(e){console.error("Live availability",e);}
+  }catch(e){console.error("Live availability",e);grid.innerHTML='<span class="muted">Availability could not be loaded</span>';}
 }
 async function createLiveBooking(guestName,guestPhone){
   const startsAt=bookingDate+"T"+state.time+":00";
@@ -1730,7 +1751,7 @@ $$("[data-time]").forEach(b => b.onclick = () => {
   b.classList.add("selected"); state.time=b.dataset.time; $("#sumTime").textContent="Demo date · "+state.time;
   bookingChoiceConfirm(state.time+" selected"); state.bookStep=4; bookRefresh();
 });
-$$(".date-strip button").forEach((b,i)=>{b.dataset.date=viennaISODate(i);const d=new Date(b.dataset.date+"T12:00:00Z");const locale=state.guestLang==="EN"?"en-GB":"de-AT";const sm=b.querySelector("small"),bb=b.querySelector("b");if(sm)sm.textContent=new Intl.DateTimeFormat(locale,{weekday:"short",timeZone:"Europe/Vienna"}).format(d).toUpperCase();if(bb)bb.textContent=new Intl.DateTimeFormat(locale,{day:"2-digit",timeZone:"Europe/Vienna"}).format(d);b.onclick=async()=>{$$(".date-strip button").forEach(x=>x.classList.remove("active"));b.classList.add("active");bookingDate=b.dataset.date;state.time=null;const st=$("#sumTime");if(st)st.textContent="—";await refreshLiveAvailability();bookRefresh();};});
+$$(".date-strip button").forEach((b,i)=>{b.dataset.date=viennaISODate(i);const d=new Date(b.dataset.date+"T12:00:00Z");const locale=state.guestLang==="EN"?"en-GB":"de-AT";const sm=b.querySelector("small"),bb=b.querySelector("b");if(sm)sm.textContent=new Intl.DateTimeFormat(locale,{weekday:"short",timeZone:"Europe/Vienna"}).format(d).toUpperCase();if(bb)bb.textContent=new Intl.DateTimeFormat(locale,{day:"2-digit",timeZone:"Europe/Vienna"}).format(d);b.onclick=async()=>{if(b.disabled)return;$(".date-strip button").forEach(x=>x.classList.remove("active"));b.classList.add("active");bookingDate=b.dataset.date;state.time=null;const st=$("#sumTime");if(st)st.textContent="—";await refreshLiveAvailability();bookRefresh();};});
 if($("#bookBack")) $("#bookBack").onclick = () => {
   if (state.bookStep > 1) {
     state.bookStep--;
