@@ -1675,13 +1675,13 @@ function bookRefresh() {
   $$(".stepper span").forEach((s, i) =>
     s.classList.toggle("active", i < state.bookStep),
   );
-  $("#bookBack").disabled = state.bookStep === 1;
+  const back=$("#bookBack"); if(back) back.disabled = state.bookStep === 1;
   const progress=$("#bookProgress"); if(progress) progress.textContent=String(state.bookStep).padStart(2,"0")+" / 04";
   let ok = [
     state.service,
     state.barber,
     state.time,
-    $("#guestName").value.trim() && $("#guestPhone").value.trim(),
+    ($("#guestName")?.value||"").trim() && ($("#guestPhone")?.value||"").trim(),
   ][state.bookStep - 1];
   $("#bookNext").disabled = !ok;
   $("#bookNext").textContent =
@@ -1711,34 +1711,19 @@ $$(".date-strip button").forEach(
       b.classList.add("active");
     }),
 );
-$("#bookBack").onclick = () => {
+if($("#bookBack")) $("#bookBack").onclick = () => {
   if (state.bookStep > 1) {
     state.bookStep--;
     bookRefresh();
   }
 };
-$("#bookNext").onclick = async () => {
+if($("#bookNext")) $("#bookNext").onclick = async () => {
   if (state.bookStep < 4) { state.bookStep++; bookRefresh(); return; }
-  openDemoCheckout(); return;
-  const guestName=(($("#guestName")?.value)||"Guest").trim()||"Guest";
-  const guestPhone=(($("#guestPhone")?.value)||"").trim();
-  const btn=$("#bookNext"); if(btn){btn.disabled=true;btn.setAttribute("aria-busy","true");}
-  try{
-    const bookingId=await createLiveBooking(guestName,guestPhone);
-    state.guestDeposit=0; state.guestPaymentStatus="not_charged";
-    state.guestBooking={id:bookingId,customer:guestName,service:state.service,price:state.price,barber:state.barber,time:state.time,deposit:0,remaining:state.price,status:"Confirmed",backend:"supabase"};
-    state.guestEvents.unshift({type:"BOOKING",result:"Confirmed · €"+state.price,detail:"LIVE DATABASE · "+state.service+" · "+state.barber+" · "+state.time});
-    state.appointments++; state.forecast+=state.price; saveDemoState();
-    $(".book-step").forEach(x=>x.classList.add("hidden")); $("#bookActions")?.classList.add("hidden"); $("#bookingSuccess")?.classList.remove("hidden");
-    const p=$("#bookingSuccess p"); if(p)p.innerHTML="<b>BOOKING SAVED TO LIVE DATABASE</b><br>No real payment was charged. Payment remains simulated until a payment provider is connected.";
-    bindGuestActions(); toast(state.guestLang==="EN"?"Booking confirmed":"Buchung bestätigt","Saved to live booking database · no real charge");
-  }catch(e){
-    console.error(e); toast(state.guestLang==="EN"?"Time no longer available":"Termin nicht mehr verfügbar",state.guestLang==="EN"?"Choose another available time.":"Bitte wähle einen anderen freien Termin.");
-    state.bookStep=3; bookRefresh(); await refreshLiveAvailability();
-  }finally{if(btn){btn.removeAttribute("aria-busy");bookRefresh();}}
+  openDemoCheckout();
+
 };
 ["guestName", "guestPhone"].forEach(
-  (id) => ($("#" + id).oninput = bookRefresh),
+  (id) => { const el=$("#"+id); if(el) el.oninput=bookRefresh; },
 );
 $(`[data-action="repeat-cut"]`).forEach(btn=>btn.onclick = () => {
   state.service = state.cutMemory.service;
