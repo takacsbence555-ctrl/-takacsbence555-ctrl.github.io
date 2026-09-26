@@ -1079,7 +1079,7 @@ function renderModule(id) {
   $("#pageTitle").textContent = t[0];
   $("#pageSub").textContent = t[1];
   $("#moduleContent").innerHTML = modules[id]();
-  if (!ownerDemoMode && ownerDashboardData && ["home","calendar","customers"].includes(id)) { $("#moduleContent").insertAdjacentHTML("afterbegin",liveOnboardingPanel()+liveMetricsPanel()+liveOwnerPanel()+(id==="customers"||id==="home"?liveCrmPanel():"")); bindOnboarding(); bindLiveCrm(); }
+  if (!ownerDemoMode && ownerDashboardData && ["home","calendar","customers"].includes(id)) { $("#moduleContent").insertAdjacentHTML("afterbegin",liveSubscriptionPanel()+liveOnboardingPanel()+liveMetricsPanel()+liveOwnerPanel()+(id==="customers"||id==="home"?liveCrmPanel():"")); bindOnboarding(); bindLiveCrm(); }
   if (!ownerDemoMode && ownerAccessToken && id==="operator") { loadLiveOperator().then(()=>{ if(state.module==="operator" && liveOperatorSnapshot) $("#moduleContent").insertAdjacentHTML("afterbegin",liveOperatorBanner()); }); }
   if (!ownerDemoMode && ownerAccessToken && ["impact","decisions"].includes(id)) { loadLiveOperator().then(()=>{ if(["impact","decisions"].includes(state.module) && liveOperatorSnapshot) $("#moduleContent").insertAdjacentHTML("afterbegin",liveOperatorBanner()); }); }
   if (state.guestBooking && ["calendar","customers","money","impact","decisions"].includes(id)) {
@@ -1603,7 +1603,7 @@ async function createLiveBooking(guestName,guestPhone){
   return await supabaseRpc("create_public_booking",{p_business_slug:BOOKING_BUSINESS,p_staff_slug:selectedStaffSlug(),p_service_slug:selectedServiceSlug(),p_starts_at:startsAt,p_display_name:guestName,p_email:null,p_phone:guestPhone});
 }
 
-let ownerAccessToken=null, ownerDashboardData=null, ownerMetrics=null, ownerCrm=[], ownerRebooking=[], ownerOnboarding=null, ownerDemoMode=false;
+let ownerAccessToken=null, ownerDashboardData=null, ownerMetrics=null, ownerCrm=[], ownerRebooking=[], ownerOnboarding=null, ownerSubscription=null, ownerDemoMode=false;
 function ownerAuthHeaders(){return {"apikey":SUPABASE_KEY,"Authorization":"Bearer "+ownerAccessToken,"Content-Type":"application/json"}}
 function parseAuthHash(){
   const raw=(location.hash||"").replace(/^#/,""); if(!raw)return;
@@ -1620,7 +1620,7 @@ async function loadOwnerDashboard(){
 function showOwnerApp(demo=false){
  ownerDemoMode=demo; $("#ownerAuthGate")?.classList.add("hidden"); $("#ownerAppShell")?.classList.remove("hidden");
  if(demo){renderModule(window.__pendingModule||"home");return;}
- Promise.all([loadOwnerDashboard(),ownerRpc("owner_business_metrics",{}).catch(()=>null),ownerRpc("owner_customer_crm",{}).catch(()=>[]),ownerRpc("owner_rebooking_opportunities",{}).catch(()=>[]),ownerRpc("owner_onboarding_snapshot",{}).catch(()=>null)]).then(([data,metrics,crm,rebooking,onboarding])=>{ ownerMetrics=metrics; ownerCrm=crm||[]; ownerRebooking=rebooking||[]; ownerOnboarding=onboarding;
+ Promise.all([loadOwnerDashboard(),ownerRpc("owner_business_metrics",{}).catch(()=>null),ownerRpc("owner_customer_crm",{}).catch(()=>[]),ownerRpc("owner_rebooking_opportunities",{}).catch(()=>[]),ownerRpc("owner_onboarding_snapshot",{}).catch(()=>null),ownerRpc("owner_subscription_snapshot",{}).catch(()=>null)]).then(([data,metrics,crm,rebooking,onboarding,subscription])=>{ ownerMetrics=metrics; ownerCrm=crm||[]; ownerRebooking=rebooking||[]; ownerOnboarding=onboarding; ownerSubscription=subscription;
    if(!data){sessionStorage.removeItem("operator-owner-token");ownerAccessToken=null;showOwnerGate("This account is not connected to a business yet.");return;}
    const brand=$(".brand small");if(brand)brand.textContent=(data.business?.name||"BUSINESS")+" · LIVE";
    const owner=$(".owner small");if(owner)owner.textContent=(data.business?.role||"owner").toUpperCase()+" · LIVE BACKEND";
@@ -1680,6 +1680,14 @@ function bindLiveCrm(){
   const days=prompt("Expected rebooking cycle (days)",String(c.rebook_interval_days||28)); if(days===null)return;
   ownerRpc("owner_save_cut_memory",{p_customer_id:c.id,p_notes:notes,p_rebook_interval_days:Number(days)||28}).then(()=>refreshOwnerLive()).then(()=>toast("Cut Memory saved","Rebooking intelligence updated")).catch(e=>toast("Could not save",e.message));
  });
+}
+function liveSubscriptionPanel(){
+ if(ownerDemoMode||!ownerSubscription)return "";
+ const x=ownerSubscription, days=Math.max(0,Number(x.trial_days_remaining||0)), trial=x.status==="trialing";
+ const label=trial?(days+" DAYS LEFT"):(String(x.status||"").toUpperCase());
+ return '<section class="pilot-ready"><small>ZELORA PRO · SUBSCRIPTION</small><h3>'+label+'</h3><p>'+(trial?'Your full 14-day trial is active. No card is required during the trial.':'Subscription status: '+x.status)+
+ '</p><div class="detail-grid"><div><small>PLAN</small><b>Zelora Pro</b></div><div><small>PRICE</small><b>€79 / month</b></div><div><small>BOOKING COMMISSION</small><b>€0</b></div><div><small>SETUP</small><b>€0</b></div></div>'+
+ (trial&&days===0?'<p><b>Trial ended.</b> Connect billing to continue live owner operations.</p>':'')+'</section>';
 }
 function liveOnboardingPanel(){
  if(ownerDemoMode||!ownerOnboarding||ownerOnboarding.ready)return "";
