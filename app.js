@@ -1587,7 +1587,7 @@ async function refreshLiveAvailability(){
       const btn=dateButtons[day];
       btn.dataset.date=date;
       btn.classList.toggle("has-slots",slots.length>0);
-      btn.disabled=slots.length===0;
+      btn.disabled=false;
       if(date===bookingDate && slots.length){chosenDate=date;chosenSlots=slots;}
       if(!chosenSlots.length && slots.length){chosenDate=date;chosenSlots=slots;}
     }
