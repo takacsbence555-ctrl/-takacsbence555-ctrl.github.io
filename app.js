@@ -1756,16 +1756,16 @@ $(`[data-action="repeat-cut"]`).forEach(btn=>btn.onclick = () => {
   bookRefresh();
   toast(state.guestLang==="EN"?"Cut Memory loaded":"Cut Memory geladen", state.guestLang==="EN"?"Your usual service, professional and time are ready":"Dein üblicher Service, Professional und Termin sind bereit");
 });
-$('[data-action="waitlist"]').onclick = () => {
+{const el=$('[data-action="waitlist"]'); if(el) el.onclick = () => {
   state.guestWaitlist = true; saveDemoState();
   toast(state.guestLang==="EN"?"Smart waitlist active":"Smart-Warteliste aktiv",state.guestLang==="EN"?"DEMO: automatic matching is enabled":"DEMO: automatisches Matching ist aktiviert");
-};
-$('[data-action="new-booking"]').onclick = () => {
+};}
+{const el=$('[data-action="new-booking"]'); if(el) el.onclick = () => {
   state.bookStep=1; state.service=""; state.price=0; state.barber=""; state.time="";
   $("#bookingSuccess").classList.add("hidden"); $("#bookActions").classList.remove("hidden");
   $("#sumService").textContent=$("#sumBarber").textContent=$("#sumTime").textContent=$("#sumPrice").textContent="—";
-  $$(".selected").forEach(x=>x.classList.remove("selected")); bookRefresh();
-};
+  $(".selected").forEach(x=>x.classList.remove("selected")); bookRefresh();
+};}
 function bindGuestActions(){
   $$("[data-guest-action]").forEach(b=>b.onclick=()=>guestAction(b.dataset.guestAction));
 }
