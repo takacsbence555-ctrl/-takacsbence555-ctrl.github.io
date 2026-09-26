@@ -1780,7 +1780,7 @@ function guestAction(a){
   if(a==="gift"){state.guestGift=true; saveDemoState();return toast("Gift card created","DEMO €50 gift card · no real charge");}
 }
 bindGuestActions();
-window.applyGuestLanguage = function openDemoCheckout(){if(!state.service||!state.barber||!state.time){toast(state.guestLang==="EN"?"Complete your booking first":"Buchung zuerst vervollständigen");return;}$("#demoCheckout")?.classList.remove("hidden");}
+function openDemoCheckout(){if(!state.service||!state.barber||!state.time){toast(state.guestLang==="EN"?"Complete your booking first":"Buchung zuerst vervollständigen");return;}$("#demoCheckout")?.classList.remove("hidden");}
 function closeDemoCheckout(){$("#demoCheckout")?.classList.add("hidden");}
 async function finishDemoCheckout(method){
  const guestName=(($("#guestName")?.value)||"Guest").trim()||"Guest", guestPhone=(($("#guestPhone")?.value)||"").trim();
