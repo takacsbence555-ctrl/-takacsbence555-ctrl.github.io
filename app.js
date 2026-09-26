@@ -1280,6 +1280,7 @@ function completePlan() {
   bind();
 }
 function act(a, e) {
+  if (a === "start-pilot") return openDrawer('<span class="drawer-kicker">FOUNDING PILOT · VIENNA</span><h2>Start with €0 for 3 months.</h2><p class="muted">Founding pilot offer for the first partner businesses.</p><div class="drawer-section"><div class="detail-grid"><div><small>FIRST 3 MONTHS</small><b>€0</b></div><div><small>AFTER PILOT</small><b>€79 / month</b></div><div><small>SETUP FEE</small><b>€0</b></div><div><small>PRICE</small><b>€79 while subscribed</b></div></div></div><p class="muted">This demo does not start a subscription or charge money. Pilot activation is confirmed separately with the business owner.</p><button class="primary" data-action="close-drawer">GOT IT</button>');
   if (a === "new-appointment") return act("manual-booking", e);
   if (a === "demo-directions") return toast("Demo location", "Directions are simulated · no real address is exposed");
   if (a === "reschedule") return toast("Reschedule prepared", "DEMO: choose a new time from Calendar");
@@ -1428,8 +1429,30 @@ function act(a, e) {
       poPrepared: false,
       loyaltyPoints: 420,
       packageCredits: 3,
+      giftBalance: 65,
+      guestBooking: null,
+      guestDeposit: 0,
+      guestPaymentStatus: "none",
+      guestWaitlist: false,
+      guestReview: false,
+      guestMembership: false,
+      guestGift: false,
+      futureBooking: null,
+      guestEvents: [],
+      guestLang: "DE",
+      bookStep: 1,
+      service: "",
+      price: 0,
+      barber: "",
+      time: "",
+      addon: 0,
+      tip: 0,
     });
     clearDemoState(); saveDemoState();
+    const gn=$("#guestName"),gp=$("#guestPhone"); if(gn)gn.value="Demo Guest";if(gp)gp.value="Demo phone";
+    $(".book-step").forEach((x,i)=>x.classList.toggle("hidden",i!==0));$("[data-service],[data-barber],[data-time]").forEach(x=>x.classList.remove("selected"));
+    const success=$("#bookingSuccess");if(success)success.classList.add("hidden");const actions=$("#bookActions");if(actions)actions.classList.remove("hidden");
+    bookingDate=viennaISODate();applyGuestLanguage("DE");bookRefresh();
     return renderModule("home");
   }
   if (a === "reasoning")
