@@ -1188,7 +1188,7 @@ function openDrawer(h) {
   $("#drawerContent").innerHTML = h;
   $("#drawer").classList.remove("hidden");
   $("#overlay").classList.remove("hidden");
-  $$("[data-action]", $("#drawer")).forEach(
+  $$("[data-action]", $$("#drawer")).forEach(
     (b) => (b.onclick = () => act(b.dataset.action, b)),
   );
 }
@@ -1450,7 +1450,7 @@ function act(a, e) {
     });
     clearDemoState(); saveDemoState();
     const gn=$("#guestName"),gp=$("#guestPhone"); if(gn)gn.value="Demo Guest";if(gp)gp.value="Demo phone";
-    $(".book-step").forEach((x,i)=>x.classList.toggle("hidden",i!==0));$("[data-service],[data-barber],[data-time]").forEach(x=>x.classList.remove("selected"));
+    $$(".book-step").forEach((x,i)=>x.classList.toggle("hidden",i!==0));$$("[data-service],[data-barber],[data-time]").forEach(x=>x.classList.remove("selected"));
     const success=$("#bookingSuccess");if(success)success.classList.add("hidden");const actions=$("#bookActions");if(actions)actions.classList.remove("hidden");
     bookingDate=viennaISODate();applyGuestLanguage("DE");bookRefresh();
     return renderModule("home");
@@ -1572,7 +1572,7 @@ async function refreshLiveAvailability(){
     const slots=await supabaseRpc("get_public_availability",{p_business_slug:BOOKING_BUSINESS,p_staff_slug:selectedStaffSlug(),p_service_slug:selectedServiceSlug(),p_date:bookingDate});
     const grid=$(".slot-grid"); if(!grid)return;
     grid.innerHTML=(slots||[]).slice(0,12).map(t=>'<button data-time="'+t+'">'+t+'</button>').join("") || '<span class="muted">No available times</span>';
-    $("#booking .slot-grid [data-time]").forEach(b=>b.onclick=()=>{ $("#booking .slot-grid [data-time]").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");state.time=b.dataset.time;$("#sumTime").textContent=bookingDate+" · "+state.time;bookingChoiceConfirm(state.time+" selected");state.bookStep=4;bookRefresh();});
+    $$("#booking .slot-grid [data-time]").forEach(b=>b.onclick=()=>{ $$("#booking .slot-grid [data-time]").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");state.time=b.dataset.time;$("#sumTime").textContent=bookingDate+" · "+state.time;bookingChoiceConfirm(state.time+" selected");state.bookStep=4;bookRefresh();});
   }catch(e){console.error("Live availability",e);}
 }
 async function createLiveBooking(guestName,guestPhone){
@@ -1638,7 +1638,7 @@ function ownerBookingModal(mode,b=null){
  }
 }
 function bindLiveOwnerRows(){
- $("[data-live-booking-id]").forEach(el=>el.onclick=()=>{const b=(ownerDashboardData?.bookings||[]).find(x=>x.id===el.dataset.liveBookingId);if(b)ownerBookingModal("manage",b)});
+ $$("[data-live-booking-id]").forEach(el=>el.onclick=()=>{const b=(ownerDashboardData?.bookings||[]).find(x=>x.id===el.dataset.liveBookingId);if(b)ownerBookingModal("manage",b)});
 }
 function escLive(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
 function liveCrmPanel(){
@@ -1651,7 +1651,7 @@ function liveCrmPanel(){
 }
 function downloadJson(name,data){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)}
 function bindLiveCrm(){
- $("#moduleContent [data-crm-customer]").forEach(btn=>btn.onclick=()=>{
+ $$("#moduleContent [data-crm-customer]").forEach(btn=>btn.onclick=()=>{
   const c=(ownerCrm||[]).find(x=>x.id===btn.dataset.crmCustomer); if(!c)return;
   const action=prompt("Customer action: memory, consent, export, delete","memory"); if(action===null)return; if(action==="consent"){ownerRpc("owner_set_marketing_consent",{p_customer_id:c.id,p_consent:true}).then(()=>toast("Consent updated","Marketing consent enabled")).catch(e=>toast("Could not update",e.message));return} if(action==="export"){ownerRpc("owner_export_customer",{p_customer_id:c.id}).then(d=>downloadJson("customer-export.json",d)).catch(e=>toast("Could not export",e.message));return} if(action==="delete"){if(!confirm("Anonymize this customer and detach personal data?"))return;ownerRpc("owner_delete_customer_data",{p_customer_id:c.id}).then(()=>refreshOwnerLive()).then(()=>toast("Customer anonymized","Personal data removed")).catch(e=>toast("Could not delete",e.message));return} const notes=prompt("Cut Memory notes",c.cut_memory||""); if(notes===null)return;
   const days=prompt("Expected rebooking cycle (days)",String(c.rebook_interval_days||28)); if(days===null)return;
@@ -1693,7 +1693,7 @@ function bookingChoiceConfirm(label) {
   clearTimeout(window.__bookingChoiceTimer); window.__bookingChoiceTimer=setTimeout(()=>el.classList.remove("show"),700);
 }
 function bookRefresh() {
-  $$(".book-step").forEach((s, i) =>
+  $$$(".book-step").forEach((s, i) =>
     s.classList.toggle("hidden", i !== state.bookStep - 1),
   );
   $$(".stepper span").forEach((s, i) =>
@@ -1709,8 +1709,8 @@ function bookRefresh() {
   ][state.bookStep - 1];
   const next=$("#bookNext"); if(next){ next.disabled=!ok; next.textContent=state.bookStep===4?(state.guestLang==="EN"?"Pay €10 deposit":"€10 Anzahlung bezahlen"):(state.guestLang==="EN"?"Continue":"Weiter"); }
 }
-$("[data-service]").forEach(b => b.onclick = () => {
-  $("[data-service]").forEach(x => x.classList.remove("selected"));
+$$("[data-service]").forEach(b => b.onclick = () => {
+  $$("[data-service]").forEach(x => x.classList.remove("selected"));
   b.classList.add("selected"); state.service=b.dataset.service; state.price=+b.dataset.price;
   const ss=$("#sumService"),sp=$("#sumPrice");if(ss)ss.textContent=state.service;if(sp)sp.textContent=money(state.price);
   bookingChoiceConfirm(state.service+" selected"); state.bookStep=2; bookRefresh();
@@ -1728,7 +1728,7 @@ $$("[data-time]").forEach(b => b.onclick = () => {
   b.classList.add("selected"); state.time=b.dataset.time; $("#sumTime").textContent="Demo date · "+state.time;
   bookingChoiceConfirm(state.time+" selected"); state.bookStep=4; bookRefresh();
 });
-$(".date-strip button").forEach((b,i)=>{b.dataset.date=viennaISODate(i);const d=new Date(b.dataset.date+"T12:00:00Z");const locale=state.guestLang==="EN"?"en-GB":"de-AT";const sm=b.querySelector("small"),bb=b.querySelector("b");if(sm)sm.textContent=new Intl.DateTimeFormat(locale,{weekday:"short",timeZone:"Europe/Vienna"}).format(d).toUpperCase();if(bb)bb.textContent=new Intl.DateTimeFormat(locale,{day:"2-digit",timeZone:"Europe/Vienna"}).format(d);b.onclick=async()=>{$(".date-strip button").forEach(x=>x.classList.remove("active"));b.classList.add("active");bookingDate=b.dataset.date;state.time=null;const st=$("#sumTime");if(st)st.textContent="—";await refreshLiveAvailability();bookRefresh();};});
+$$(".date-strip button").forEach((b,i)=>{b.dataset.date=viennaISODate(i);const d=new Date(b.dataset.date+"T12:00:00Z");const locale=state.guestLang==="EN"?"en-GB":"de-AT";const sm=b.querySelector("small"),bb=b.querySelector("b");if(sm)sm.textContent=new Intl.DateTimeFormat(locale,{weekday:"short",timeZone:"Europe/Vienna"}).format(d).toUpperCase();if(bb)bb.textContent=new Intl.DateTimeFormat(locale,{day:"2-digit",timeZone:"Europe/Vienna"}).format(d);b.onclick=async()=>{$$(".date-strip button").forEach(x=>x.classList.remove("active"));b.classList.add("active");bookingDate=b.dataset.date;state.time=null;const st=$("#sumTime");if(st)st.textContent="—";await refreshLiveAvailability();bookRefresh();};});
 if($("#bookBack")) $("#bookBack").onclick = () => {
   if (state.bookStep > 1) {
     state.bookStep--;
@@ -1743,7 +1743,7 @@ if($("#bookNext")) $("#bookNext").onclick = async () => {
 ["guestName", "guestPhone"].forEach(
   (id) => { const el=$("#"+id); if(el) el.oninput=bookRefresh; },
 );
-$(`[data-action="repeat-cut"]`).forEach(btn=>btn.onclick = () => {
+$$(`[data-action="repeat-cut"]`).forEach(btn=>btn.onclick = () => {
   state.service = state.cutMemory.service;
   state.price = 42;
   state.barber = state.cutMemory.barber;
@@ -1764,7 +1764,7 @@ $(`[data-action="repeat-cut"]`).forEach(btn=>btn.onclick = () => {
   state.bookStep=1; state.service=""; state.price=0; state.barber=""; state.time="";
   $("#bookingSuccess").classList.add("hidden"); $("#bookActions").classList.remove("hidden");
   $("#sumService").textContent=$("#sumBarber").textContent=$("#sumTime").textContent=$("#sumPrice").textContent="—";
-  $(".selected").forEach(x=>x.classList.remove("selected")); bookRefresh();
+  $$(".selected").forEach(x=>x.classList.remove("selected")); bookRefresh();
 };}
 function bindGuestActions(){
   $$("[data-guest-action]").forEach(b=>b.onclick=()=>guestAction(b.dataset.guestAction));
@@ -1787,7 +1787,7 @@ function openDemoCheckout(){if(!state.service||!state.barber||!state.time){toast
 function closeDemoCheckout(){$("#demoCheckout")?.classList.add("hidden");}
 async function finishDemoCheckout(method){
  const guestName=(($("#guestName")?.value)||"Guest").trim()||"Guest", guestPhone=(($("#guestPhone")?.value)||"").trim();
- try{const bookingId=await createLiveBooking(guestName,guestPhone);state.guestDeposit=10;state.guestPaymentStatus="simulated_paid";state.guestBooking={id:bookingId,customer:guestName,service:state.service,price:state.price,barber:state.barber,time:state.time,deposit:10,remaining:Math.max(0,state.price-10),status:"Confirmed",backend:"supabase"};state.guestEvents.unshift({type:"PAYMENT",result:"€10 simulated deposit",detail:method+" · DEMO ONLY · no real charge"});state.appointments++;state.forecast+=state.price;saveDemoState();closeDemoCheckout();$$(".book-step").forEach(x=>x.classList.add("hidden"));$("#bookActions")?.classList.add("hidden");$("#bookingSuccess")?.classList.remove("hidden");const p=$("#bookingSuccess p");if(p)p.innerHTML=state.guestLang==="EN"?"<b>BOOKING CONFIRMED</b><br>€10 demo deposit approved. No real money was charged.":"<b>BUCHUNG BESTÄTIGT</b><br>€10 Demo-Anzahlung bestätigt. Es wurde kein echtes Geld abgebucht.";bindGuestActions();applyGuestLanguage(state.guestLang);toast(state.guestLang==="EN"?"Demo payment approved":"Demo-Zahlung bestätigt",state.guestLang==="EN"?"No real money was charged":"Es wurde kein echtes Geld abgebucht");}catch(e){console.error(e);closeDemoCheckout();state.bookStep=3;bookRefresh();await refreshLiveAvailability();toast(state.guestLang==="EN"?"Time no longer available":"Termin nicht mehr verfügbar");}}
+ try{const bookingId=await createLiveBooking(guestName,guestPhone);state.guestDeposit=10;state.guestPaymentStatus="simulated_paid";state.guestBooking={id:bookingId,customer:guestName,service:state.service,price:state.price,barber:state.barber,time:state.time,deposit:10,remaining:Math.max(0,state.price-10),status:"Confirmed",backend:"supabase"};state.guestEvents.unshift({type:"PAYMENT",result:"€10 simulated deposit",detail:method+" · DEMO ONLY · no real charge"});state.appointments++;state.forecast+=state.price;saveDemoState();closeDemoCheckout();$$$(".book-step").forEach(x=>x.classList.add("hidden"));$("#bookActions")?.classList.add("hidden");$("#bookingSuccess")?.classList.remove("hidden");const p=$("#bookingSuccess p");if(p)p.innerHTML=state.guestLang==="EN"?"<b>BOOKING CONFIRMED</b><br>€10 demo deposit approved. No real money was charged.":"<b>BUCHUNG BESTÄTIGT</b><br>€10 Demo-Anzahlung bestätigt. Es wurde kein echtes Geld abgebucht.";bindGuestActions();applyGuestLanguage(state.guestLang);toast(state.guestLang==="EN"?"Demo payment approved":"Demo-Zahlung bestätigt",state.guestLang==="EN"?"No real money was charged":"Es wurde kein echtes Geld abgebucht");}catch(e){console.error(e);closeDemoCheckout();state.bookStep=3;bookRefresh();await refreshLiveAvailability();toast(state.guestLang==="EN"?"Time no longer available":"Termin nicht mehr verfügbar");}}
 $("#checkoutClose")?.addEventListener("click",closeDemoCheckout);$("#demoCheckout")?.addEventListener("click",e=>{if(e.target.id==="demoCheckout")closeDemoCheckout()});$("#demoApplePay")?.addEventListener("click",()=>finishDemoCheckout("Apple Pay"));$("#demoCardPay")?.addEventListener("click",()=>finishDemoCheckout("Card"));$("#summaryPayDemo")?.addEventListener("click",()=>{if(state.bookStep!==4)return toast(state.guestLang==="EN"?"Finish the booking details first":"Bitte zuerst die Buchungsdetails ausfüllen");openDemoCheckout();});
 function applyGuestLanguage(lang){
  state.guestLang=lang;saveDemoState();const en=lang==="EN";const set=(sel,html)=>{const n=$(sel);if(n)n.innerHTML=html};
