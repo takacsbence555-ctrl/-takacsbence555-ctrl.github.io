@@ -3979,3 +3979,18 @@ button {
 @media(min-width:901px){
  #booking .book-actions{position:static!important;background:transparent!important;padding-top:22px!important}
 }
+
+/* Demo-ready mobile booking: keep the flow primary, summary secondary */
+@media(max-width:900px){
+ #booking .booking-layout{display:block!important}
+ #booking .booking-main{width:100%!important}
+ #booking .booking-summary{display:none!important}
+ #booking .book-step.hidden{display:none!important}
+ #booking .book-step:not(.hidden){display:block!important}
+ #booking .book-actions{
+   position:sticky!important;bottom:calc(8px + env(safe-area-inset-bottom))!important;
+   margin:28px 0 0!important;padding:12px 0!important;width:100%!important;
+   background:linear-gradient(to bottom,rgba(11,11,11,0),#0b0b0b 28%)!important;
+   grid-template-columns:1fr auto auto!important;
+ }
+}
