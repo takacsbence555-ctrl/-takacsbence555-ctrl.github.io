@@ -1122,7 +1122,9 @@ window.closeDrawer = closeDrawer;
 
 // One delegated controller for dynamic Owner OS controls. It survives every innerHTML rerender.
 document.addEventListener("click", (e) => {
-  const go = e.target.closest("[data-go]");
+  const target = e.target instanceof Element ? e.target : e.target?.parentElement;
+  if (!target) return;
+  const go = target.closest("[data-go]");
   if (go) { e.preventDefault(); return renderModule(go.dataset.go); }
 
   const action = target?.closest("[data-action]");
