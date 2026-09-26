@@ -1709,17 +1709,19 @@ function bookRefresh() {
   ][state.bookStep - 1];
   const next=$("#bookNext"); if(next){ next.disabled=!ok; next.textContent=state.bookStep===4?(state.guestLang==="EN"?"Pay €10 deposit":"€10 Anzahlung bezahlen"):(state.guestLang==="EN"?"Continue":"Weiter"); }
 }
-$$("[data-service]").forEach(b => b.onclick = () => {
-  $$("[data-service]").forEach(x => x.classList.remove("selected"));
+$("[data-service]").forEach(b => b.onclick = () => {
+  $("[data-service]").forEach(x => x.classList.remove("selected"));
   b.classList.add("selected"); state.service=b.dataset.service; state.price=+b.dataset.price;
-  $("#sumService").textContent=state.service; $("#sumPrice").textContent=money(state.price);
+  const ss=$("#sumService"),sp=$("#sumPrice");if(ss)ss.textContent=state.service;if(sp)sp.textContent=money(state.price);
   bookingChoiceConfirm(state.service+" selected"); state.bookStep=2; bookRefresh();
+  requestAnimationFrame(()=>document.querySelector("#bookStep2")?.scrollIntoView({behavior:"smooth",block:"start"}));
 });
 $$("[data-barber]").forEach(b => b.onclick = () => {
   $$("[data-barber]").forEach(x => x.classList.remove("selected"));
   b.classList.add("selected"); state.barber=b.dataset.barber; $("#sumBarber").textContent=state.barber;
-  const quickTime=b.querySelector(".next-slot strong")?.textContent?.match(/(\d{2}:\d{2})/)?.[1]; if(quickTime){state.time=quickTime; $("#sumTime").textContent="Demo date · "+state.time;}
-  bookingChoiceConfirm(state.barber+" · "+(quickTime||"selected")); state.bookStep=3; bookRefresh();
+  state.time=""; const st=$("#sumTime");if(st)st.textContent="—";
+  bookingChoiceConfirm(state.barber+" selected"); state.bookStep=3; bookRefresh(); refreshLiveAvailability();
+  requestAnimationFrame(()=>document.querySelector("#bookStep3")?.scrollIntoView({behavior:"smooth",block:"start"}));
 });
 $$("[data-time]").forEach(b => b.onclick = () => {
   $$("[data-time]").forEach(x => x.classList.remove("selected"));
