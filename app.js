@@ -1693,7 +1693,7 @@ function bookingChoiceConfirm(label) {
   clearTimeout(window.__bookingChoiceTimer); window.__bookingChoiceTimer=setTimeout(()=>el.classList.remove("show"),700);
 }
 function bookRefresh() {
-  $(".book-step").forEach((s, i) =>
+  $$(".book-step").forEach((s, i) =>
     s.classList.toggle("hidden", i !== state.bookStep - 1),
   );
   $$(".stepper span").forEach((s, i) =>
