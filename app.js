@@ -1534,7 +1534,8 @@ const SUPABASE_KEY="sb_publishable_3FRbG5Y2r1K_iLK27KErIQ_1CMH1a0Q";
 const BOOKING_BUSINESS="demo-studio";
 const SERVICE_SLUGS={"Classic Cut":"classic-cut","Skin Fade":"skin-fade","Cut + Beard":"cut-beard","Beard Ritual":"beard-ritual"};
 const STAFF_SLUGS={"Demo Barber A":"demo-barber-a","Demo Barber B":"demo-barber-b","Demo Barber C":"demo-barber-c"};
-let bookingDate=new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Vienna",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
+function viennaISODate(offsetDays=0){const parts=new Intl.DateTimeFormat("en-US",{timeZone:"Europe/Vienna",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());const v={};parts.forEach(p=>v[p.type]=p.value);const d=new Date(Date.UTC(+v.year,+v.month-1,+v.day+offsetDays));return d.toISOString().slice(0,10)}
+let bookingDate=viennaISODate();
 
 async function supabaseRpc(fn,params){
   const res=await fetch(SUPABASE_URL+"/rest/v1/rpc/"+fn,{method:"POST",headers:{"apikey":SUPABASE_KEY,"Authorization":"Bearer "+SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify(params)});
@@ -1552,7 +1553,7 @@ async function refreshLiveAvailability(){
   }catch(e){console.error("Live availability",e);}
 }
 async function createLiveBooking(guestName,guestPhone){
-  const startsAt=bookingDate+"T"+state.time+":00+02:00";
+  const startsAt=bookingDate+"T"+state.time+":00";
   return await supabaseRpc("create_public_booking",{p_business_slug:BOOKING_BUSINESS,p_staff_slug:selectedStaffSlug(),p_service_slug:selectedServiceSlug(),p_starts_at:startsAt,p_display_name:guestName,p_email:null,p_phone:guestPhone});
 }
 
@@ -1702,13 +1703,7 @@ $$("[data-time]").forEach(b => b.onclick = () => {
   b.classList.add("selected"); state.time=b.dataset.time; $("#sumTime").textContent="Demo date · "+state.time;
   bookingChoiceConfirm(state.time+" selected"); state.bookStep=4; bookRefresh();
 });
-$$(".date-strip button").forEach(
-  (b) =>
-    (b.onclick = () => {
-      $$(".date-strip button").forEach((x) => x.classList.remove("active"));
-      b.classList.add("active");
-    }),
-);
+$(".date-strip button").forEach((b,i)=>{b.dataset.date=viennaISODate(i);const d=new Date(b.dataset.date+"T12:00:00Z");const locale=state.guestLang==="EN"?"en-GB":"de-AT";const sm=b.querySelector("small"),bb=b.querySelector("b");if(sm)sm.textContent=new Intl.DateTimeFormat(locale,{weekday:"short",timeZone:"Europe/Vienna"}).format(d).toUpperCase();if(bb)bb.textContent=new Intl.DateTimeFormat(locale,{day:"2-digit",timeZone:"Europe/Vienna"}).format(d);b.onclick=async()=>{$(".date-strip button").forEach(x=>x.classList.remove("active"));b.classList.add("active");bookingDate=b.dataset.date;state.time=null;const st=$("#sumTime");if(st)st.textContent="—";await refreshLiveAvailability();bookRefresh();};});
 if($("#bookBack")) $("#bookBack").onclick = () => {
   if (state.bookStep > 1) {
     state.bookStep--;
