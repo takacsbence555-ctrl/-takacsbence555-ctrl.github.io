@@ -1282,7 +1282,7 @@ function completePlan() {
   bind();
 }
 function act(a, e) {
-  if (a === "start-pilot") return openDrawer('<span class="drawer-kicker">ZELORA PRO · FREE TRIAL</span><h2>14 days free. No card required.</h2><p class="muted">Use the complete Zelora Pro experience before deciding.</p><div class="drawer-section"><div class="detail-grid"><div><small>FREE TRIAL</small><b>14 days</b></div><div><small>AFTER TRIAL</small><b>€79 / month</b></div><div><small>SETUP FEE</small><b>€0</b></div><div><small>BOOKING COMMISSION</small><b>€0</b></div></div></div><p class="muted">Cancel anytime. The demo does not charge money; live billing is enabled only after payment setup is connected.</p><button class="primary" data-action="close-drawer">CONTINUE</button>');
+  if (a === "start-pilot") return openDrawer('<span class="drawer-kicker">ZELORA PRO · FREE TRIAL</span><h2>14 days free. No card required.</h2><p class="muted">Use the complete Zelora Pro experience before deciding.</p><div class="drawer-section"><div class="detail-grid"><div><small>FREE TRIAL</small><b>14 days</b></div><div><small>AFTER TRIAL</small><b>€49 / month</b></div><div><small>SETUP FEE</small><b>€0</b></div><div><small>BOOKING COMMISSION</small><b>€0</b></div></div></div><p class="muted">Cancel anytime. The demo does not charge money; live billing is enabled only after payment setup is connected.</p><button class="primary" data-action="close-drawer">CONTINUE</button>');
   if (a === "new-appointment") return act("manual-booking", e);
   if (a === "demo-directions") return toast("Demo location", "Directions are simulated · no real address is exposed");
   if (a === "reschedule") return toast("Reschedule prepared", "DEMO: choose a new time from Calendar");
@@ -1710,7 +1710,7 @@ function liveSubscriptionPanel(){
  const x=ownerSubscription, days=Math.max(0,Number(x.trial_days_remaining||0)), trial=x.status==="trialing";
  const label=trial?(days+" DAYS LEFT"):(String(x.status||"").toUpperCase());
  return '<section class="pilot-ready"><small>ZELORA PRO · SUBSCRIPTION</small><h3>'+label+'</h3><p>'+(trial?'Your full 14-day trial is active. No card is required during the trial.':'Subscription status: '+x.status)+
- '</p><div class="detail-grid"><div><small>PLAN</small><b>Zelora Pro</b></div><div><small>PRICE</small><b>€79 / month</b></div><div><small>BOOKING COMMISSION</small><b>€0</b></div><div><small>SETUP</small><b>€0</b></div></div>'+
+ '</p><div class="detail-grid"><div><small>PLAN</small><b>Zelora Pro</b></div><div><small>PRICE</small><b>€49 / month</b></div><div><small>BOOKING COMMISSION</small><b>€0</b></div><div><small>SETUP</small><b>€0</b></div></div>'+
  (trial&&days===0?'<p><b>Trial ended.</b> Connect billing to continue live owner operations.</p>':'')+'</section>';
 }
 function liveOnboardingPanel(){
