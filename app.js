@@ -1080,7 +1080,7 @@ function renderModule(id) {
   $("#pageSub").textContent = t[1];
   $("#moduleContent").innerHTML = modules[id]();
   if (!ownerDemoMode && ownerDashboardData && ["home","calendar","customers"].includes(id)) { $("#moduleContent").insertAdjacentHTML("afterbegin",liveSubscriptionPanel()+liveOnboardingPanel()+liveMetricsPanel()+liveOwnerPanel()+(id==="customers"||id==="home"?liveCrmPanel():"")); bindOnboarding(); bindLiveCrm(); }
-  if (!ownerDemoMode && ownerAccessToken && id==="settings" && ownerBusinessSettings) { $("#moduleContent").insertAdjacentHTML("afterbegin",liveSettingsPanel()); }
+  if (!ownerDemoMode && ownerAccessToken && id==="settings") { if(ownerBusinessSettings) $("#moduleContent").insertAdjacentHTML("afterbegin",liveSettingsPanel()); if(ownerSetup) $("#moduleContent").insertAdjacentHTML("afterbegin",liveSetupPanel()); }
   if (!ownerDemoMode && ownerAccessToken && id==="operator") { loadLiveOperator().then(()=>{ if(state.module==="operator" && liveOperatorSnapshot) $("#moduleContent").insertAdjacentHTML("afterbegin",liveOperatorBanner()); }); }
   if (!ownerDemoMode && ownerAccessToken && ["impact","decisions"].includes(id)) { loadLiveOperator().then(()=>{ if(["impact","decisions"].includes(state.module) && liveOperatorSnapshot) $("#moduleContent").insertAdjacentHTML("afterbegin",liveOperatorBanner()); }); }
   if (state.guestBooking && ["calendar","customers","money","impact","decisions"].includes(id)) {
@@ -1129,6 +1129,11 @@ document.addEventListener("click", (e) => {
   if (go) { e.preventDefault(); return renderModule(go.dataset.go); }
 
   const action = target?.closest("[data-action]");
+  if(action?.dataset.action==="manage-live-setup" && !ownerDemoMode){e.preventDefault();openLiveSetup();return;}
+  if(action?.dataset.action==="add-live-service" && !ownerDemoMode){e.preventDefault();ownerRpc("owner_add_service",{p_name:$("#newSvcName").value,p_duration_minutes:Number($("#newSvcDur").value),p_price_cents:Math.round(Number($("#newSvcPrice").value)*100)}).then(reloadLiveSetup).catch(()=>toast("Could not add service","Check the fields."));return;}
+  if(action?.dataset.action==="add-live-staff" && !ownerDemoMode){e.preventDefault();ownerRpc("owner_add_staff",{p_name:$("#newStaffName").value}).then(reloadLiveSetup).catch(()=>toast("Could not add staff","Check the name."));return;}
+  if(action?.dataset.action==="save-live-hours" && !ownerDemoMode){e.preventDefault();const sid=action.dataset.staffId;Promise.all([0,1,2,3,4,5,6].map(i=>ownerRpc("owner_set_working_hours",{p_staff_id:sid,p_weekday:i,p_start:$('[data-live-start="'+sid+'|'+i+'"]').value,p_end:$('[data-live-end="'+sid+'|'+i+'"]').value,p_enabled:$('[data-live-day="'+sid+'|'+i+'"]').checked}))).then(reloadLiveSetup).catch(()=>toast("Could not save hours"));return;}
+  if(action?.dataset.action==="add-live-timeoff" && !ownerDemoMode){e.preventDefault();const sid=action.dataset.staffId;ownerRpc("owner_add_time_off",{p_staff_id:sid,p_starts_at:$('[data-off-start="'+sid+'"]').value,p_ends_at:$('[data-off-end="'+sid+'"]').value,p_reason:$('[data-off-reason="'+sid+'"]').value}).then(reloadLiveSetup).catch(()=>toast("Could not block time","Check start and end."));return;}
   if(action?.dataset.action==="edit-live-settings" && !ownerDemoMode){e.preventDefault();openLiveSettings();return;}
   if(action?.dataset.action==="save-live-settings" && !ownerDemoMode){
     e.preventDefault();
@@ -1610,7 +1615,7 @@ async function createLiveBooking(guestName,guestPhone){
   return await supabaseRpc("create_public_booking",{p_business_slug:BOOKING_BUSINESS,p_staff_slug:selectedStaffSlug(),p_service_slug:selectedServiceSlug(),p_starts_at:startsAt,p_display_name:guestName,p_email:null,p_phone:guestPhone});
 }
 
-let ownerAccessToken=null, ownerDashboardData=null, ownerMetrics=null, ownerCrm=[], ownerRebooking=[], ownerOnboarding=null, ownerSubscription=null, ownerBusinessSettings=null, ownerDemoMode=false;
+let ownerAccessToken=null, ownerDashboardData=null, ownerMetrics=null, ownerCrm=[], ownerRebooking=[], ownerOnboarding=null, ownerSubscription=null, ownerBusinessSettings=null, ownerSetup=null, ownerDemoMode=false;
 function ownerAuthHeaders(){return {"apikey":SUPABASE_KEY,"Authorization":"Bearer "+ownerAccessToken,"Content-Type":"application/json"}}
 function parseAuthHash(){
   const raw=(location.hash||"").replace(/^#/,""); if(!raw)return;
@@ -1627,7 +1632,7 @@ async function loadOwnerDashboard(){
 function showOwnerApp(demo=false){
  ownerDemoMode=demo; $("#ownerAuthGate")?.classList.add("hidden"); $("#ownerAppShell")?.classList.remove("hidden");
  if(demo){renderModule(window.__pendingModule||"home");return;}
- Promise.all([loadOwnerDashboard(),ownerRpc("owner_business_metrics",{}).catch(()=>null),ownerRpc("owner_customer_crm",{}).catch(()=>[]),ownerRpc("owner_rebooking_opportunities",{}).catch(()=>[]),ownerRpc("owner_onboarding_snapshot",{}).catch(()=>null),ownerRpc("owner_subscription_snapshot",{}).catch(()=>null),ownerRpc("owner_business_settings",{}).catch(()=>null)]).then(([data,metrics,crm,rebooking,onboarding,subscription,businessSettings])=>{ ownerMetrics=metrics; ownerCrm=crm||[]; ownerRebooking=rebooking||[]; ownerOnboarding=onboarding; ownerSubscription=subscription; ownerBusinessSettings=businessSettings;
+ Promise.all([loadOwnerDashboard(),ownerRpc("owner_business_metrics",{}).catch(()=>null),ownerRpc("owner_customer_crm",{}).catch(()=>[]),ownerRpc("owner_rebooking_opportunities",{}).catch(()=>[]),ownerRpc("owner_onboarding_snapshot",{}).catch(()=>null),ownerRpc("owner_subscription_snapshot",{}).catch(()=>null),ownerRpc("owner_business_settings",{}).catch(()=>null),ownerRpc("owner_setup_snapshot",{}).catch(()=>null)]).then(([data,metrics,crm,rebooking,onboarding,subscription,businessSettings,setup])=>{ ownerMetrics=metrics; ownerCrm=crm||[]; ownerRebooking=rebooking||[]; ownerOnboarding=onboarding; ownerSubscription=subscription; ownerBusinessSettings=businessSettings; ownerSetup=setup;
    if(!data){sessionStorage.removeItem("operator-owner-token");ownerAccessToken=null;showOwnerGate("This account is not connected to a business yet.");return;}
    const brand=$(".brand small");if(brand)brand.textContent=(data.business?.name||"BUSINESS")+" · LIVE";
    const owner=$(".owner small");if(owner)owner.textContent=(data.business?.role||"owner").toUpperCase()+" · LIVE BACKEND";
@@ -1712,6 +1717,22 @@ function bindLiveCrm(){
   ownerRpc("owner_save_cut_memory",{p_customer_id:c.id,p_notes:notes,p_rebook_interval_days:Number(days)||28}).then(()=>refreshOwnerLive()).then(()=>toast("Cut Memory saved","Rebooking intelligence updated")).catch(e=>toast("Could not save",e.message));
  });
 }
+function liveSetupPanel(){
+ if(ownerDemoMode||!ownerSetup)return "";
+ const st=ownerSetup.staff||[], sv=ownerSetup.services||[], wh=ownerSetup.working_hours||[], off=ownerSetup.time_off||[];
+ const names=Object.fromEntries(st.map(x=>[x.id,x.name]));
+ return '<section class="pilot-ready"><small>KAVELYQ · LIVE SETUP</small><h3>Staff, services & availability</h3><div class="detail-grid"><div><small>STAFF</small><b>'+st.length+'</b></div><div><small>SERVICES</small><b>'+sv.length+'</b></div><div><small>WORKING DAYS</small><b>'+wh.length+'</b></div><div><small>UPCOMING TIME OFF</small><b>'+off.length+'</b></div></div><p>'+st.map(x=>x.name).join(' · ')+'</p><button class="primary small" data-action="manage-live-setup">Manage live setup</button></section>';
+}
+function openLiveSetup(){
+ const st=ownerSetup?.staff||[], sv=ownerSetup?.services||[], links=ownerSetup?.staff_services||[], wh=ownerSetup?.working_hours||[], off=ownerSetup?.time_off||[];
+ const enabled=(sid,vid)=>links.some(x=>x.staff_id===sid&&x.service_id===vid);
+ const dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+ openDrawer('<span class="drawer-kicker">KAVELYQ · LIVE SETUP</span><h2>Staff & services</h2><div class="drawer-section"><h3>Add service</h3><label>Name<input id="newSvcName" placeholder="Haircut"></label><label>Duration<input id="newSvcDur" type="number" value="45"></label><label>Price €<input id="newSvcPrice" type="number" value="45"></label><button class="secondary" data-action="add-live-service">Add service</button></div><div class="drawer-section"><h3>Add staff</h3><label>Name<input id="newStaffName" placeholder="Professional name"></label><button class="secondary" data-action="add-live-staff">Add staff</button></div>'+
+ st.map(x=>'<div class="drawer-section"><h3>'+x.name+'</h3><p>'+sv.map(v=>'<label><input type="checkbox" data-live-staff-service="'+x.id+'|'+v.id+'" '+(enabled(x.id,v.id)?'checked':'')+'> '+v.name+'</label>').join('')+'</p><h4>Working hours</h4>'+dayNames.map((d,i)=>{const h=wh.find(q=>q.staff_id===x.id&&q.weekday===i);return '<div class="live-hours"><label><input type="checkbox" data-live-day="'+x.id+'|'+i+'" '+(h?'checked':'')+'> '+d+'</label><input data-live-start="'+x.id+'|'+i+'" type="time" value="'+(h?String(h.start_time).slice(0,5):'09:00')+'"><input data-live-end="'+x.id+'|'+i+'" type="time" value="'+(h?String(h.end_time).slice(0,5):'18:00')+'"></div>'}).join('')+'<button class="secondary" data-action="save-live-hours" data-staff-id="'+x.id+'">Save hours</button><h4>Time off</h4><input data-off-start="'+x.id+'" type="datetime-local"><input data-off-end="'+x.id+'" type="datetime-local"><input data-off-reason="'+x.id+'" placeholder="Holiday / unavailable"><button class="secondary" data-action="add-live-timeoff" data-staff-id="'+x.id+'">Block time</button></div>').join('')+
+ '<div class="drawer-section"><h3>Upcoming time off</h3>'+(off.length?off.map(o=>'<p><b>'+(st.find(x=>x.id===o.staff_id)?.name||'Staff')+'</b> · '+new Date(o.starts_at).toLocaleString()+' → '+new Date(o.ends_at).toLocaleString()+'<br>'+(o.reason||'Unavailable')+'</p>').join(''):'<p class="muted">No upcoming blocked time.</p>')+'</div>');
+ $("[data-live-staff-service]").forEach(c=>c.onchange=async()=>{const [sid,vid]=c.dataset.liveStaffService.split("|");try{await ownerRpc("owner_set_staff_service",{p_staff_id:sid,p_service_id:vid,p_enabled:c.checked});ownerSetup=await ownerRpc("owner_setup_snapshot",{});toast("Service assignment saved");}catch(e){c.checked=!c.checked;toast("Could not save");}});
+}
+async function reloadLiveSetup(){ownerSetup=await ownerRpc("owner_setup_snapshot",{});openLiveSetup();}
 function liveSettingsPanel(){
  if(ownerDemoMode||!ownerBusinessSettings)return "";
  const x=ownerBusinessSettings;
