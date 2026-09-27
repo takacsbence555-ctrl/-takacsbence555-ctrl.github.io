@@ -207,57 +207,55 @@ const coreGroups = {
     features: [
       [
         "Online + manual booking",
-        "WORKING DEMO",
-        "working",
-        "manual-booking",
+        "LIVE",\n        "live",\n        "manual-booking",
         "Create booking",
       ],
       [
         "Recurring appointments",
-        "WORKING DEMO",
-        "working",
+        "PREVIEW",
+        "preview",
         "core-recurring",
         state.recurringCreated ? "4 visits created" : "Create series",
       ],
       [
         "Group booking",
-        "SIMULATED FEATURE",
-        "simulated",
+        "PREVIEW",
+        "preview",
         "core-group",
         state.groupCreated ? "Party reserved" : "Reserve party",
       ],
       [
         "Resources / rooms / equipment",
-        "SIMULATED FEATURE",
-        "simulated",
+        "PREVIEW",
+        "preview",
         "core-resource",
         "Manage chairs",
       ],
       [
         "Forms & consultations",
-        "WORKING DEMO",
-        "working",
+        "PREVIEW",
+        "preview",
         "core-form",
         state.formSent ? "Consent captured" : "Send form",
       ],
       [
         "Waitlist, walk-ins & queue",
-        "AI ENHANCED",
-        "enhanced",
+        "PREVIEW",
+        "preview",
         "fill-live-slot",
         "Run predictive fill",
       ],
       [
         "Booking rules, buffers & availability",
-        "WORKING DEMO",
-        "working",
+        "PREVIEW",
+        "preview",
         "core-rules",
         "Edit rules",
       ],
       [
         "Multi-location booking",
-        "WORKING DEMO",
-        "working",
+        "PREVIEW",
+        "preview",
         "core-locations",
         "Open locations",
       ],
@@ -269,43 +267,43 @@ const coreGroups = {
     features: [
       [
         "Profiles, visits, payments & communication",
-        "WORKING DEMO",
-        "working",
+        "PREVIEW",
+        "preview",
         "core-profile",
         "Open profile",
       ],
       [
         "Notes, photos, documents & forms",
-        "WORKING DEMO",
-        "working",
+        "PREVIEW",
+        "preview",
         "core-documents",
         "Open records",
       ],
       [
         "Tags, preferences & preferred employee",
-        "WORKING DEMO",
-        "working",
+        "PREVIEW",
+        "preview",
         "core-segments",
         "Manage segments",
       ],
       [
         "LTV, retention, churn & next visit",
-        "AI ENHANCED",
-        "enhanced",
+        "PREVIEW",
+        "preview",
         "reactivate",
         "Execute intervention",
       ],
       [
         "Saved cards & customer wallet",
-        "SIMULATED FEATURE",
-        "simulated",
+        "PREVIEW",
+        "preview",
         "core-wallet",
         "Open wallet",
       ],
       [
         "No-show history & policy state",
-        "AI ENHANCED",
-        "enhanced",
+        "PREVIEW",
+        "preview",
         "risk",
         "Review risk",
       ],
@@ -318,57 +316,57 @@ const coreGroups = {
     features: [
       [
         "Cash, card, Tap to Pay & receipts",
-        "WORKING DEMO",
-        "working",
+        "PREVIEW",
+        "preview",
         "open-checkout",
         "Open checkout",
       ],
       [
         "Deposits, prepayment & cancellation fees",
-        "WORKING DEMO",
-        "working",
+        "PREVIEW",
+        "preview",
         "core-deposit",
         "Edit protection",
       ],
       [
         "Tips & split payments",
-        "SIMULATED FEATURE",
-        "simulated",
+        "PREVIEW",
+        "preview",
         "core-split",
         "Run split payment",
       ],
       [
         "Refunds & adjustments",
-        "WORKING DEMO",
-        "working",
+        "PREVIEW",
+        "preview",
         "core-refund",
         state.refundPending ? "Approval pending" : "Request refund",
       ],
       [
         "Gift cards",
-        "SIMULATED FEATURE",
-        "simulated",
+        "PREVIEW",
+        "preview",
         "core-gift",
         "Balance " + money(state.giftBalance),
       ],
       [
         "Memberships",
-        "SIMULATED FEATURE",
-        "simulated",
+        "PREVIEW",
+        "preview",
         "core-membership",
         "Active · Monthly Cut",
       ],
       [
         "Packages",
-        "SIMULATED FEATURE",
-        "simulated",
+        "PREVIEW",
+        "preview",
         "core-package",
         state.packageCredits + " credits left",
       ],
       [
         "Cash management & payment reporting",
-        "PLANNED PRODUCTION",
-        "planned",
+        "COMING SOON",
+        "coming",
         "core-cash",
         "Open day close",
       ],
@@ -380,36 +378,34 @@ const coreGroups = {
     features: [
       [
         "Schedules, shifts, breaks & time off",
-        "WORKING DEMO",
-        "working",
+        "PREVIEW",
+        "preview",
         "core-shifts",
         "Open schedule",
       ],
       [
         "Roles & advanced permissions",
-        "WORKING DEMO",
-        "working",
+        "PREVIEW",
+        "preview",
         "core-permissions",
         "Edit access",
       ],
       [
         "Commission, tips & payout estimate",
-        "SIMULATED FEATURE",
-        "simulated",
+        "PREVIEW",
+        "preview",
         "core-payout",
         "Review payout",
       ],
       [
         "Services, prices & working hours",
-        "WORKING DEMO",
-        "working",
-        "core-staff-services",
+        "LIVE",\n        "live",\n        "core-staff-services",
         "Edit staff setup",
       ],
       [
         "Revenue, utilization, retention & ticket",
-        "AI ENHANCED",
-        "enhanced",
+        "PREVIEW",
+        "preview",
         "staff-plan",
         "Create growth plan",
       ],
@@ -422,50 +418,50 @@ const coreGroups = {
     features: [
       [
         "Email, SMS & WhatsApp campaigns",
-        "WORKING DEMO",
-        "working",
+        "PREVIEW",
+        "preview",
         "campaign",
         "Prepare campaign",
       ],
       [
         "Rebooking, reactivation & win-back",
-        "AI ENHANCED",
-        "enhanced",
+        "PREVIEW",
+        "preview",
         "reactivate",
         "Execute plan",
       ],
       [
         "Birthday, reviews & Google reviews",
-        "SIMULATED FEATURE",
-        "simulated",
+        "PREVIEW",
+        "preview",
         "reviews",
         "Activate flow",
       ],
       [
         "Referrals & loyalty",
-        "SIMULATED FEATURE",
-        "simulated",
+        "PREVIEW",
+        "preview",
         "core-loyalty",
         state.loyaltyPoints + " points",
       ],
       [
         "Promotions, discounts & off-peak offers",
-        "AI ENHANCED",
-        "enhanced",
+        "PREVIEW",
+        "preview",
         "pricing",
         "Review guardrails",
       ],
       [
         "Campaign analytics & attribution",
-        "WORKING DEMO",
-        "working",
+        "PREVIEW",
+        "preview",
         "impact-detail",
         "Trace revenue",
       ],
       [
         "Marketplace, social & Google booking",
-        "PLANNED PRODUCTION",
-        "planned",
+        "COMING SOON",
+        "coming",
         "core-channels",
         "Manage channels",
       ],
@@ -477,43 +473,43 @@ const coreGroups = {
     features: [
       [
         "Products, stock & movements",
-        "WORKING DEMO",
-        "working",
+        "PREVIEW",
+        "preview",
         "core-stock",
         "Open stock ledger",
       ],
       [
         "Product sales & service consumption",
-        "SIMULATED FEATURE",
-        "simulated",
+        "PREVIEW",
+        "preview",
         "core-consumption",
         "Review usage",
       ],
       [
         "Low-stock warnings",
-        "AI ENHANCED",
-        "enhanced",
+        "PREVIEW",
+        "preview",
         "reorder",
         "Prepare replenishment",
       ],
       [
         "Suppliers & purchase orders",
-        "WORKING DEMO",
-        "working",
+        "PREVIEW",
+        "preview",
         "core-purchase",
         state.poPrepared ? "PO awaiting approval" : "Create PO",
       ],
       [
         "Inventory valuation & reporting",
-        "PLANNED PRODUCTION",
-        "planned",
+        "COMING SOON",
+        "coming",
         "core-valuation",
         "Open valuation",
       ],
       [
         "Online retail / click & collect",
-        "PLANNED PRODUCTION",
-        "planned",
+        "COMING SOON",
+        "coming",
         "core-retail",
         "View roadmap",
       ],
@@ -525,50 +521,50 @@ const coreGroups = {
     features: [
       [
         "Revenue, sales & payments",
-        "WORKING DEMO",
-        "working",
+        "PREVIEW",
+        "preview",
         "core-report",
         "Open report",
       ],
       [
         "Appointments, customers & no-shows",
-        "WORKING DEMO",
-        "working",
+        "PREVIEW",
+        "preview",
         "core-report",
         "Open report",
       ],
       [
         "Retention, churn & LTV",
-        "AI ENHANCED",
-        "enhanced",
+        "PREVIEW",
+        "preview",
         "core-report-plan",
         "Execute improvement plan",
       ],
       [
         "Utilization & staff performance",
-        "AI ENHANCED",
-        "enhanced",
+        "PREVIEW",
+        "preview",
         "staff-plan",
         "Create capacity plan",
       ],
       [
         "Marketing & inventory attribution",
-        "WORKING DEMO",
-        "working",
+        "PREVIEW",
+        "preview",
         "impact-detail",
         "Trace result",
       ],
       [
         "Locations & financial reporting",
-        "SIMULATED FEATURE",
-        "simulated",
+        "PREVIEW",
+        "preview",
         "diagnose-location",
         "Diagnose location",
       ],
       [
         "Data export & connector",
-        "PLANNED PRODUCTION",
-        "planned",
+        "COMING SOON",
+        "coming",
         "core-export",
         "View export plan",
       ],
@@ -580,50 +576,48 @@ const coreGroups = {
     features: [
       [
         "Multi-location, roles & security",
-        "WORKING DEMO",
-        "working",
+        "PREVIEW",
+        "preview",
         "core-admin",
         "Open admin",
       ],
       [
         "Responsive owner experience",
-        "WORKING DEMO",
-        "working",
+        "PREVIEW",
+        "preview",
         "core-mobile",
         "Preview mobile",
       ],
       [
         "Customer booking experience",
-        "WORKING DEMO",
-        "working",
-        "core-guest",
+        "LIVE",\n        "live",\n        "core-guest",
         "Open guest view",
       ],
       [
         "Website, booking page & widget",
-        "SIMULATED FEATURE",
-        "simulated",
+        "PREVIEW",
+        "preview",
         "core-channels",
         "Manage channels",
       ],
       [
         "Notifications & social integrations",
-        "SIMULATED FEATURE",
-        "simulated",
+        "PREVIEW",
+        "preview",
         "core-channels",
         "Manage integrations",
       ],
       [
         "Data import / export",
-        "PLANNED PRODUCTION",
-        "planned",
+        "COMING SOON",
+        "coming",
         "core-import",
         "View migration",
       ],
       [
         "Marketplace / discovery",
-        "PLANNED PRODUCTION",
-        "planned",
+        "COMING SOON",
+        "coming",
         "core-marketplace",
         "View ecosystem",
       ],
@@ -631,19 +625,8 @@ const coreGroups = {
   },
 };
 function coreCard(f) {
-  return (
-    '<article class="core-card"><header><em class="' +
-    f[2] +
-    '">' +
-    f[1] +
-    "</em></header><h3>" +
-    f[0] +
-    '</h3><button data-action="' +
-    f[3] +
-    '">' +
-    f[4] +
-    " →</button></article>"
-  );
+ const active=f[2]==="live";
+ return '<article class="core-card"><header><em class="'+f[2]+'">'+f[1]+'</em></header><h3>'+f[0]+'</h3>'+(active?'<button data-action="'+f[3]+'">'+f[4]+' →</button>':'<button type="button" disabled aria-disabled="true">'+(f[2]==="coming"?"Coming soon":"Preview only")+'</button>')+'</article>';
 }
 modules.core = () => {
   const setCoreLabel = (group, action, label) => {
@@ -683,7 +666,7 @@ modules.core = () => {
   );
   let g = coreGroups[state.coreTab];
   return (
-    '<section class="core-hero"><div><span>COMPLETE BUSINESS PLATFORM</span><h2>AI-first. Manual always available.</h2><p>The Operator prepares or performs routine work; every underlying control remains accessible here.</p></div><div><b>42</b><small>capabilities demonstrated</small></div></section><div class="core-tabs">' +
+    '<section class="core-hero"><div><span>KAVELYQ PRODUCT MAP</span><h2>Live today. Preview next.</h2><p>Only features marked LIVE are enabled in the production workflow. Preview and Coming Soon items are visible for product direction only.</p></div></section><div class="core-tabs">' +
     Object.entries(coreGroups)
       .map(
         ([k, v]) =>
@@ -700,9 +683,9 @@ modules.core = () => {
     g.label +
     "</h2><p>" +
     g.summary +
-    '</p></div><span class="demo-chip">DEMO PRODUCT STATE</span></header><div class="core-grid">' +
+    '</p></div><span class="demo-chip">PRODUCT STATUS</span></header><div class="core-grid">' +
     g.features.map(coreCard).join("") +
-    '</div></section><div class="core-legend"><span><i class="working"></i> Working demo</span><span><i class="simulated"></i> Simulated feature</span><span><i class="planned"></i> Planned production</span><span><i class="enhanced"></i> AI enhanced</span><b>Covered means demonstrable — never an empty page.</b></div>'
+    '</div></section><div class="core-legend"><span><i class="live"></i> LIVE</span><span><i class="preview"></i> PREVIEW</span><span><i class="coming"></i> COMING SOON</span><b>Preview items cannot execute production actions.</b></div>'
   );
 };
 function statusLabel() {
