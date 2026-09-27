@@ -207,7 +207,9 @@ const coreGroups = {
     features: [
       [
         "Online + manual booking",
-        "LIVE",\n        "live",\n        "manual-booking",
+        "LIVE",
+        "live",
+        "manual-booking",
         "Create booking",
       ],
       [
@@ -399,7 +401,9 @@ const coreGroups = {
       ],
       [
         "Services, prices & working hours",
-        "LIVE",\n        "live",\n        "core-staff-services",
+        "LIVE",
+        "live",
+        "core-staff-services",
         "Edit staff setup",
       ],
       [
@@ -590,7 +594,9 @@ const coreGroups = {
       ],
       [
         "Customer booking experience",
-        "LIVE",\n        "live",\n        "core-guest",
+        "LIVE",
+        "live",
+        "core-guest",
         "Open guest view",
       ],
       [
