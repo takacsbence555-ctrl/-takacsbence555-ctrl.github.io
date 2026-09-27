@@ -211,10 +211,7 @@ window.__guestLang=function(lang){
               </div>
               <div class="or"><span>oder ohne Konto buchen</span></div>
               <div class="form-grid">
-                <label>Name<input id="guestName" value="Demo Guest" /></label
-                ><label
-                  >Telefon<input id="guestPhone" value="Demo phone"
-                /></label>
+                <label>Name<input id="guestName" autocomplete="name" placeholder="Your name" /></label><label>Email<input id="guestEmail" type="email" autocomplete="email" placeholder="you@example.com" /></label><label>Telefon<input id="guestPhone" type="tel" autocomplete="tel" placeholder="+43 …" /></label>
               </div>
               <div class="deposit-card">
                 <span
@@ -226,7 +223,7 @@ window.__guestLang=function(lang){
                 ><strong>€10</strong>
               </div>
               <div class="policy">
-                <input type="checkbox" checked />
+                <input id="bookingPolicyConsent" type="checkbox" />
                 <span
                   >Kostenlose Stornierung bis 24 Stunden. Danach können 50%
                   verrechnet werden.</span
@@ -310,8 +307,8 @@ window.__guestLang=function(lang){
       <div id="ownerAppShell" class="app-shell hidden">
         <aside class="sidebar">
           <div class="brand">
-            <span>O</span>
-            <div>OPERATOR<small>NOIR · DEMO STUDIO</small></div>
+            <span>K</span>
+            <div>KAVELYQ<small>AI BUSINESS OS</small></div>
           </div>
           <nav id="sideNav">
             <button class="active" data-module="home" onclick="window.__openModule('home')">
