@@ -1129,6 +1129,12 @@ document.addEventListener("click", (e) => {
   if (go) { e.preventDefault(); return renderModule(go.dataset.go); }
 
   const action = target?.closest("[data-action]");
+  if(action?.dataset.action==="crm-save-memory" && !ownerDemoMode){e.preventDefault();const id=action.dataset.customerId;ownerRpc("owner_save_cut_memory",{p_customer_id:id,p_notes:$("#crmMemory").value,p_rebook_interval_days:Number($("#crmDays").value)||28}).then(()=>refreshOwnerLive()).then(()=>{closeDrawer();toast("Customer memory saved");}).catch(()=>toast("Could not save"));return;}
+  if(action?.dataset.action==="crm-save-consent" && !ownerDemoMode){e.preventDefault();const id=action.dataset.customerId;ownerRpc("owner_set_marketing_consent",{p_customer_id:id,p_consent:$("#crmConsent").checked}).then(()=>refreshOwnerLive()).then(()=>toast("Consent preference saved")).catch(()=>toast("Could not save consent"));return;}
+  if(action?.dataset.action==="crm-export" && !ownerDemoMode){e.preventDefault();const id=action.dataset.customerId;ownerRpc("owner_export_customer",{p_customer_id:id}).then(d=>downloadJson("kavelyq-customer-export.json",d)).catch(()=>toast("Could not export"));return;}
+  if(action?.dataset.action==="crm-anonymize-confirm" && !ownerDemoMode){e.preventDefault();const id=action.dataset.customerId;openDrawer('<span class="drawer-kicker">PERMANENT PRIVACY ACTION</span><h2>Anonymize customer?</h2><p>This removes the customer’s personal data from KAVELYQ. This cannot be undone.</p><label>Type ANONYMIZE to confirm<input id="anonConfirm" autocomplete="off"></label><button class="danger" data-action="crm-anonymize-now" data-customer-id="'+id+'">Permanently anonymize</button>');return;}
+  if(action?.dataset.action==="crm-anonymize-now" && !ownerDemoMode){e.preventDefault();if($("#anonConfirm")?.value!=="ANONYMIZE")return toast("Confirmation required","Type ANONYMIZE exactly.");const id=action.dataset.customerId;ownerRpc("owner_delete_customer_data",{p_customer_id:id}).then(()=>refreshOwnerLive()).then(()=>{closeDrawer();toast("Customer anonymized","Personal data removed.");}).catch(()=>toast("Could not anonymize"));return;}
+  if(action?.dataset.action==="owner-signout"){e.preventDefault();ownerSignOut();return;}
   if(action?.dataset.action==="save-live-service" && !ownerDemoMode){e.preventDefault();const id=action.dataset.serviceId;ownerRpc("owner_update_service",{p_service_id:id,p_name:$('[data-edit-svc-name="'+id+'"]').value,p_duration_minutes:Number($('[data-edit-svc-dur="'+id+'"]').value),p_price_cents:Math.round(Number($('[data-edit-svc-price="'+id+'"]').value)*100),p_active:$('[data-edit-svc-active="'+id+'"]').checked}).then(reloadLiveSetup).catch(()=>toast("Could not save service"));return;}
   if(action?.dataset.action==="save-live-staff" && !ownerDemoMode){e.preventDefault();const id=action.dataset.staffId;ownerRpc("owner_update_staff",{p_staff_id:id,p_name:$('[data-edit-staff-name="'+id+'"]').value,p_active:$('[data-edit-staff-active="'+id+'"]').checked}).then(reloadLiveSetup).catch(()=>toast("Could not save staff"));return;}
   if(action?.dataset.action==="remove-live-timeoff" && !ownerDemoMode){e.preventDefault();ownerRpc("owner_remove_time_off",{p_time_off_id:action.dataset.timeoffId}).then(reloadLiveSetup).catch(()=>toast("Could not remove blocked time"));return;}
@@ -1623,9 +1629,11 @@ async function createLiveBooking(guestName,guestPhone){
 let ownerAccessToken=null, ownerDashboardData=null, ownerMetrics=null, ownerCrm=[], ownerRebooking=[], ownerOnboarding=null, ownerSubscription=null, ownerBusinessSettings=null, ownerSetup=null, ownerDemoMode=false;
 function ownerAuthHeaders(){return {"apikey":SUPABASE_KEY,"Authorization":"Bearer "+ownerAccessToken,"Content-Type":"application/json"}}
 function parseAuthHash(){
-  const raw=(location.hash||"").replace(/^#/,""); if(!raw)return;
-  const q=new URLSearchParams(raw); const token=q.get("access_token"); if(token){ownerAccessToken=token;sessionStorage.setItem("operator-owner-token",token);history.replaceState(null,"",location.pathname+location.search);}
+ const raw=(location.hash||"").replace(/^#/,""); const q=new URLSearchParams(raw); const token=q.get("access_token");
+ if(token){ownerAccessToken=token;sessionStorage.setItem("kavelyq-owner-token",token);sessionStorage.removeItem("operator-owner-token");history.replaceState(null,"",location.pathname+location.search);return true;}
+ ownerAccessToken=sessionStorage.getItem("kavelyq-owner-token")||sessionStorage.getItem("operator-owner-token")||null;return !!ownerAccessToken;
 }
+function ownerSignOut(){ownerAccessToken=null;sessionStorage.removeItem("kavelyq-owner-token");sessionStorage.removeItem("operator-owner-token");ownerDashboardData=null;ownerCrm=[];ownerSetup=null;showOwnerGate("Signed out securely.");}
 async function ownerRpc(fn,params={}){
  const res=await fetch(SUPABASE_URL+"/rest/v1/rpc/"+fn,{method:"POST",headers:ownerAuthHeaders(),body:JSON.stringify(params)});
  if(res.status===401)throw new Error("AUTH_REQUIRED"); const t=await res.text();if(!res.ok)throw new Error(t||("HTTP "+res.status));return t?JSON.parse(t):null;
@@ -1638,11 +1646,11 @@ function showOwnerApp(demo=false){
  ownerDemoMode=demo; $("#ownerAuthGate")?.classList.add("hidden"); $("#ownerAppShell")?.classList.remove("hidden");
  if(demo){renderModule(window.__pendingModule||"home");return;}
  Promise.all([loadOwnerDashboard(),ownerRpc("owner_business_metrics",{}).catch(()=>null),ownerRpc("owner_customer_crm",{}).catch(()=>[]),ownerRpc("owner_rebooking_opportunities",{}).catch(()=>[]),ownerRpc("owner_onboarding_snapshot",{}).catch(()=>null),ownerRpc("owner_subscription_snapshot",{}).catch(()=>null),ownerRpc("owner_business_settings",{}).catch(()=>null),ownerRpc("owner_setup_snapshot",{}).catch(()=>null)]).then(([data,metrics,crm,rebooking,onboarding,subscription,businessSettings,setup])=>{ ownerMetrics=metrics; ownerCrm=crm||[]; ownerRebooking=rebooking||[]; ownerOnboarding=onboarding; ownerSubscription=subscription; ownerBusinessSettings=businessSettings; ownerSetup=setup;
-   if(!data){sessionStorage.removeItem("operator-owner-token");ownerAccessToken=null;showOwnerGate("This account is not connected to a business yet.");return;}
+   if(!data){sessionStorage.removeItem("operator-owner-token");sessionStorage.removeItem("kavelyq-owner-token");ownerAccessToken=null;showOwnerGate("This account is not connected to a business yet.");return;}
    const brand=$(".brand small");if(brand)brand.textContent=(data.business?.name||"BUSINESS")+" · LIVE";
    const owner=$(".owner small");if(owner)owner.textContent=(data.business?.role||"owner").toUpperCase()+" · LIVE BACKEND";
    renderModule(window.__pendingModule||"home");
- }).catch(()=>{sessionStorage.removeItem("operator-owner-token");ownerAccessToken=null;showOwnerGate("Sign-in expired. Request a new secure link.");});
+ }).catch(()=>{sessionStorage.removeItem("operator-owner-token");sessionStorage.removeItem("kavelyq-owner-token");ownerAccessToken=null;showOwnerGate("Sign-in expired. Request a new secure link.");});
 }
 function showOwnerGate(message=""){
  $("#ownerAppShell")?.classList.add("hidden");$("#ownerAuthGate")?.classList.remove("hidden");const s=$("#ownerAuthStatus");if(s)s.textContent=message;
@@ -1715,13 +1723,11 @@ function liveCrmPanel(){
  '<div><h4>Customer memory</h4>'+(customers.length?customers.map(x=>'<button class="crm-row" data-crm-customer="'+x.id+'"><b>'+escLive(x.display_name)+'</b><span>'+(x.visit_count||0)+' visits · €'+((x.lifetime_value_cents||0)/100).toFixed(0)+' LTV</span><em>'+escLive(x.cut_memory||x.preferred_service||"No Cut Memory yet")+'</em></button>').join(""):'<p class="muted">No live customer history yet.</p>')+'</div></div></section>';
 }
 function downloadJson(name,data){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)}
+function openLiveCustomer(c){
+ openDrawer('<span class="drawer-kicker">KAVELYQ · CUSTOMER</span><h2>'+escLive(c.display_name)+'</h2><div class="detail-grid"><div><small>VISITS</small><b>'+(c.visit_count||0)+'</b></div><div><small>LTV</small><b>€'+((c.lifetime_value_cents||0)/100).toFixed(0)+'</b></div><div><small>MARKETING</small><b>'+(c.marketing_consent?'Allowed':'Not allowed')+'</b></div><div><small>REBOOK CYCLE</small><b>'+(c.rebook_interval_days||28)+' days</b></div></div><label>Cut / customer memory<textarea id="crmMemory">'+escLive(c.cut_memory||'')+'</textarea></label><label>Expected rebooking cycle (days)<input id="crmDays" type="number" min="1" max="365" value="'+(c.rebook_interval_days||28)+'"></label><button class="primary" data-action="crm-save-memory" data-customer-id="'+c.id+'">Save memory</button><div class="drawer-section"><h3>Privacy & consent</h3><label><input id="crmConsent" type="checkbox" '+(c.marketing_consent?'checked':'')+'> Customer has marketing consent</label><button class="secondary" data-action="crm-save-consent" data-customer-id="'+c.id+'">Save consent</button><button class="secondary" data-action="crm-export" data-customer-id="'+c.id+'">Export customer data</button><p class="muted">Anonymization permanently removes personal customer data from the CRM while preserving non-personal business records.</p><button class="danger" data-action="crm-anonymize-confirm" data-customer-id="'+c.id+'">Anonymize customer…</button></div>');
+}
 function bindLiveCrm(){
- $$("#moduleContent [data-crm-customer]").forEach(btn=>btn.onclick=()=>{
-  const c=(ownerCrm||[]).find(x=>x.id===btn.dataset.crmCustomer); if(!c)return;
-  const action=prompt("Customer action: memory, consent, export, delete","memory"); if(action===null)return; if(action==="consent"){ownerRpc("owner_set_marketing_consent",{p_customer_id:c.id,p_consent:true}).then(()=>toast("Consent updated","Marketing consent enabled")).catch(e=>toast("Could not update",e.message));return} if(action==="export"){ownerRpc("owner_export_customer",{p_customer_id:c.id}).then(d=>downloadJson("customer-export.json",d)).catch(e=>toast("Could not export",e.message));return} if(action==="delete"){if(!confirm("Anonymize this customer and detach personal data?"))return;ownerRpc("owner_delete_customer_data",{p_customer_id:c.id}).then(()=>refreshOwnerLive()).then(()=>toast("Customer anonymized","Personal data removed")).catch(e=>toast("Could not delete",e.message));return} const notes=prompt("Cut Memory notes",c.cut_memory||""); if(notes===null)return;
-  const days=prompt("Expected rebooking cycle (days)",String(c.rebook_interval_days||28)); if(days===null)return;
-  ownerRpc("owner_save_cut_memory",{p_customer_id:c.id,p_notes:notes,p_rebook_interval_days:Number(days)||28}).then(()=>refreshOwnerLive()).then(()=>toast("Cut Memory saved","Rebooking intelligence updated")).catch(e=>toast("Could not save",e.message));
- });
+ $$("#moduleContent [data-crm-customer]").forEach(btn=>btn.onclick=()=>{const c=(ownerCrm||[]).find(x=>x.id===btn.dataset.crmCustomer);if(c)openLiveCustomer(c);});
 }
 function liveSetupPanel(){
  if(ownerDemoMode||!ownerSetup)return "";
@@ -1780,7 +1786,7 @@ document.addEventListener("DOMContentLoaded",()=>{
  $("#ownerLoginBtn")?.addEventListener("click",sendOwnerMagicLink);
  $("#ownerDemoBtn")?.addEventListener("click",()=>showOwnerApp(true));
  $("#ownerTrialBtn")?.addEventListener("click",startOwnerTrial);
- $("#ownerSignOut")?.addEventListener("click",()=>{sessionStorage.removeItem("operator-owner-token");ownerAccessToken=null;ownerDashboardData=null;showOwnerGate("Signed out.");});
+ $("#ownerSignOut")?.addEventListener("click",()=>{sessionStorage.removeItem("operator-owner-token");sessionStorage.removeItem("kavelyq-owner-token");ownerAccessToken=null;ownerDashboardData=null;showOwnerGate("Signed out.");});
  if(ownerAccessToken){ if(new URLSearchParams(location.search).get("new_business")==="1") openBusinessSetup(); else showOwnerApp(false); }else showOwnerGate();
 });
 
