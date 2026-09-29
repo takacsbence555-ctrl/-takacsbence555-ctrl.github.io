@@ -1617,9 +1617,22 @@ async function createLiveBooking(guestName,guestPhone,guestEmail){
 let ownerAccessToken=null, ownerDashboardData=null, ownerMetrics=null, ownerCrm=[], ownerRebooking=[], ownerOnboarding=null, ownerSubscription=null, ownerBusinessSettings=null, ownerSetup=null, ownerDemoMode=false;
 function ownerAuthHeaders(){return {"apikey":SUPABASE_KEY,"Authorization":"Bearer "+ownerAccessToken,"Content-Type":"application/json"}}
 function parseAuthHash(){
- const raw=(location.hash||"").replace(/^#/,""); const q=new URLSearchParams(raw); const token=q.get("access_token");
+ const hash=new URLSearchParams((location.hash||"").replace(/^#/,"")),query=new URLSearchParams(location.search);
+ const token=hash.get("access_token");
  if(token){ownerAccessToken=token;sessionStorage.setItem("kavelyq-owner-token",token);sessionStorage.removeItem("operator-owner-token");history.replaceState(null,"",location.pathname+location.search);return true;}
+ const code=query.get("code");
+ if(code){showOwnerGate("Completing secure sign-in…");exchangeOwnerAuthCode(code);return false;}
  ownerAccessToken=sessionStorage.getItem("kavelyq-owner-token")||sessionStorage.getItem("operator-owner-token")||null;return !!ownerAccessToken;
+}
+async function exchangeOwnerAuthCode(code){
+ try{
+  const verifier=sessionStorage.getItem("kavelyq-pkce-verifier");if(!verifier)throw new Error("PKCE_MISSING");
+  const res=await fetch(SUPABASE_URL+"/auth/v1/token?grant_type=pkce",{method:"POST",headers:{"apikey":SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify({auth_code:code,code_verifier:verifier})});
+  const out=await res.json();if(!res.ok||!out.access_token)throw new Error("AUTH_EXCHANGE_FAILED");
+  ownerAccessToken=out.access_token;sessionStorage.setItem("kavelyq-owner-token",out.access_token);sessionStorage.removeItem("kavelyq-pkce-verifier");
+  const keep=new URLSearchParams(location.search),isNew=keep.get("new_business")==="1";keep.delete("code");history.replaceState(null,"",location.pathname+(keep.toString()?"?"+keep:""));
+  if(isNew)openBusinessSetup();else showOwnerApp(false);
+ }catch(e){showOwnerGate("Secure sign-in could not be completed. Request a new link.");}
 }
 function ownerSignOut(){ownerAccessToken=null;sessionStorage.removeItem("kavelyq-owner-token");sessionStorage.removeItem("operator-owner-token");ownerDashboardData=null;ownerCrm=[];ownerSetup=null;showOwnerGate("Signed out securely.");}
 async function ownerRpc(fn,params={}){
@@ -1770,7 +1783,7 @@ function liveOwnerPanel(){
  return '<section class="synced-booking"><div><span>LIVE BUSINESS DATA · SUPABASE</span><h3>'+d.business.name+'</h3><p>'+d.counts.bookings+' bookings · '+d.counts.customers+' customers · '+d.counts.staff+' staff · '+d.counts.services+' services</p></div><b>LIVE</b></section>'+(rows?'<section class="guest-audit-trail"><div class="panel-head"><h2>Live bookings</h2><span class="demo-chip">DATABASE</span></div>'+rows+'</section>':'');
 }
 parseAuthHash();
-ownerAccessToken=ownerAccessToken||sessionStorage.getItem("operator-owner-token");
+ownerAccessToken=ownerAccessToken||sessionStorage.getItem("kavelyq-owner-token")||sessionStorage.getItem("operator-owner-token");
 document.addEventListener("DOMContentLoaded",()=>{
  $("#ownerLoginBtn")?.addEventListener("click",sendOwnerMagicLink);
  $("#ownerDemoBtn")?.addEventListener("click",()=>showOwnerApp(true));
@@ -1799,7 +1812,7 @@ function bookRefresh() {
     state.service,
     state.barber,
     state.time,
-    ($("#guestName")?.value||"").trim() && ($("#guestPhone")?.value||"").trim(),
+    ($("#guestName")?.value||"").trim() && ((($("#guestPhone")?.value||"").trim()) || (($("#guestEmail")?.value||"").trim())) && $("#bookingPolicyConsent")?.checked,
   ][state.bookStep - 1];
   const next=$("#bookNext"); if(next){ next.disabled=!ok; next.textContent=state.bookStep===4?(state.guestLang==="EN"?"Confirm booking":"Buchung bestätigen"):(state.guestLang==="EN"?"Continue":"Weiter"); }
 }
@@ -1834,7 +1847,7 @@ if($("#bookNext")) $("#bookNext").onclick = async () => {
   confirmLiveBooking();
 
 };
-["guestName", "guestPhone", "guestEmail"].forEach(
+["guestName", "guestPhone", "guestEmail", "bookingPolicyConsent"].forEach(
   (id) => { const el=$("#"+id); if(el) el.oninput=bookRefresh; },
 );
 $$(`[data-action="repeat-cut"]`).forEach(btn=>btn.onclick = () => {
