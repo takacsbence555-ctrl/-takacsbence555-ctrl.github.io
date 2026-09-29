@@ -1620,19 +1620,7 @@ function parseAuthHash(){
  const hash=new URLSearchParams((location.hash||"").replace(/^#/,"")),query=new URLSearchParams(location.search);
  const token=hash.get("access_token");
  if(token){ownerAccessToken=token;sessionStorage.setItem("kavelyq-owner-token",token);sessionStorage.removeItem("operator-owner-token");history.replaceState(null,"",location.pathname+location.search);return true;}
- const code=query.get("code");
- if(code){showOwnerGate("Completing secure sign-in…");exchangeOwnerAuthCode(code);return false;}
  ownerAccessToken=sessionStorage.getItem("kavelyq-owner-token")||sessionStorage.getItem("operator-owner-token")||null;return !!ownerAccessToken;
-}
-async function exchangeOwnerAuthCode(code){
- try{
-  const verifier=sessionStorage.getItem("kavelyq-pkce-verifier");if(!verifier)throw new Error("PKCE_MISSING");
-  const res=await fetch(SUPABASE_URL+"/auth/v1/token?grant_type=pkce",{method:"POST",headers:{"apikey":SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify({auth_code:code,code_verifier:verifier})});
-  const out=await res.json();if(!res.ok||!out.access_token)throw new Error("AUTH_EXCHANGE_FAILED");
-  ownerAccessToken=out.access_token;sessionStorage.setItem("kavelyq-owner-token",out.access_token);sessionStorage.removeItem("kavelyq-pkce-verifier");
-  const keep=new URLSearchParams(location.search),isNew=keep.get("new_business")==="1";keep.delete("code");history.replaceState(null,"",location.pathname+(keep.toString()?"?"+keep:""));
-  if(isNew)openBusinessSetup();else showOwnerApp(false);
- }catch(e){showOwnerGate("Secure sign-in could not be completed. Request a new link.");}
 }
 function ownerSignOut(){ownerAccessToken=null;sessionStorage.removeItem("kavelyq-owner-token");sessionStorage.removeItem("operator-owner-token");ownerDashboardData=null;ownerCrm=[];ownerSetup=null;showOwnerGate("Signed out securely.");}
 async function ownerRpc(fn,params={}){
@@ -1847,9 +1835,7 @@ if($("#bookNext")) $("#bookNext").onclick = async () => {
   confirmLiveBooking();
 
 };
-["guestName", "guestPhone", "guestEmail", "bookingPolicyConsent"].forEach(
-  (id) => { const el=$("#"+id); if(el) el.oninput=bookRefresh; },
-);
+["guestName", "guestPhone", "guestEmail"].forEach((id)=>{const el=$("#"+id);if(el)el.oninput=bookRefresh;});const policy=$("#bookingPolicyConsent");if(policy)policy.onchange=bookRefresh;
 $$(`[data-action="repeat-cut"]`).forEach(btn=>btn.onclick = () => {
   state.service = state.cutMemory.service;
   state.price = 42;
