@@ -1611,8 +1611,7 @@ async function refreshLiveAvailability(){
   }catch(e){console.error("Live availability",e);grid.innerHTML='<span class="muted">Availability could not be loaded</span>';}
 }
 async function createLiveBooking(guestName,guestPhone,guestEmail){
-  const startsAt=bookingDate+"T"+state.time+":00";
-  return await supabaseRpc("create_public_booking_v2",{p_business_slug:BOOKING_BUSINESS,p_staff_slug:selectedStaffSlug(),p_service_slug:selectedServiceSlug(),p_starts_at:startsAt,p_display_name:guestName,p_email:guestEmail||null,p_phone:guestPhone});
+  return await supabaseRpc("create_public_booking_local_v2",{p_business_slug:BOOKING_BUSINESS,p_staff_slug:selectedStaffSlug(),p_service_slug:selectedServiceSlug(),p_date:bookingDate,p_time:state.time+":00",p_display_name:guestName,p_email:guestEmail||null,p_phone:guestPhone});
 }
 
 let ownerAccessToken=null, ownerDashboardData=null, ownerMetrics=null, ownerCrm=[], ownerRebooking=[], ownerOnboarding=null, ownerSubscription=null, ownerBusinessSettings=null, ownerSetup=null, ownerDemoMode=false;
@@ -1678,6 +1677,7 @@ async function sendOwnerMagicLink(){
  finally{if(btn)btn.disabled=false;}
 }
 async function refreshOwnerLive(){ownerDashboardData=await loadOwnerDashboard();try{[ownerMetrics,ownerCrm,ownerRebooking,ownerOnboarding]=await Promise.all([ownerRpc("owner_business_metrics",{}),ownerRpc("owner_customer_crm",{}),ownerRpc("owner_rebooking_opportunities",{}),ownerRpc("owner_onboarding_snapshot",{})])}catch(e){ownerMetrics=null}renderModule(state.module||"home")}
+function localDateTimeValue(iso){const d=new Date(iso);if(Number.isNaN(d.getTime()))return "";const p=n=>String(n).padStart(2,"0");return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+"T"+p(d.getHours())+":"+p(d.getMinutes());}
 function ownerBookingModal(mode,b=null){
  if(ownerDemoMode||!ownerDashboardData)return toast("Live owner account required","Use secure owner sign-in to change live bookings.");
  if(ownerSubscription && !["active","trialing"].includes(ownerSubscription.status))return toast("Subscription required","Your data is safe, but live changes are paused until KAVELYQ Pro is active.");
@@ -1910,7 +1910,7 @@ async function openGuestBookingManager(){
 }
 async function loadGuestManageSlots(){
  const token=state.guestBooking?.manageToken||state.guestManageToken,date=$("#guestManageDate")?.value;if(!token||!date)return toast("Choose a date");
- try{const slots=await supabaseRpc("get_public_manage_availability",{p_token:token,p_date:date});const box=$("#guestManageSlots");box.innerHTML=(slots||[]).length?(slots||[]).map(t=>'<button data-manage-time="'+t+'">'+t+'</button>').join(""):'<span class="muted">No available times</span>';$("[data-manage-time]",box).forEach(b=>b.onclick=async()=>{try{await supabaseRpc("reschedule_public_booking",{p_token:token,p_starts_at:date+"T"+b.dataset.manageTime+":00"});state.guestBooking.time=b.dataset.manageTime;saveDemoState();closeDrawer();toast("Booking rescheduled","Your appointment was updated.");}catch(e){toast("Could not reschedule","That time may no longer be available.");}});}catch(e){toast("Could not load times");}
+ try{const slots=await supabaseRpc("get_public_manage_availability",{p_token:token,p_date:date});const box=$("#guestManageSlots");box.innerHTML=(slots||[]).length?(slots||[]).map(t=>'<button data-manage-time="'+t+'">'+t+'</button>').join(""):'<span class="muted">No available times</span>';$("[data-manage-time]").forEach(b=>b.onclick=async()=>{try{await supabaseRpc("reschedule_public_booking_local",{p_token:token,p_date:date,p_time:b.dataset.manageTime+":00"});state.guestBooking.time=b.dataset.manageTime;saveDemoState();closeDrawer();toast("Booking rescheduled","Your appointment was updated.");}catch(e){toast("Could not reschedule","That time may no longer be available.");}});}catch(e){toast("Could not load times");}
 }
 async function cancelGuestBooking(){
  const token=state.guestBooking?.manageToken||state.guestManageToken;if(!token)return;
