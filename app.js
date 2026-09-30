@@ -1914,12 +1914,12 @@ async function openGuestBookingManager(){
 }
 async function loadGuestManageSlots(){
  const token=state.guestBooking?.manageToken||state.guestManageToken,date=$("#guestManageDate")?.value;if(!token||!date)return toast("Choose a date");
- try{const slots=await supabaseRpc("get_public_manage_availability",{p_token:token,p_date:date});const box=$("#guestManageSlots");box.innerHTML=(slots||[]).length?(slots||[]).map(t=>'<button data-manage-time="'+t+'">'+t+'</button>').join(""):'<span class="muted">No available times</span>';$("[data-manage-time]",box).forEach(b=>b.onclick=async()=>{try{await supabaseRpc("reschedule_public_booking_local",{p_token:token,p_date:date,p_time:b.dataset.manageTime+":00"});state.guestBooking.time=b.dataset.manageTime;saveDemoState();closeDrawer();toast("Booking rescheduled","Your appointment was updated.");}catch(e){toast("Could not reschedule","That time may no longer be available.");}});}catch(e){toast("Could not load times");}
+ try{const slots=await supabaseRpc("get_public_manage_availability",{p_token:token,p_date:date});const box=$("#guestManageSlots");box.innerHTML=(slots||[]).length?(slots||[]).map(t=>'<button data-manage-time="'+t+'">'+t+'</button>').join(""):'<span class="muted">No available times</span>';$("[data-manage-time]",box).forEach(b=>b.onclick=async()=>{try{await supabaseRpc("reschedule_public_booking_local",{p_token:token,p_date:date,p_time:b.dataset.manageTime+":00"});if(state.guestBooking)state.guestBooking.time=b.dataset.manageTime;saveDemoState();closeDrawer();toast("Booking rescheduled","Your appointment was updated.");}catch(e){toast("Could not reschedule","That time may no longer be available.");}});}catch(e){toast("Could not load times");}
 }
 async function cancelGuestBooking(){
  const token=state.guestBooking?.manageToken||state.guestManageToken;if(!token)return;
  if(!confirm("Cancel this booking?"))return;
- try{const r=await supabaseRpc("cancel_public_booking",{p_token:token});state.guestBooking.status="Cancelled";saveDemoState();closeDrawer();toast("Booking cancelled",r?.within_policy?"Cancelled within policy.":"Cancelled after the policy deadline.");}catch(e){toast("Could not cancel booking");}
+ try{const r=await supabaseRpc("cancel_public_booking",{p_token:token});if(state.guestBooking)state.guestBooking.status="Cancelled";saveDemoState();closeDrawer();toast("Booking cancelled",r?.within_policy?"Cancelled within policy.":"Cancelled after the policy deadline.");}catch(e){toast("Could not cancel booking");}
 }
 function applyGuestLanguage(lang){
  state.guestLang=lang;saveDemoState();const en=lang==="EN";const set=(sel,html)=>{const n=$(sel);if(n)n.innerHTML=html};
