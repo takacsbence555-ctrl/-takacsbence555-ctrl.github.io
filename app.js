@@ -1125,6 +1125,7 @@ document.addEventListener("click", (e) => {
   if (go) { e.preventDefault(); return renderModule(go.dataset.go); }
 
   const action = target?.closest("[data-action]");
+  if(action?.dataset.action==="manage-guest-booking"){e.preventDefault();openGuestBookingManager();return;}
   if(action?.dataset.action==="crm-save-memory" && !ownerDemoMode){e.preventDefault();const id=action.dataset.customerId;ownerRpc("owner_save_cut_memory",{p_customer_id:id,p_notes:$("#crmMemory").value,p_rebook_interval_days:Number($("#crmDays").value)||28}).then(()=>refreshOwnerLive()).then(()=>{closeDrawer();toast("Customer memory saved");}).catch(()=>toast("Could not save"));return;}
   if(action?.dataset.action==="crm-save-consent" && !ownerDemoMode){e.preventDefault();const id=action.dataset.customerId;ownerRpc("owner_set_marketing_consent",{p_customer_id:id,p_consent:$("#crmConsent").checked}).then(()=>refreshOwnerLive()).then(()=>toast("Consent preference saved")).catch(()=>toast("Could not save consent"));return;}
   if(action?.dataset.action==="crm-export" && !ownerDemoMode){e.preventDefault();const id=action.dataset.customerId;ownerRpc("owner_export_customer",{p_customer_id:id}).then(d=>downloadJson("kavelyq-customer-export.json",d)).catch(()=>toast("Could not export"));return;}
@@ -1892,6 +1893,7 @@ function guestAction(a){
   saveDemoState();
   if(!state.guestBooking) return toast("No active demo booking");
   const b=state.guestBooking;
+  if(b.backend==="supabase" && a==="rebook"){const name=b.service;$('[data-action="new-booking"]')?.click();$$("[data-service]").find(x=>x.dataset.service===name)?.click();return;}
   if(a==="reschedule"){b.time=b.time==="16:15"?"17:45":"16:15"; state.guestEvents.unshift({type:"RESCHEDULE",result:"Moved to "+b.time,detail:"Owner Calendar synced"}); $("#sumTime").textContent="Demo date · "+b.time; saveDemoState();return toast("Booking rescheduled",b.time+" · Owner Calendar synced");}
   if(a==="cancel"){if(b.status==="Cancelled")return toast("Already cancelled");b.status="Cancelled";state.forecast=Math.max(0,state.forecast-b.price);if(state.guestPaymentStatus==="simulated_paid"&&state.guestDeposit>0){state.current=Math.max(0,state.current-state.guestDeposit);state.guestPaymentStatus="simulated_refunded";b.deposit=0;state.guestDeposit=0;}state.guestEvents.unshift({type:"CANCEL",result:"Slot released",detail:"€10 simulated refund"});saveDemoState();return toast("Booking cancelled","DEMO: calendar released · €10 refund simulated");}
   if(a==="manage-guest-booking")return openGuestBookingManager();
@@ -1922,7 +1924,7 @@ async function confirmLiveBooking(){
   state.appointments++;state.forecast+=state.price;saveDemoState();
   $$(".book-step").forEach(x=>x.classList.add("hidden"));$("#bookActions")?.classList.add("hidden");$("#bookingSuccess")?.classList.remove("hidden");
   const p=$("#bookingSuccess p");if(p)p.innerHTML=(state.guestLang==="EN"?"<b>BOOKING CONFIRMED</b><br>No online payment was charged.":"<b>BUCHUNG BESTÄTIGT</b><br>Es wurde keine Online-Zahlung abgebucht.")+'<br><button class="secondary small" data-action="manage-guest-booking">Manage booking</button>';
-  bindGuestActions();applyGuestLanguage(state.guestLang);toast(state.guestLang==="EN"?"Booking confirmed":"Buchung bestätigt",state.guestLang==="EN"?"No online payment was charged":"Keine Online-Zahlung wurde abgebucht");
+  bindGuestActions();applyGuestLanguage(state.guestLang);saveRoute();toast(state.guestLang==="EN"?"Booking confirmed":"Buchung bestätigt",state.guestLang==="EN"?"No online payment was charged":"Keine Online-Zahlung wurde abgebucht");
  }catch(e){console.error(e);state.bookStep=3;bookRefresh();await refreshLiveAvailability();toast(state.guestLang==="EN"?"Could not confirm booking":"Buchung konnte nicht bestätigt werden",state.guestLang==="EN"?"The time may no longer be available.":"Der Termin ist möglicherweise nicht mehr verfügbar.");}
  finally{guestBookingBusy=false;bookRefresh();}
 }
@@ -1937,6 +1939,9 @@ async function openGuestBookingManager(){
   state.guestManageToken=token;
   const d=new Date(x.starts_at),locale=state.guestLang==="EN"?"en-GB":"de-AT";const date=d.toLocaleDateString(locale,{timeZone:x.timezone});const time=d.toLocaleTimeString(locale,{hour:"2-digit",minute:"2-digit",timeZone:x.timezone});
   openDrawer('<span class="drawer-kicker">KAVELYQ · BOOKING</span><h2>'+escLive(x.service_name)+'</h2><p>'+escLive(x.business_name)+' · '+escLive(x.staff_name)+'</p><div class="drawer-section"><div class="detail-grid"><div><small>DATE</small><b>'+date+'</b></div><div><small>TIME</small><b>'+time+'</b></div><div><small>STATUS</small><b>'+escLive(x.status)+'</b></div><div><small>POLICY</small><b>'+x.cancellation_window_hours+'h</b></div></div></div><label>New date<input id="guestManageDate" type="date"></label><button class="secondary" data-action="guest-load-slots">Find times</button><div id="guestManageSlots" class="slot-grid"></div><button class="danger" data-action="guest-self-cancel">Cancel booking</button>');
+  $('[data-action="guest-self-cancel"]').disabled=!x.can_cancel;
+  $('[data-action="guest-load-slots"]').disabled=!x.can_cancel;
+  const field=$('#guestManageDate');field.value=formatDateTimeLocalInZone(x.starts_at,x.timezone).slice(0,10);field.min=formatDateTimeLocalInZone(new Date().toISOString(),x.timezone).slice(0,10);
  }catch(e){toast("Could not open booking","The management link may no longer be valid.");}
 }
 async function loadGuestManageSlots(){
@@ -1956,6 +1961,18 @@ function applyGuestLanguage(lang){
  set(".booking-summary>h3",en?"Your booking":"Deine Buchung");const sl=en?["Service","Professional","Appointment","Total"]:["Service","Barber","Termin","Gesamt"];$$(".booking-summary .sum-row>span").forEach((n,i)=>{if(sl[i])n.textContent=sl[i]});
  
  const success=$("#bookingSuccess");if(success&&!success.classList.contains("hidden")){const sm=success.querySelector("small"),hh=success.querySelector("h2"),nb=success.querySelector('[data-action="new-booking"]');if(sm)sm.textContent=en?"CONFIRMED":"BESTÄTIGT";if(hh)hh.textContent=en?"Booking confirmed.":"Buchung bestätigt.";if(nb)nb.textContent=en?"New booking":"Neue Buchung";}
+
+ $$('.book-step .section-title small').forEach((n,i)=>n.textContent=(en?'STEP ':'SCHRITT ')+(i+1));
+ set('.or span',en?'or book without an account':'oder ohne Konto buchen');
+ const phone=$('#guestPhone')?.parentElement;if(phone&&phone.firstChild?.nodeType===3)phone.firstChild.textContent=en?'Phone':'Telefon';
+ set('.policy span',en?'Free cancellation up to 24 hours before your appointment. A 50% fee may apply afterwards.':'Kostenlose Stornierung bis 24 Stunden vor dem Termin. Danach können 50% verrechnet werden.');
+ set('.waitlist-card span',en?'No suitable appointment?':'Kein passender Termin?');set('.waitlist-card strong',en?'Join the smart waitlist →':'Auf die intelligente Warteliste →');
+ set('.deposit-card b',en?'Online payment coming soon':'Online-Zahlung demnächst verfügbar');set('.deposit-card small',en?'Confirm your appointment without an online charge.':'Bestätige deinen Termin ohne Online-Zahlung.');set('.deposit-card strong',en?'€0 now':'€0 jetzt');
+ const descriptions=en?['Consultation, cut & styling · 45 min','Precise fade & finish · 50 min','Complete grooming · 60 min','Contour, hot towel & care · 30 min']:['Beratung, Schnitt & Styling · 45 Min','Präziser Übergang & Finish · 50 Min','Komplettes Grooming · 60 Min','Kontur, Hot Towel & Pflege · 30 Min'];
+ if(BOOKING_BUSINESS==='demo-studio')$$('.service-card small').forEach((n,i)=>n.textContent=descriptions[i]);
+ $$('[data-action="repeat-cut"]').forEach((b,i)=>b.textContent=i===0?(en?'↻ Repeat your last cut':'↻ Letzten Schnitt wiederholen'):(en?'Book again':'Erneut buchen'));
+ $$('.date-strip button').forEach(b=>{const d=new Date(b.dataset.date+'T12:00:00Z');if(!Number.isNaN(d.getTime())){const n=b.querySelector('small');if(n)n.textContent=new Intl.DateTimeFormat(en?'en-GB':'de-AT',{weekday:'short',timeZone:'Europe/Vienna'}).format(d).toUpperCase();}});
+
  $$(".lang [data-lang]").forEach(x=>x.classList.toggle("active",x.dataset.lang===lang));
 }
 window.applyGuestLanguage=applyGuestLanguage;
@@ -1972,6 +1989,7 @@ function saveRoute(){
  u.searchParams.set('view',view);
  if(view==='hq')u.searchParams.set('module',state.module);else u.searchParams.delete('module');
  if(view==='booking')u.searchParams.set('step',state.bookStep);else u.searchParams.delete('step');
+ if(view==='booking'&&!$('#bookingSuccess').classList.contains('hidden'))u.searchParams.set('completed','1');else u.searchParams.delete('completed');
  const url=u.pathname+u.search+u.hash;
  if(url!==location.pathname+location.search+location.hash)history.pushState(null,'',url);
  try{sessionStorage.setItem('kavelyq-booking-draft',JSON.stringify({service:state.service,price:state.price,barber:state.barber,time:state.time,date:bookingDate,lang:state.guestLang}))}catch(e){}
@@ -1987,6 +2005,7 @@ function restoreRoute(){
     if(d){state.service=d.service||'';state.price=Number(d.price)||0;state.barber=d.barber||'';state.time=d.time||'';bookingDate=d.date>=viennaISODate()?d.date:viennaISODate();}
     state.bookStep=Math.min(Math.max(1,Number(q.get('step'))||1),state.time?4:state.barber?3:state.service?2:1);
     $('#sumService').textContent=state.service||'—';$('#sumBarber').textContent=state.barber||'—';$('#sumPrice').textContent=state.service?money(state.price):'—';$('#sumTime').textContent=state.time?bookingDate+' · '+state.time:'—';
+    if(q.get('completed')==='1'&&state.guestBooking?.id){$('#bookingSuccess').classList.remove('hidden');$('#bookActions').classList.add('hidden');}
     bookRefresh();if(state.bookStep===3)refreshLiveAvailability();
   }
  }catch(e){}finally{routeRestoring=false;}
