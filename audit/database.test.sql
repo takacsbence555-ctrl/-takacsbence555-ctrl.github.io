@@ -1,0 +1,85 @@
+-- All synthetic rows and edits roll back in an exception subtransaction.
+create temporary table audit_results(result jsonb) on commit drop;
+do $test$
+declare b uuid;s uuid;v uuid;u uuid:=gen_random_uuid();r jsonb;tok uuid;bk uuid;d date;ns uuid;nv uuid;cid uuid;passed text[]:=array[]::text[];failed boolean;
+begin
+ begin
+  select id into b from businesses where public_slug='demo-studio';
+  select id into s from staff where business_id=b and public_slug='demo-barber-a';
+  select id into v from services where business_id=b and public_slug='classic-cut';
+  d:=((now() at time zone 'Europe/Vienna')::date+1);
+  while extract(dow from d)=0 loop d:=d+1;end loop;
+  r:=create_public_booking_local_v2('demo-studio','demo-barber-a','classic-cut',d,'10:00','AUDIT ROLLBACK',null,'+430000000000');
+  tok:=(r->>'manage_token')::uuid;bk:=(r->>'booking_id')::uuid;
+  assert exists(select 1 from bookings where id=bk and (starts_at at time zone 'Europe/Vienna')::timestamp=d+'10:00'::time),'timezone mismatch';
+  assert not exists(select 1 from notification_queue where booking_id=bk),'unexpected notification';
+  passed:=array_append(passed,'create booking, management token, Vienna timezone, no email/SMS');
+  failed:=false;
+  begin perform create_public_booking_local_v2('demo-studio','demo-barber-a','classic-cut',d,'10:00','AUDIT DUPLICATE',null,'+430000000001');exception when others then failed:=true;end;
+  assert failed,'duplicate booking accepted';passed:=array_append(passed,'overlap / duplicate rejected');
+  perform reschedule_public_booking_local(tok,d,'11:00');
+  assert (get_public_booking_manage(tok)->>'starts_at')::timestamptz=(d+'11:00'::time) at time zone 'Europe/Vienna','reschedule mismatch';
+  perform cancel_public_booking(tok);
+  assert get_public_booking_manage(tok)->>'status'='cancelled','cancel mismatch';
+  passed:=array_append(passed,'get/manage, reschedule, cancel');
+  failed:=false;
+  begin perform create_public_booking_local_v2('demo-studio','demo-barber-a','classic-cut',d,'12:00','AUDIT','bad-email',null);exception when others then failed:=true;end;
+  assert failed,'invalid email accepted';passed:=array_append(passed,'invalid email rejected');
+  failed:=false;
+  begin perform create_public_booking_local_v2('demo-studio','demo-barber-a','classic-cut',d,'12:00',repeat('x',121),null,'+430000000002');exception when others then failed:=true;end;
+  assert failed,'overlong name accepted';passed:=array_append(passed,'extreme name rejected');
+  failed:=false;
+  begin perform create_public_booking_local_v2('demo-studio','demo-barber-a','classic-cut',d,'03:00','AUDIT',null,'+430000000003');exception when others then failed:=true;end;
+  assert failed,'outside hours accepted';passed:=array_append(passed,'outside working hours rejected');
+  while extract(dow from d)<>0 loop d:=d+1;end loop;
+  insert into working_hours(staff_id,weekday,start_time,end_time) values(s,0,'10:00','20:00');
+  r:=create_public_booking_local_v2('demo-studio','demo-barber-a','classic-cut',d,'10:00','AUDIT SUNDAY',null,'+430000000004');
+  assert r->>'booking_id' is not null,'Sunday rejected';passed:=array_append(passed,'Sunday availability and booking agree');
+  insert into auth.users(id) values(u);
+  insert into business_members(business_id,user_id,role) values(b,u,'owner');
+  perform set_config('request.jwt.claims',jsonb_build_object('sub',u,'role','authenticated')::text,true);
+  execute 'set local role authenticated';
+  assert (owner_dashboard()->'business'->>'id')::uuid=b,'owner dashboard wrong tenant';
+  bk:=owner_create_booking_local(b,s,v,d,'12:00','AUDIT OWNER');
+  perform owner_reschedule_booking_local(bk,d,'13:00');
+  perform owner_cancel_booking(bk);
+  passed:=array_append(passed,'owner dashboard, create, reschedule, cancel');
+  assert jsonb_typeof(owner_customer_crm())='array','CRM invalid';
+  assert owner_setup_snapshot() is not null,'setup invalid';
+  assert owner_business_settings() is not null,'settings invalid';
+  passed:=array_append(passed,'CRM, staff/service/settings snapshots');
+  ns:=owner_add_staff('AUDIT STAFF');nv:=owner_add_service('AUDIT SERVICE',30,1999);
+  perform owner_update_staff(ns,'AUDIT STAFF UPDATED',true);
+  perform owner_update_service(nv,'AUDIT SERVICE UPDATED',45,2099,true);
+  perform owner_set_staff_service(ns,nv,true);
+  perform owner_set_working_hours(ns,1,'09:00','17:00',true);
+  assert exists(select 1 from staff_services where staff_id=ns and service_id=nv),'assignment missing';
+  assert exists(select 1 from working_hours where staff_id=ns and weekday=1),'hours missing';
+  r:=owner_update_business_settings(null,null,'AUDIT ADDRESS',24,20,'AUDIT POLICY',null,null);
+  assert r->>'address'='AUDIT ADDRESS','settings save failed';
+  passed:=array_append(passed,'staff/service create+edit, assignment, working hours, settings save');
+  bk:=owner_create_booking_local(b,s,v,d,'15:00','AUDIT FINANCIAL');
+  select customer_id into cid from bookings where id=bk;
+  perform owner_update_booking_status(bk,'completed');
+  perform owner_save_cut_memory(cid,'AUDIT MEMORY',30);
+  perform owner_set_marketing_consent(cid,true);
+  assert exists(select 1 from customers where id=cid and visit_count=1 and lifetime_value_cents=3600),'CRM totals wrong';
+  perform owner_update_service(v,'Classic Cut',45,9999,true);
+  assert exists(select 1 from bookings where id=bk and booked_price_cents=3600),'booked price changed';
+  perform kavelyq_private.refresh_customer_crm(cid);
+  assert exists(select 1 from customers where id=cid and lifetime_value_cents=3600),'historic revenue changed';
+  passed:=array_append(passed,'completion, CRM memory/consent, stable historic cents after service repricing');
+
+  perform set_config('request.jwt.claims',jsonb_build_object('sub',gen_random_uuid(),'role','authenticated')::text,true);
+  assert owner_dashboard() is null,'cross-tenant owner data exposed';
+  assert (select count(*) from bookings)=0,'cross-tenant booking data exposed';
+  passed:=array_append(passed,'authenticated cross-tenant RLS isolation');
+  execute 'reset role';
+  raise exception 'AUDIT_ROLLBACK';
+ exception when others then
+  if sqlerrm<>'AUDIT_ROLLBACK' then raise;end if;
+ end;
+ insert into audit_results values(jsonb_build_object('passed',passed,'test_data_persisted',false));
+end
+$test$;
+select result from audit_results;

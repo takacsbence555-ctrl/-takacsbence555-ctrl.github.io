@@ -4053,3 +4053,10 @@ button {
  #booking #bookBack::after{content:"←";font-size:21px!important}
  #booking #bookNext::after{content:"→";font-size:21px!important}
 }
+
+
+/* Audit: keep hidden completion navigation hidden and render one mobile arrow. */
+#booking #bookActions.hidden{display:none!important}
+@media(max-width:900px){#booking #bookBack::before,#booking #bookNext::before{display:none!important}}
+@media(max-width:900px){#booking #bookActions{z-index:100!important}}
+.live-booking-card{max-height:calc(100dvh - 40px);overflow-y:auto;box-sizing:border-box}

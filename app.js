@@ -5,7 +5,7 @@ const money = (n) =>
   new Intl.NumberFormat("de-AT", {
     style: "currency",
     currency: "EUR",
-    minimumFractionDigits: 2,
+    minimumFractionDigits: Number.isInteger(n) ? 0 : 2,
     maximumFractionDigits: 2,
   }).format(n);
 const state = {
@@ -1166,6 +1166,7 @@ document.addEventListener("click", (e) => {
 });
 
 function bind() {
+  bindOwnerControls();
   $$("[data-permission]").forEach(
     (s) =>
       (s.onchange = () => {
@@ -1302,7 +1303,8 @@ function completePlan() {
   bind();
 }
 function act(a, e) {
-  if (a === "start-pilot") return openDrawer('<span class="drawer-kicker">KAVELYQ PRO · FREE TRIAL</span><h2>14 days free. No card required.</h2><p class="muted">Use the complete Kavelyq Pro experience before deciding.</p><div class="drawer-section"><div class="detail-grid"><div><small>FREE TRIAL</small><b>14 days</b></div><div><small>AFTER TRIAL</small><b>€49 / month</b></div><div><small>SETUP FEE</small><b>€0</b></div><div><small>BOOKING COMMISSION</small><b>€0</b></div></div></div><p class="muted">Cancel anytime. The demo does not charge money; live billing is enabled only after payment setup is connected.</p><button class="primary" data-action="close-drawer">CONTINUE</button>');
+  if (a === "start-pilot") { $("#salesEntry")?.classList.add("hidden");setView("hq");showOwnerGate("Enter your email to request a free-trial link.");return;}
+  if (a === "unused-pilot-preview") return openDrawer('<span class="drawer-kicker">KAVELYQ PRO · FREE TRIAL</span><h2>14 days free. No card required.</h2><p class="muted">Use the complete Kavelyq Pro experience before deciding.</p><div class="drawer-section"><div class="detail-grid"><div><small>FREE TRIAL</small><b>14 days</b></div><div><small>AFTER TRIAL</small><b>€49 / month</b></div><div><small>SETUP FEE</small><b>€0</b></div><div><small>BOOKING COMMISSION</small><b>€0</b></div></div></div><p class="muted">Cancel anytime. The demo does not charge money; live billing is enabled only after payment setup is connected.</p><button class="primary" data-action="close-drawer">CONTINUE</button>');
   if (a === "new-appointment") return act("manual-booking", e);
   if (a === "demo-directions") return toast("Demo location", "Directions are simulated · no real address is exposed");
   if (a === "reschedule") return toast("Reschedule prepared", "DEMO: choose a new time from Calendar");
@@ -1323,11 +1325,13 @@ function act(a, e) {
   if (a === "coverage-payments") return renderModule("money");
   if (a === "coverage-operations") return renderModule("live");
   if (a === "coverage-growth") return renderModule("operator");
+  if (a === "manual-booking" && !ownerDemoMode && ownerDashboardData)return ownerBookingModal("create");
   if (a === "manual-booking")
     return openDrawer(
       '<span class="drawer-kicker">MANUAL CONTROL · WORKING DEMO</span><h2>Create appointment</h2><p class="muted">The Operator can do this from a goal, but full manual control remains available.</p><div class="drawer-section"><div class="detail-grid"><div><small>CUSTOMER</small><b>Demo Customer A</b></div><div><small>SERVICE</small><b>Classic Cut · €42</b></div><div><small>STAFF</small><b>Demo Barber B</b></div><div><small>TIME</small><b>Today · 18:00</b></div></div></div><button class="primary" data-action="confirm-manual">CREATE BOOKING</button>',
     );
   if (a === "confirm-manual") {
+    if(state.manualBooking)return toast("Already created","Duplicate demo booking prevented");
     Object.assign(state, {
       manualBooking: true,
       appointments: state.appointments + 1,
@@ -1343,6 +1347,7 @@ function act(a, e) {
     );
   }
   if (a === "core-recurring") {
+    if(state.recurringCreated)return toast("Already created");
     Object.assign(state, {
       recurringCreated: true,
       appointments: state.appointments + 4,
@@ -1357,6 +1362,7 @@ function act(a, e) {
     );
   }
   if (a === "core-group") {
+    if(state.groupCreated)return toast("Already created");
     Object.assign(state, {
       groupCreated: true,
       appointments: state.appointments + 3,
@@ -1695,12 +1701,12 @@ function localDateTimeValue(iso){const d=new Date(iso);if(Number.isNaN(d.getTime
 function ownerBookingModal(mode,b=null){
  if(ownerDemoMode||!ownerDashboardData)return toast("Live owner account required","Use secure owner sign-in to change live bookings.");
  if(ownerSubscription && !["active","trialing"].includes(ownerSubscription.status))return toast("Subscription required","Your data is safe, but live changes are paused until KAVELYQ Pro is active.");
- const staff=(ownerDashboardData.staff||[]).map(x=>'<option value="'+x.id+'" '+(b&&x.display_name===b.staff?"selected":"")+'>'+x.display_name+'</option>').join("");
- const services=(ownerDashboardData.services||[]).map(x=>'<option value="'+x.id+'" '+(b&&x.name===b.service?"selected":"")+'>'+x.name+' · €'+(x.price_cents/100).toFixed(0)+'</option>').join("");
+ const staff=(ownerDashboardData.staff||[]).map(x=>'<option value="'+x.id+'" '+(b&&x.display_name===b.staff?"selected":"")+'>'+escLive(x.display_name)+'</option>').join("");
+ const services=(ownerDashboardData.services||[]).map(x=>'<option value="'+x.id+'" '+(b&&x.name===b.service?"selected":"")+'>'+escLive(x.name)+' · €'+(x.price_cents/100).toFixed(0)+'</option>').join("");
  const ownerTz=ownerDashboardData?.business?.timezone||"Europe/Vienna";const start=b?formatDateTimeLocalInZone(b.starts_at,ownerTz):"";
  const wrap=document.createElement("div");wrap.className="live-booking-modal";
  wrap.innerHTML='<div class="live-booking-card"><button class="modal-close" type="button">×</button><small>LIVE DATABASE</small><h2>'+(mode==="create"?"New booking":"Manage booking")+'</h2>'+
- (mode==="create"?'<label>Customer<input id="liveCustomer" value="Demo Guest"></label><label>Professional<select id="liveStaff">'+staff+'</select></label><label>Service<select id="liveService">'+services+'</select></label>':'<p><b>'+b.customer+'</b><br>'+b.service+' · '+b.staff+'</p>')+
+ (mode==="create"?'<label>Customer<input id="liveCustomer" value="Demo Guest"></label><label>Professional<select id="liveStaff">'+staff+'</select></label><label>Service<select id="liveService">'+services+'</select></label>':'<p><b>'+escLive(b.customer)+'</b><br>'+escLive(b.service)+' · '+escLive(b.staff)+'</p>')+
  '<label>Date & time<input id="liveStart" type="datetime-local" value="'+start+'"></label><div class="modal-actions">'+
  (mode==="create"?'<button class="primary" id="liveSave">Create booking</button>':'<button class="primary" id="liveMove">Reschedule</button><button class="secondary" id="liveComplete">Complete</button><button class="secondary" id="liveNoShow">No-show</button><button class="secondary" id="liveCancel">Cancel booking</button>')+'</div><span id="liveBookingStatus"></span></div>';
  document.body.appendChild(wrap);wrap.querySelector(".modal-close").onclick=()=>wrap.remove();
@@ -1736,15 +1742,15 @@ function liveSetupPanel(){
  if(ownerDemoMode||!ownerSetup)return "";
  const st=ownerSetup.staff||[], sv=ownerSetup.services||[], wh=ownerSetup.working_hours||[], off=ownerSetup.time_off||[];
  const names=Object.fromEntries(st.map(x=>[x.id,x.name]));
- return '<section class="pilot-ready"><small>KAVELYQ · LIVE SETUP</small><h3>Staff, services & availability</h3><div class="detail-grid"><div><small>STAFF</small><b>'+st.length+'</b></div><div><small>SERVICES</small><b>'+sv.length+'</b></div><div><small>WORKING DAYS</small><b>'+wh.length+'</b></div><div><small>UPCOMING TIME OFF</small><b>'+off.length+'</b></div></div><p>'+st.map(x=>x.name).join(' · ')+'</p><button class="primary small" data-action="manage-live-setup">Manage live setup</button></section>';
+ return '<section class="pilot-ready"><small>KAVELYQ · LIVE SETUP</small><h3>Staff, services & availability</h3><div class="detail-grid"><div><small>STAFF</small><b>'+st.length+'</b></div><div><small>SERVICES</small><b>'+sv.length+'</b></div><div><small>WORKING DAYS</small><b>'+wh.length+'</b></div><div><small>UPCOMING TIME OFF</small><b>'+off.length+'</b></div></div><p>'+st.map(x=>escLive(x.name)).join(' · ')+'</p><button class="primary small" data-action="manage-live-setup">Manage live setup</button></section>';
 }
 function openLiveSetup(){
  const st=ownerSetup?.staff||[], sv=ownerSetup?.services||[], links=ownerSetup?.staff_services||[], wh=ownerSetup?.working_hours||[], off=ownerSetup?.time_off||[];
  const enabled=(sid,vid)=>links.some(x=>x.staff_id===sid&&x.service_id===vid);
  const dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
  openDrawer('<span class="drawer-kicker">KAVELYQ · LIVE SETUP</span><h2>Staff & services</h2><div class="drawer-section"><h3>Add service</h3><label>Name<input id="newSvcName" placeholder="Haircut"></label><label>Duration<input id="newSvcDur" type="number" value="45"></label><label>Price €<input id="newSvcPrice" type="number" value="45"></label><button class="secondary" data-action="add-live-service">Add service</button></div><div class="drawer-section"><h3>Add staff</h3><label>Name<input id="newStaffName" placeholder="Professional name"></label><button class="secondary" data-action="add-live-staff">Add staff</button></div>'+
- st.map(x=>'<div class="drawer-section"><h3><input data-edit-staff-name="'+x.id+'" value="'+escLive(x.name)+'"> <label><input type="checkbox" data-edit-staff-active="'+x.id+'" '+(x.active?'checked':'')+'> Active</label></h3><button class="secondary" data-action="save-live-staff" data-staff-id="'+x.id+'">Save staff</button><p>'+sv.filter(v=>v.active).map(v=>'<label><input type="checkbox" data-live-staff-service="'+x.id+'|'+v.id+'" '+(enabled(x.id,v.id)?'checked':'')+'> '+v.name+'</label>').join('')+'</p><h4>Working hours</h4>'+dayNames.map((d,i)=>{const h=wh.find(q=>q.staff_id===x.id&&q.weekday===i);return '<div class="live-hours"><label><input type="checkbox" data-live-day="'+x.id+'|'+i+'" '+(h?'checked':'')+'> '+d+'</label><input data-live-start="'+x.id+'|'+i+'" type="time" value="'+(h?String(h.start_time).slice(0,5):'09:00')+'"><input data-live-end="'+x.id+'|'+i+'" type="time" value="'+(h?String(h.end_time).slice(0,5):'18:00')+'"></div>'}).join('')+'<button class="secondary" data-action="save-live-hours" data-staff-id="'+x.id+'">Save hours</button><h4>Time off</h4><input data-off-start="'+x.id+'" type="datetime-local"><input data-off-end="'+x.id+'" type="datetime-local"><input data-off-reason="'+x.id+'" placeholder="Holiday / unavailable"><button class="secondary" data-action="add-live-timeoff" data-staff-id="'+x.id+'">Block time</button></div>').join('')+
- '<div class="drawer-section"><h3>Services</h3>'+sv.map(v=>'<div class="live-hours"><input data-edit-svc-name="'+v.id+'" value="'+escLive(v.name)+'"><input data-edit-svc-dur="'+v.id+'" type="number" min="5" value="'+v.duration_minutes+'"><input data-edit-svc-price="'+v.id+'" type="number" min="0" step="0.01" value="'+(v.price_cents/100).toFixed(2)+'"><label><input data-edit-svc-active="'+v.id+'" type="checkbox" '+(v.active?'checked':'')+'> Active</label><button class="secondary" data-action="save-live-service" data-service-id="'+v.id+'">Save</button></div>').join('')+'</div><div class="drawer-section"><h3>Upcoming time off</h3>'+(off.length?off.map(o=>'<p><b>'+(st.find(x=>x.id===o.staff_id)?.name||'Staff')+'</b> · '+new Date(o.starts_at).toLocaleString()+' → '+new Date(o.ends_at).toLocaleString()+'<br>'+(o.reason||'Unavailable')+' <button class="ghost" data-action="remove-live-timeoff" data-timeoff-id="'+o.id+'">Remove</button></p>').join(''):'<p class="muted">No upcoming blocked time.</p>')+'</div>');
+ st.map(x=>'<div class="drawer-section"><h3><input data-edit-staff-name="'+x.id+'" value="'+escLive(x.name)+'"> <label><input type="checkbox" data-edit-staff-active="'+x.id+'" '+(x.active?'checked':'')+'> Active</label></h3><button class="secondary" data-action="save-live-staff" data-staff-id="'+x.id+'">Save staff</button><p>'+sv.filter(v=>v.active).map(v=>'<label><input type="checkbox" data-live-staff-service="'+x.id+'|'+v.id+'" '+(enabled(x.id,v.id)?'checked':'')+'> '+escLive(v.name)+'</label>').join('')+'</p><h4>Working hours</h4>'+dayNames.map((d,i)=>{const h=wh.find(q=>q.staff_id===x.id&&q.weekday===i);return '<div class="live-hours"><label><input type="checkbox" data-live-day="'+x.id+'|'+i+'" '+(h?'checked':'')+'> '+d+'</label><input data-live-start="'+x.id+'|'+i+'" type="time" value="'+(h?String(h.start_time).slice(0,5):'09:00')+'"><input data-live-end="'+x.id+'|'+i+'" type="time" value="'+(h?String(h.end_time).slice(0,5):'18:00')+'"></div>'}).join('')+'<button class="secondary" data-action="save-live-hours" data-staff-id="'+x.id+'">Save hours</button><h4>Time off</h4><input data-off-start="'+x.id+'" type="datetime-local"><input data-off-end="'+x.id+'" type="datetime-local"><input data-off-reason="'+x.id+'" placeholder="Holiday / unavailable"><button class="secondary" data-action="add-live-timeoff" data-staff-id="'+x.id+'">Block time</button></div>').join('')+
+ '<div class="drawer-section"><h3>Services</h3>'+sv.map(v=>'<div class="live-hours"><input data-edit-svc-name="'+v.id+'" value="'+escLive(v.name)+'"><input data-edit-svc-dur="'+v.id+'" type="number" min="5" value="'+v.duration_minutes+'"><input data-edit-svc-price="'+v.id+'" type="number" min="0" step="0.01" value="'+(v.price_cents/100).toFixed(2)+'"><label><input data-edit-svc-active="'+v.id+'" type="checkbox" '+(v.active?'checked':'')+'> Active</label><button class="secondary" data-action="save-live-service" data-service-id="'+v.id+'">Save</button></div>').join('')+'</div><div class="drawer-section"><h3>Upcoming time off</h3>'+(off.length?off.map(o=>'<p><b>'+escLive(st.find(x=>x.id===o.staff_id)?.name||'Staff')+'</b> · '+new Date(o.starts_at).toLocaleString()+' → '+new Date(o.ends_at).toLocaleString()+'<br>'+escLive(o.reason||'Unavailable')+' <button class="ghost" data-action="remove-live-timeoff" data-timeoff-id="'+o.id+'">Remove</button></p>').join(''):'<p class="muted">No upcoming blocked time.</p>')+'</div>');
  $$("[data-live-staff-service]").forEach(c=>c.onchange=async()=>{const [sid,vid]=c.dataset.liveStaffService.split("|");try{await ownerRpc("owner_set_staff_service",{p_staff_id:sid,p_service_id:vid,p_enabled:c.checked});ownerSetup=await ownerRpc("owner_setup_snapshot",{});toast("Service assignment saved");}catch(e){c.checked=!c.checked;toast("Could not save");}});
 }
 async function reloadLiveSetup(){ownerSetup=await ownerRpc("owner_setup_snapshot",{});openLiveSetup();}
@@ -1755,7 +1761,7 @@ function liveSettingsPanel(){
 }
 function openLiveSettings(){
  const x=ownerBusinessSettings||{};
- openDrawer('<span class="drawer-kicker">KAVELYQ · LIVE SETTINGS</span><h2>Booking policy</h2><label>Contact email<input id="lsEmail" value="'+(x.contact_email||'')+'"></label><label>Contact phone<input id="lsPhone" value="'+(x.contact_phone||'')+'"></label><label>Business address<input id="lsAddress" value="'+(x.address||'')+'"></label><label>Cancellation window (hours)<input id="lsCancel" type="number" min="0" max="336" value="'+(x.cancellation_window_hours??24)+'"></label><label>Deposit (%)<input id="lsDeposit" type="number" min="0" max="100" value="'+(x.deposit_percent??20)+'"></label><label>No-show policy<textarea id="lsPolicy">'+(x.no_show_policy||'')+'</textarea></label><label>Privacy policy URL<input id="lsPrivacy" value="'+(x.privacy_url||'')+'"></label><label>Terms URL<input id="lsTerms" value="'+(x.terms_url||'')+'"></label><button class="primary" data-action="save-live-settings">Save live settings</button>');
+ openDrawer('<span class="drawer-kicker">KAVELYQ · LIVE SETTINGS</span><h2>Booking policy</h2><label>Contact email<input id="lsEmail" value="'+escLive(x.contact_email||'')+'"></label><label>Contact phone<input id="lsPhone" value="'+escLive(x.contact_phone||'')+'"></label><label>Business address<input id="lsAddress" value="'+escLive(x.address||'')+'"></label><label>Cancellation window (hours)<input id="lsCancel" type="number" min="0" max="336" value="'+(x.cancellation_window_hours??24)+'"></label><label>Deposit (%)<input id="lsDeposit" type="number" min="0" max="100" value="'+(x.deposit_percent??20)+'"></label><label>No-show policy<textarea id="lsPolicy">'+escLive(x.no_show_policy||'')+'</textarea></label><label>Privacy policy URL<input id="lsPrivacy" value="'+escLive(x.privacy_url||'')+'"></label><label>Terms URL<input id="lsTerms" value="'+escLive(x.terms_url||'')+'"></label><button class="primary" data-action="save-live-settings">Save live settings</button>');
 }
 function liveSubscriptionPanel(){
  if(ownerDemoMode||!ownerSubscription)return "";
@@ -1780,7 +1786,7 @@ function liveMetricsPanel(){
 }
 function liveOwnerPanel(){
  const d=ownerDashboardData;if(!d)return "";
- const rows=(d.bookings||[]).slice(0,8).map(b=>'<div class="guest-event" data-live-booking-id="'+b.id+'"><b>'+new Date(b.starts_at).toLocaleString("en-GB",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})+'</b><span>'+b.customer+' · '+b.service+' · '+b.staff+'</span><strong>'+b.status.toUpperCase()+'</strong></div>').join("");
+ const rows=(d.bookings||[]).slice(0,8).map(b=>'<div class="guest-event" data-live-booking-id="'+b.id+'"><b>'+new Date(b.starts_at).toLocaleString("en-GB",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})+'</b><span>'+escLive(b.customer)+' · '+escLive(b.service)+' · '+escLive(b.staff)+'</span><strong>'+b.status.toUpperCase()+'</strong></div>').join("");
  return '<section class="synced-booking"><div><span>LIVE BUSINESS DATA · SUPABASE</span><h3>'+d.business.name+'</h3><p>'+d.counts.bookings+' bookings · '+d.counts.customers+' customers · '+d.counts.staff+' staff · '+d.counts.services+' services</p></div><b>LIVE</b></section>'+(rows?'<section class="guest-audit-trail"><div class="panel-head"><h2>Live bookings</h2><span class="demo-chip">DATABASE</span></div>'+rows+'</section>':'');
 }
 parseAuthHash();
@@ -1994,6 +2000,7 @@ async function loadBookingCatalog(){
   if(!c){if(BOOKING_BUSINESS!=='demo-studio'){$('#salesEntry')?.classList.add('hidden');setView('booking');$('#bookStep1').innerHTML='<h2>Booking unavailable</h2><p>This salon link is unavailable.</p>';}return;}
   c.services.forEach(x=>SERVICE_SLUGS[x.name]=x.public_slug);c.staff.forEach(x=>STAFF_SLUGS[x.display_name]=x.public_slug);
   if(BOOKING_BUSINESS==='demo-studio'){
+   const locations=$('.location-select select');if(locations){[...locations.options].forEach((o,i)=>{if(i){o.disabled=true;o.textContent+=' · Preview';}});}
    $$('[data-service]').forEach(b=>{const x=c.services.find(x=>x.name===b.dataset.service);if(x){b.dataset.price=x.price_cents/100;b.querySelector('strong').textContent=money(x.price_cents/100)}else b.disabled=true;});
    $$('.next-slot strong').forEach(n=>n.textContent='Check availability →');return;
   }
@@ -2011,3 +2018,34 @@ async function loadBookingCatalog(){
  }catch(e){toast('Booking data unavailable','Please reload to try again.');}
 }
 document.addEventListener('DOMContentLoaded',loadBookingCatalog);
+
+function bindOwnerControls(){
+ const search=$('.head-actions .search');if(search)search.onclick=()=>{
+  openDrawer('<span class="drawer-kicker">SEARCH KAVELYQ</span><h2>Find a workspace</h2><input id="workspaceSearch" placeholder="Search pages…"><div id="workspaceResults"></div>');
+  const input=$('#workspaceSearch'),box=$('#workspaceResults');
+  const update=()=>{box.innerHTML=Object.entries(titles).filter(([id,t])=>t[0].toLowerCase().includes(input.value.toLowerCase())).map(([id,t])=>'<p><button class="secondary" data-go="'+id+'">'+escLive(t[0])+'</button></p>').join('')||'<p>No results.</p>';};input.oninput=update;update();input.focus();
+ };
+ const notification=$('.head-actions [aria-label="Notifications"]');if(notification)notification.onclick=()=>openDrawer('<span class="drawer-kicker">'+(ownerDemoMode?'DEMO':'KAVELYQ')+' · NOTIFICATIONS</span><h2>Business updates</h2><p>'+(ownerDemoMode?'Demo: review the prepared AI plan and empty capacity in Live Business.':'Live customer notifications are managed by the delivery integration.')+'</p><button class="secondary" data-go="live">Open Live Business</button>');
+ $$('#moduleContent .filters button:not([data-action])').forEach(b=>{
+  const text=b.textContent.trim();
+  if(state.module==='calendar'&&text==='Day')b.onclick=()=>{closeDrawer();renderModule('calendar');};
+  else if(state.module==='calendar'&&text==='Week')b.onclick=()=>{
+   const live=!ownerDemoMode&&ownerDashboardData;
+   const rows=live?(ownerDashboardData.bookings||[]).map(x=>'<p>'+escLive(formatDateTimeLocalInZone(x.starts_at,ownerDashboardData.business.timezone))+' · '+escLive(x.customer)+' · '+escLive(x.staff)+' · '+escLive(x.status)+'</p>').join(''):calendar();
+   openDrawer('<span class="drawer-kicker">'+(live?'LIVE BOOKING LIST':'DEMO WEEK · 21–27 SEPTEMBER')+'</span><h2>Week overview</h2>'+rows);
+  };
+  else if(state.module==='calendar'&&text==='Locations')b.onclick=()=>renderModule('locations');
+  else{b.disabled=true;b.title='Preview — not enabled in this release';}
+ });
+ $$('#moduleContent button').filter(b=>!b.disabled&&!b.onclick&&!Object.keys(b.dataset).some(k=>['action','go','module','coreTab','sim','tip'].includes(k))).forEach(b=>{if(b.textContent.trim()==='All')b.onclick=()=>{$$('#moduleContent .campaign').forEach(n=>n.classList.remove('hidden'));toast('All campaigns displayed','Demo campaigns only');};else if(b.textContent.trim()==='Details')b.onclick=()=>openDrawer('<span class="drawer-kicker">DEMO INVENTORY</span><h2>Stock details</h2><p>'+escLive(b.parentElement.textContent)+'</p>');else{b.disabled=true;b.title='Preview — not enabled in this release';}});
+ const customerSearch=$('#moduleContent .list-search input');if(customerSearch)customerSearch.oninput=()=>{
+  const query=customerSearch.value.toLowerCase().trim();$$('#moduleContent .client-row').forEach(r=>r.classList.toggle('hidden',!r.textContent.toLowerCase().includes(query)));
+ };
+ $$('#moduleContent .client-row').forEach(r=>{
+  r.setAttribute('role','button');r.tabIndex=0;
+  r.onclick=()=>{const name=r.querySelector('b')?.textContent,detail=r.querySelector('small')?.textContent;openDrawer('<span class="drawer-kicker">DEMO CUSTOMER PROFILE</span><h2>'+escLive(name)+'</h2><p>'+escLive(detail)+'</p><p>This profile contains simulated demo data.</p><button class="secondary" data-action="close-drawer">Close</button>');};r.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();r.click();}};
+ });
+ $$('#moduleContent .customer-tabs span').forEach(n=>{n.setAttribute('role','button');n.tabIndex=0;n.onclick=()=>openDrawer('<span class="drawer-kicker">DEMO CUSTOMER</span><h2>'+escLive(n.textContent)+'</h2><p>'+({ 'Booking history':'Demo: Skin Fade + Beard · 28 August · €64.00', 'Payment history':'Demo payments are simulated. No real charge was made.', 'Notes & preferences':'0 → 1.5 low–mid fade · 5 cm textured top.', 'Photos':'No customer photos are available in this demo.', 'Communication':'No real messages are sent from the demo.'}[n.textContent]||'Preview feature.')+'</p>');n.onkeydown=e=>{if(e.key==='Enter')n.click()};});
+ $$('#moduleContent .core-links span').forEach(n=>{n.setAttribute('role','button');n.tabIndex=0;n.onclick=()=>{if(n.textContent==='Customers')renderModule('customers');else if(!ownerDemoMode&&ownerSetup)openLiveSetup();else openDrawer('<span class="drawer-kicker">PREVIEW</span><h2>'+escLive(n.textContent)+'</h2><p>Live staff, services and working hours are available under Settings after owner sign-in.</p><button class="secondary" data-go="settings">Open settings</button>');};n.onkeydown=e=>{if(e.key==='Enter')n.click()};});
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer();if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('.head-actions .search')?.click();}});
