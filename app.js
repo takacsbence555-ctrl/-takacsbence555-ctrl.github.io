@@ -115,7 +115,7 @@ function setView(id) {
   if(!["booking","hq","admin"].includes(id))return;
   $$(".view").forEach((v) => v.classList.toggle("hidden", v.id !== id));
   $$("[data-view]").forEach((b) => b.classList.toggle("active", b.dataset.view === id));
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  window.scrollTo({ top: 0, behavior: "instant" });
   if(document.readyState!=="loading")saveRoute();
 }
 // Delegated navigation is resilient to rerenders and mobile Safari event quirks.
@@ -1109,7 +1109,7 @@ function renderModule(id) {
   );
   bind();
   bindLiveOwnerRows();
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  window.scrollTo({ top: 0, behavior: "instant" });
   if(document.readyState!=="loading")saveRoute();
 }
 window.renderModule = renderModule;
