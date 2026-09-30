@@ -5,7 +5,8 @@ const money = (n) =>
   new Intl.NumberFormat("de-AT", {
     style: "currency",
     currency: "EUR",
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(n);
 const state = {
   module: "home",
@@ -111,9 +112,11 @@ function toast(t, x = "") {
   window.tt = setTimeout(() => e.classList.add("hidden"), 3400);
 }
 function setView(id) {
+  if(!["booking","hq","admin"].includes(id))return;
   $$(".view").forEach((v) => v.classList.toggle("hidden", v.id !== id));
   $$("[data-view]").forEach((b) => b.classList.toggle("active", b.dataset.view === id));
   window.scrollTo({ top: 0, behavior: "smooth" });
+  if(document.readyState!=="loading")saveRoute();
 }
 // Delegated navigation is resilient to rerenders and mobile Safari event quirks.
 document.addEventListener("click", (e) => {
@@ -1063,6 +1066,7 @@ modules.impact = () =>
   (state.plan === "active" ? "19.4" : "13.8") +
   ' h</b><span>estimated from automated work</span></article></div><section class="attribution-table"><div class="panel-head"><h2>Attribution trail</h2><span class="demo-chip">CLICKABLE DEMO DATA</span></div><div data-action="impact-detail"><span>Cycle-aware reactivation plan</span><b>12 customers</b><strong>+€540</strong><em>View →</em></div><div data-action="impact-detail"><span>Cancellation / waitlist recovery</span><b>8 offers · 3 bookings</b><strong>+€280</strong><em>View →</em></div><div data-action="impact-detail"><span>Personalized rebooking</span><b>47 messages · 9 bookings</b><strong>+€390</strong><em>View →</em></div><div data-action="impact-detail"><span>No-show protection</span><b>5 protected bookings</b><strong>+€238</strong><em>View →</em></div></section>';
 function renderModule(id) {
+  if(!titles[id]||!modules[id])return;
   state.module = id;
   saveDemoState();
   let t = titles[id];
@@ -1104,7 +1108,9 @@ function renderModule(id) {
     b.classList.toggle("active", b.dataset.module === id),
   );
   bind();
+  bindLiveOwnerRows();
   window.scrollTo({ top: 0, behavior: "smooth" });
+  if(document.readyState!=="loading")saveRoute();
 }
 window.renderModule = renderModule;
 window.act = act;
@@ -1203,9 +1209,7 @@ function openDrawer(h) {
   $("#drawerContent").innerHTML = h;
   $("#drawer").classList.remove("hidden");
   $("#overlay").classList.remove("hidden");
-  $$("[data-action]", $$("#drawer")).forEach(
-    (b) => (b.onclick = () => act(b.dataset.action, b)),
-  );
+  // Dynamic actions use the single delegated controller.
 }
 function closeDrawer() {
   $("#drawer").classList.add("hidden");
@@ -1239,7 +1243,9 @@ async function runLiveOperator(){
   toast("Operator action executed","Decision Log updated · no external messages sent");
  }catch(e){console.error(e);toast("Operator action failed","No live action was applied.");}
 }
+let executionTimer;
 function startExecution() {
+  if(state.plan==="executing")return;
   state.plan = "executing";
   let steps = [
     "Analyzing customers…",
@@ -1264,8 +1270,9 @@ function startExecution() {
       )
       .join("") +
     '</div><div class="execution-foot"><span id="executionCount">1 of 5</span><small>Do not close this demo flow</small></div></section>';
-  let timer = setInterval(() => {
+  let timer = executionTimer = setInterval(() => {
     let rows = $$("#executionSteps>div");
+    if(rows.length!==steps.length){clearInterval(timer);state.plan="prepared";saveDemoState();return;}
     rows[i].className = "done";
     rows[i].querySelector("i").textContent = "✓";
     rows[i].querySelector("b").textContent = "Complete";
@@ -1569,7 +1576,7 @@ function checkout() {
 }
 const SUPABASE_URL="https://lpnewhfsbpwyjgdpoxqj.supabase.co";
 const SUPABASE_KEY="sb_publishable_3FRbG5Y2r1K_iLK27KErIQ_1CMH1a0Q";
-const BOOKING_BUSINESS="demo-studio";
+const BOOKING_BUSINESS=new URLSearchParams(location.search).get("salon")||"demo-studio";
 const SERVICE_SLUGS={"Classic Cut":"classic-cut","Skin Fade":"skin-fade","Cut + Beard":"cut-beard","Beard Ritual":"beard-ritual"};
 const STAFF_SLUGS={"Demo Barber A":"demo-barber-a","Demo Barber B":"demo-barber-b","Demo Barber C":"demo-barber-c"};
 function formatDateTimeLocalInZone(value,timeZone){const p=new Intl.DateTimeFormat("en-CA",{timeZone,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date(value));const x={};p.forEach(v=>x[v.type]=v.value);return x.year+"-"+x.month+"-"+x.day+"T"+x.hour+":"+x.minute;}
@@ -1583,29 +1590,33 @@ async function supabaseRpc(fn,params){
 }
 function selectedStaffSlug(){return STAFF_SLUGS[state.barber]||"demo-barber-a"}
 function selectedServiceSlug(){return SERVICE_SLUGS[state.service]||"skin-fade"}
-async function refreshLiveAvailability(preserveSelectedDate=false){
-  if(!state.service||!state.barber) return;
-  const dateButtons=$$(".date-strip button");
-  const grid=$(".slot-grid"); if(!grid)return;
+let availabilitySequence=0, slotStaffMap={};
+async function refreshLiveAvailability(){
+  if(!state.service||!state.barber)return;
+  const sequence=++availabilitySequence, serviceSlug=selectedServiceSlug(), barber=state.barber;
+  const buttons=$$(".date-strip button"),grid=$("#booking .slot-grid");if(!grid)return;
   grid.innerHTML='<span class="muted">Loading available times…</span>';
+  state.time="";bookRefresh();
   try{
-    const staffSlugs=state.barber==="First available"?Object.values(STAFF_SLUGS):[selectedStaffSlug()];
-    const days=await Promise.all(dateButtons.map(async(btn,day)=>{
-      const date=viennaISODate(day);
-      const results=await Promise.all(staffSlugs.map(staffSlug=>supabaseRpc("get_public_availability",{p_business_slug:BOOKING_BUSINESS,p_staff_slug:staffSlug,p_service_slug:selectedServiceSlug(),p_date:date})));
-      const slots=[...new Set(results.flat())].sort().slice(0,12);
-      btn.dataset.date=date;btn.classList.toggle("has-slots",slots.length>0);btn.disabled=false;
-      return {date,slots};
+    const staffSlugs=barber==="First available"?Object.values(STAFF_SLUGS):[selectedStaffSlug()];
+    const results=await Promise.all(buttons.map(async b=>{
+      const date=b.dataset.date;
+      const staffSlots=await Promise.all(staffSlugs.map(async staff=>({staff,times:await supabaseRpc("get_public_availability",{p_business_slug:BOOKING_BUSINESS,p_staff_slug:staff,p_service_slug:serviceSlug,p_date:date})||[]})));
+      const map={};staffSlots.forEach(x=>x.times.forEach(t=>{if(!map[t])map[t]=x.staff}));
+      return {date,map,times:Object.keys(map).sort()};
     }));
-    let chosen=days.find(x=>x.date===bookingDate);
-    if(!preserveSelectedDate && (!chosen||!chosen.slots.length)) chosen=days.find(x=>x.slots.length)||chosen||days[0];
-    if(chosen)bookingDate=chosen.date;
-    dateButtons.forEach(b=>b.classList.toggle("active",b.dataset.date===bookingDate));
-    const chosenSlots=chosen?.slots||[];
-    if(!chosenSlots.length){grid.innerHTML='<span class="muted">No available times on this day</span>';return;}
-    grid.innerHTML=chosenSlots.map(t=>'<button data-time="'+t+'">'+t+'</button>').join("");
-    $$("#booking .slot-grid [data-time]").forEach(b=>b.onclick=()=>{$$("#booking .slot-grid [data-time]").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");state.time=b.dataset.time;$("#sumTime").textContent=bookingDate+" · "+state.time;bookingChoiceConfirm(state.time+" selected");state.bookStep=4;bookRefresh();});
-  }catch(e){console.error("Live availability",e);grid.innerHTML='<span class="muted">Availability could not be loaded</span>';}
+    if(sequence!==availabilitySequence)return;
+    results.forEach((r,i)=>{buttons[i].classList.toggle("has-slots",!!r.times.length);buttons[i].classList.toggle("active",r.date===bookingDate)});
+    const chosen=results.find(r=>r.date===bookingDate);slotStaffMap=chosen?.map||{};
+    if(!chosen?.times.length){grid.innerHTML='<span class="muted">No available times on this day. Choose another date.</span>';return;}
+    grid.innerHTML=chosen.times.map(t=>'<button data-time="'+t+'">'+t+'</button>').join("");
+    $$("[data-time]",grid).forEach(b=>b.onclick=()=>{
+      state.time=b.dataset.time;
+      if(barber==="First available"){const slug=slotStaffMap[state.time];state.barber=Object.keys(STAFF_SLUGS).find(k=>STAFF_SLUGS[k]===slug);$("#sumBarber").textContent=state.barber;}
+      $("#sumTime").textContent=bookingDate+" · "+state.time;
+      state.bookStep=4;bookRefresh();bookingChoiceConfirm(state.time+" selected");
+    });
+  }catch(e){if(sequence!==availabilitySequence)return;grid.innerHTML='<span class="muted">Availability could not be loaded. Please try again.</span>';}
 }
 async function createLiveBooking(guestName,guestPhone,guestEmail){
   return await supabaseRpc("create_public_booking_local_v2",{p_business_slug:BOOKING_BUSINESS,p_staff_slug:selectedStaffSlug(),p_service_slug:selectedServiceSlug(),p_date:bookingDate,p_time:state.time+":00",p_display_name:guestName,p_email:guestEmail||null,p_phone:guestPhone});
@@ -1619,8 +1630,13 @@ function parseAuthHash(){
  if(token){ownerAccessToken=token;sessionStorage.setItem("kavelyq-owner-token",token);sessionStorage.removeItem("operator-owner-token");history.replaceState(null,"",location.pathname+location.search);return true;}
  ownerAccessToken=sessionStorage.getItem("kavelyq-owner-token")||sessionStorage.getItem("operator-owner-token")||null;return !!ownerAccessToken;
 }
-function ownerSignOut(){ownerAccessToken=null;sessionStorage.removeItem("kavelyq-owner-token");sessionStorage.removeItem("operator-owner-token");ownerDashboardData=null;ownerCrm=[];ownerSetup=null;showOwnerGate("Signed out securely.");}
+function ownerSignOut(){sessionStorage.removeItem("kavelyq-owner-demo");ownerAccessToken=null;sessionStorage.removeItem("kavelyq-owner-token");sessionStorage.removeItem("operator-owner-token");ownerDashboardData=null;ownerCrm=[];ownerSetup=null;showOwnerGate("Signed out securely.");}
+const ownerPending=new Map();
 async function ownerRpc(fn,params={}){
+ const key=fn+JSON.stringify(params);if(ownerPending.has(key))return ownerPending.get(key);
+ const pending=performOwnerRpc(fn,params);ownerPending.set(key,pending);try{return await pending}finally{ownerPending.delete(key)}
+}
+async function performOwnerRpc(fn,params={}){
  const res=await fetch(SUPABASE_URL+"/rest/v1/rpc/"+fn,{method:"POST",headers:ownerAuthHeaders(),body:JSON.stringify(params)});
  if(res.status===401)throw new Error("AUTH_REQUIRED"); const t=await res.text();if(!res.ok)throw new Error(t||("HTTP "+res.status));return t?JSON.parse(t):null;
 }
@@ -1629,7 +1645,7 @@ async function loadOwnerDashboard(){
  const data=await ownerRpc("owner_dashboard",{}); ownerDashboardData=data; return data;
 }
 function showOwnerApp(demo=false){
- ownerDemoMode=demo; $("#ownerAuthGate")?.classList.add("hidden"); $("#ownerAppShell")?.classList.remove("hidden");
+ ownerDemoMode=demo; if(demo)sessionStorage.setItem("kavelyq-owner-demo","1");else sessionStorage.removeItem("kavelyq-owner-demo"); $("#ownerAuthGate")?.classList.add("hidden"); $("#ownerAppShell")?.classList.remove("hidden");
  if(demo){renderModule(window.__pendingModule||"home");return;}
  Promise.all([loadOwnerDashboard(),ownerRpc("owner_business_metrics",{}).catch(()=>null),ownerRpc("owner_customer_crm",{}).catch(()=>[]),ownerRpc("owner_rebooking_opportunities",{}).catch(()=>[]),ownerRpc("owner_onboarding_snapshot",{}).catch(()=>null),ownerRpc("owner_subscription_snapshot",{}).catch(()=>null),ownerRpc("owner_business_settings",{}).catch(()=>null),ownerRpc("owner_setup_snapshot",{}).catch(()=>null)]).then(([data,metrics,crm,rebooking,onboarding,subscription,businessSettings,setup])=>{ ownerMetrics=metrics; ownerCrm=crm||[]; ownerRebooking=rebooking||[]; ownerOnboarding=onboarding; ownerSubscription=subscription; ownerBusinessSettings=businessSettings; ownerSetup=setup;
    if(!data){sessionStorage.removeItem("operator-owner-token");sessionStorage.removeItem("kavelyq-owner-token");ownerAccessToken=null;showOwnerGate("This account is not connected to a business yet.");return;}
@@ -1643,7 +1659,7 @@ function showOwnerGate(message=""){
 }
 async function startOwnerTrial(){
  const email=$("#ownerEmail")?.value?.trim();
- if(!email)return showOwnerGate("Enter your email first, then start the free trial.");
+ if(!email||!/^\S+@\S+\.\S+$/.test(email))return showOwnerGate("Enter a valid email first, then start the free trial.");
  const btn=$("#ownerTrialBtn");if(btn)btn.disabled=true;
  try{
   const redirect=location.origin+location.pathname+"?new_business=1";
@@ -1666,7 +1682,7 @@ function openBusinessSetup(){
  };
 }
 async function sendOwnerMagicLink(){
- const email=$("#ownerEmail")?.value?.trim();if(!email)return showOwnerGate("Enter your owner email.");
+ const email=$("#ownerEmail")?.value?.trim();if(!email||!/^\S+@\S+\.\S+$/.test(email))return showOwnerGate("Enter a valid owner email.");
  const btn=$("#ownerLoginBtn");if(btn)btn.disabled=true;
  try{
   const res=await fetch(SUPABASE_URL+"/auth/v1/otp",{method:"POST",headers:{"apikey":SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify({email,create_user:false,gotrue_meta_security:{captcha_token:null}})});
@@ -1689,9 +1705,9 @@ function ownerBookingModal(mode,b=null){
  (mode==="create"?'<button class="primary" id="liveSave">Create booking</button>':'<button class="primary" id="liveMove">Reschedule</button><button class="secondary" id="liveComplete">Complete</button><button class="secondary" id="liveNoShow">No-show</button><button class="secondary" id="liveCancel">Cancel booking</button>')+'</div><span id="liveBookingStatus"></span></div>';
  document.body.appendChild(wrap);wrap.querySelector(".modal-close").onclick=()=>wrap.remove();
  const status=t=>{const s=wrap.querySelector("#liveBookingStatus");if(s)s.textContent=t};
- if(mode==="create")wrap.querySelector("#liveSave").onclick=async()=>{try{status("Saving…");(()=>{const v=splitLocalDateTime(wrap.querySelector("#liveStart").value);return ownerRpc("owner_create_booking_local",{p_business_id:ownerDashboardData.business.id,p_staff_id:wrap.querySelector("#liveStaff").value,p_service_id:wrap.querySelector("#liveService").value,p_date:v.date,p_time:v.time,p_customer_name:wrap.querySelector("#liveCustomer").value})})();wrap.remove();await refreshOwnerLive();toast("Booking created","Saved to live database");}catch(e){status(e.message.includes("SLOT_ALREADY_BOOKED")?"That time is already booked.":"Could not create booking.");}};
+ if(mode==="create")wrap.querySelector("#liveSave").onclick=async()=>{try{status("Saving…");await (()=>{const v=splitLocalDateTime(wrap.querySelector("#liveStart").value);return ownerRpc("owner_create_booking_local",{p_business_id:ownerDashboardData.business.id,p_staff_id:wrap.querySelector("#liveStaff").value,p_service_id:wrap.querySelector("#liveService").value,p_date:v.date,p_time:v.time,p_customer_name:wrap.querySelector("#liveCustomer").value})})();wrap.remove();await refreshOwnerLive();toast("Booking created","Saved to live database");}catch(e){status(e.message.includes("SLOT_ALREADY_BOOKED")?"That time is already booked.":"Could not create booking.");}};
  else{
-  wrap.querySelector("#liveMove").onclick=async()=>{try{status("Saving…");(()=>{const v=splitLocalDateTime(wrap.querySelector("#liveStart").value);return ownerRpc("owner_reschedule_booking_local",{p_booking_id:b.id,p_date:v.date,p_time:v.time})})();wrap.remove();await refreshOwnerLive();toast("Booking rescheduled","Live database updated");}catch(e){status(e.message.includes("SLOT_ALREADY_BOOKED")?"That time is already booked.":"Could not reschedule booking.");}};
+  wrap.querySelector("#liveMove").onclick=async()=>{try{status("Saving…");await (()=>{const v=splitLocalDateTime(wrap.querySelector("#liveStart").value);return ownerRpc("owner_reschedule_booking_local",{p_booking_id:b.id,p_date:v.date,p_time:v.time})})();wrap.remove();await refreshOwnerLive();toast("Booking rescheduled","Live database updated");}catch(e){status(e.message.includes("SLOT_ALREADY_BOOKED")?"That time is already booked.":"Could not reschedule booking.");}};
   wrap.querySelector("#liveComplete").onclick=async()=>{try{status("Saving…");await ownerRpc("owner_update_booking_status",{p_booking_id:b.id,p_status:"completed"});wrap.remove();await refreshOwnerLive();toast("Appointment completed","Revenue is now verified in live metrics");}catch(e){status("Could not update booking.");}};
   wrap.querySelector("#liveNoShow").onclick=async()=>{try{status("Saving…");await ownerRpc("owner_update_booking_status",{p_booking_id:b.id,p_status:"no_show"});wrap.remove();await refreshOwnerLive();toast("Marked as no-show","Live metrics updated");}catch(e){status("Could not update booking.");}};
   wrap.querySelector("#liveCancel").onclick=async()=>{try{status("Cancelling…");await ownerRpc("owner_cancel_booking",{p_booking_id:b.id});wrap.remove();await refreshOwnerLive();toast("Booking cancelled","Live database updated");}catch(e){status("Could not cancel booking.");}};
@@ -1729,7 +1745,7 @@ function openLiveSetup(){
  openDrawer('<span class="drawer-kicker">KAVELYQ · LIVE SETUP</span><h2>Staff & services</h2><div class="drawer-section"><h3>Add service</h3><label>Name<input id="newSvcName" placeholder="Haircut"></label><label>Duration<input id="newSvcDur" type="number" value="45"></label><label>Price €<input id="newSvcPrice" type="number" value="45"></label><button class="secondary" data-action="add-live-service">Add service</button></div><div class="drawer-section"><h3>Add staff</h3><label>Name<input id="newStaffName" placeholder="Professional name"></label><button class="secondary" data-action="add-live-staff">Add staff</button></div>'+
  st.map(x=>'<div class="drawer-section"><h3><input data-edit-staff-name="'+x.id+'" value="'+escLive(x.name)+'"> <label><input type="checkbox" data-edit-staff-active="'+x.id+'" '+(x.active?'checked':'')+'> Active</label></h3><button class="secondary" data-action="save-live-staff" data-staff-id="'+x.id+'">Save staff</button><p>'+sv.filter(v=>v.active).map(v=>'<label><input type="checkbox" data-live-staff-service="'+x.id+'|'+v.id+'" '+(enabled(x.id,v.id)?'checked':'')+'> '+v.name+'</label>').join('')+'</p><h4>Working hours</h4>'+dayNames.map((d,i)=>{const h=wh.find(q=>q.staff_id===x.id&&q.weekday===i);return '<div class="live-hours"><label><input type="checkbox" data-live-day="'+x.id+'|'+i+'" '+(h?'checked':'')+'> '+d+'</label><input data-live-start="'+x.id+'|'+i+'" type="time" value="'+(h?String(h.start_time).slice(0,5):'09:00')+'"><input data-live-end="'+x.id+'|'+i+'" type="time" value="'+(h?String(h.end_time).slice(0,5):'18:00')+'"></div>'}).join('')+'<button class="secondary" data-action="save-live-hours" data-staff-id="'+x.id+'">Save hours</button><h4>Time off</h4><input data-off-start="'+x.id+'" type="datetime-local"><input data-off-end="'+x.id+'" type="datetime-local"><input data-off-reason="'+x.id+'" placeholder="Holiday / unavailable"><button class="secondary" data-action="add-live-timeoff" data-staff-id="'+x.id+'">Block time</button></div>').join('')+
  '<div class="drawer-section"><h3>Services</h3>'+sv.map(v=>'<div class="live-hours"><input data-edit-svc-name="'+v.id+'" value="'+escLive(v.name)+'"><input data-edit-svc-dur="'+v.id+'" type="number" min="5" value="'+v.duration_minutes+'"><input data-edit-svc-price="'+v.id+'" type="number" min="0" step="0.01" value="'+(v.price_cents/100).toFixed(2)+'"><label><input data-edit-svc-active="'+v.id+'" type="checkbox" '+(v.active?'checked':'')+'> Active</label><button class="secondary" data-action="save-live-service" data-service-id="'+v.id+'">Save</button></div>').join('')+'</div><div class="drawer-section"><h3>Upcoming time off</h3>'+(off.length?off.map(o=>'<p><b>'+(st.find(x=>x.id===o.staff_id)?.name||'Staff')+'</b> · '+new Date(o.starts_at).toLocaleString()+' → '+new Date(o.ends_at).toLocaleString()+'<br>'+(o.reason||'Unavailable')+' <button class="ghost" data-action="remove-live-timeoff" data-timeoff-id="'+o.id+'">Remove</button></p>').join(''):'<p class="muted">No upcoming blocked time.</p>')+'</div>');
- $("[data-live-staff-service]").forEach(c=>c.onchange=async()=>{const [sid,vid]=c.dataset.liveStaffService.split("|");try{await ownerRpc("owner_set_staff_service",{p_staff_id:sid,p_service_id:vid,p_enabled:c.checked});ownerSetup=await ownerRpc("owner_setup_snapshot",{});toast("Service assignment saved");}catch(e){c.checked=!c.checked;toast("Could not save");}});
+ $$("[data-live-staff-service]").forEach(c=>c.onchange=async()=>{const [sid,vid]=c.dataset.liveStaffService.split("|");try{await ownerRpc("owner_set_staff_service",{p_staff_id:sid,p_service_id:vid,p_enabled:c.checked});ownerSetup=await ownerRpc("owner_setup_snapshot",{});toast("Service assignment saved");}catch(e){c.checked=!c.checked;toast("Could not save");}});
 }
 async function reloadLiveSetup(){ownerSetup=await ownerRpc("owner_setup_snapshot",{});openLiveSetup();}
 function liveSettingsPanel(){
@@ -1770,12 +1786,12 @@ function liveOwnerPanel(){
 parseAuthHash();
 ownerAccessToken=ownerAccessToken||sessionStorage.getItem("kavelyq-owner-token")||sessionStorage.getItem("operator-owner-token");
 document.addEventListener("DOMContentLoaded",()=>{
- const manageFromUrl=loadManageTokenFromUrl();
+ const manageFromUrl=loadManageTokenFromUrl(); if(manageFromUrl){$("#salesEntry")?.classList.add("hidden");setView("booking");}
  $("#ownerLoginBtn")?.addEventListener("click",sendOwnerMagicLink);
  $("#ownerDemoBtn")?.addEventListener("click",()=>showOwnerApp(true));
  $("#ownerTrialBtn")?.addEventListener("click",startOwnerTrial);
- $("#ownerSignOut")?.addEventListener("click",()=>{sessionStorage.removeItem("operator-owner-token");sessionStorage.removeItem("kavelyq-owner-token");ownerAccessToken=null;ownerDashboardData=null;showOwnerGate("Signed out.");});
- if(ownerAccessToken){ if(new URLSearchParams(location.search).get("new_business")==="1") openBusinessSetup(); else showOwnerApp(false); }else showOwnerGate(); if(manageFromUrl)setTimeout(openGuestBookingManager,0);
+ $("#ownerSignOut")?.addEventListener("click",()=>{sessionStorage.removeItem("kavelyq-owner-demo");sessionStorage.removeItem("operator-owner-token");sessionStorage.removeItem("kavelyq-owner-token");ownerAccessToken=null;ownerDashboardData=null;showOwnerGate("Signed out.");});
+ if(ownerAccessToken){ if(new URLSearchParams(location.search).get("new_business")==="1") openBusinessSetup(); else showOwnerApp(false); }else if(sessionStorage.getItem("kavelyq-owner-demo"))showOwnerApp(true);else showOwnerGate(); if(manageFromUrl)setTimeout(openGuestBookingManager,0);
 });
 
 function bookingChoiceConfirm(label) {
@@ -1786,6 +1802,7 @@ function bookingChoiceConfirm(label) {
   clearTimeout(window.__bookingChoiceTimer); window.__bookingChoiceTimer=setTimeout(()=>el.classList.remove("show"),700);
 }
 function bookRefresh() {
+  if(!$("#bookingSuccess")?.classList.contains("hidden")){ $$(".book-step").forEach(s=>s.classList.add("hidden"));return; }
   $$(".book-step").forEach((s, i) =>
     s.classList.toggle("hidden", i !== state.bookStep - 1),
   );
@@ -1800,11 +1817,14 @@ function bookRefresh() {
     state.time,
     ($("#guestName")?.value||"").trim() && ((($("#guestPhone")?.value||"").trim()) || (($("#guestEmail")?.value||"").trim())) && $("#bookingPolicyConsent")?.checked,
   ][state.bookStep - 1];
-  const next=$("#bookNext"); if(next){ next.disabled=!ok; next.textContent=state.bookStep===4?(state.guestLang==="EN"?"Confirm booking":"Buchung bestätigen"):(state.guestLang==="EN"?"Continue":"Weiter"); }
+  const success=$("#bookingSuccess");if(success&&!success.classList.contains("hidden"))return;
+  if(document.readyState!=="loading")saveRoute();
+  const next=$("#bookNext"); if(next){ next.disabled=guestBookingBusy||!ok; next.textContent=state.bookStep===4?(state.guestLang==="EN"?"Confirm booking":"Buchung bestätigen"):(state.guestLang==="EN"?"Continue":"Weiter"); }
 }
+function bindBookingChoices(){
 $$("[data-service]").forEach(b => b.onclick = () => {
   $$("[data-service]").forEach(x => x.classList.remove("selected"));
-  b.classList.add("selected"); state.service=b.dataset.service; state.price=+b.dataset.price;
+  b.classList.add("selected"); state.service=b.dataset.service; state.price=+b.dataset.price; state.barber=""; state.time=""; $("#sumBarber").textContent=$("#sumTime").textContent="—";
   const ss=$("#sumService"),sp=$("#sumPrice");if(ss)ss.textContent=state.service;if(sp)sp.textContent=money(state.price);
   bookingChoiceConfirm(state.service+" selected"); state.bookStep=2; bookRefresh();
   requestAnimationFrame(()=>{const el=document.querySelector("#bookStep2");if(el){const y=el.getBoundingClientRect().top+window.scrollY-110;window.scrollTo({top:Math.max(0,y),behavior:"smooth"});}});
@@ -1816,12 +1836,14 @@ $$("[data-barber]").forEach(b => b.onclick = () => {
   bookingChoiceConfirm(state.barber+" selected"); state.bookStep=3; bookRefresh(); refreshLiveAvailability();
   requestAnimationFrame(()=>{const el=document.querySelector("#bookStep3");if(el){const y=el.getBoundingClientRect().top+window.scrollY-110;window.scrollTo({top:Math.max(0,y),behavior:"smooth"});}});
 });
+}
+bindBookingChoices();
 $$("[data-time]").forEach(b => b.onclick = () => {
   $$("[data-time]").forEach(x => x.classList.remove("selected"));
   b.classList.add("selected"); state.time=b.dataset.time; $("#sumTime").textContent="Demo date · "+state.time;
   bookingChoiceConfirm(state.time+" selected"); state.bookStep=4; bookRefresh();
 });
-$$(".date-strip button").forEach((b,i)=>{b.dataset.date=viennaISODate(i);const d=new Date(b.dataset.date+"T12:00:00Z");const locale=state.guestLang==="EN"?"en-GB":"de-AT";const sm=b.querySelector("small"),bb=b.querySelector("b");if(sm)sm.textContent=new Intl.DateTimeFormat(locale,{weekday:"short",timeZone:"Europe/Vienna"}).format(d).toUpperCase();if(bb)bb.textContent=new Intl.DateTimeFormat(locale,{day:"2-digit",timeZone:"Europe/Vienna"}).format(d);b.onclick=async()=>{if(b.disabled)return;$(".date-strip button").forEach(x=>x.classList.remove("active"));b.classList.add("active");bookingDate=b.dataset.date;state.time=null;const st=$("#sumTime");if(st)st.textContent="—";await refreshLiveAvailability(true);bookRefresh();};});
+$$(".date-strip button").forEach((b,i)=>{b.dataset.date=viennaISODate(i);const d=new Date(b.dataset.date+"T12:00:00Z");const locale=state.guestLang==="EN"?"en-GB":"de-AT";const sm=b.querySelector("small"),bb=b.querySelector("b");if(sm)sm.textContent=new Intl.DateTimeFormat(locale,{weekday:"short",timeZone:"Europe/Vienna"}).format(d).toUpperCase();if(bb)bb.textContent=new Intl.DateTimeFormat(locale,{day:"2-digit",timeZone:"Europe/Vienna"}).format(d);b.onclick=async()=>{if(b.disabled)return;$$(".date-strip button").forEach(x=>x.classList.remove("active"));b.classList.add("active");bookingDate=b.dataset.date;state.time=null;const st=$("#sumTime");if(st)st.textContent="—";await refreshLiveAvailability();bookRefresh();};});
 if($("#bookBack")) $("#bookBack").onclick = () => {
   if (state.bookStep > 1) {
     state.bookStep--;
@@ -1841,7 +1863,7 @@ $$(`[data-action="repeat-cut"]`).forEach(btn=>btn.onclick = () => {
   state.time = state.cutMemory.time;
   $("#sumService").textContent = "Skin Fade";
   $("#sumBarber").textContent = "Demo Barber A";
-  $("#sumTime").textContent = "Di, 22. Sep · 16:15";
+  $("#sumTime").textContent = "—";
   $("#sumPrice").textContent = "€42";
   state.bookStep = 4;
   bookRefresh();
@@ -1875,46 +1897,50 @@ function guestAction(a){
   if(a==="gift"){state.guestGift=true; saveDemoState();return toast("Gift card created","DEMO €50 gift card · no real charge");}
 }
 bindGuestActions();
+let guestBookingBusy=false;
 async function confirmLiveBooking(){
+ if(guestBookingBusy)return;
+ if(!state.service||!state.barber||!state.time)return toast("Choose service, professional and time");
  const guestName=(($("#guestName")?.value)||"").trim(),guestPhone=(($("#guestPhone")?.value)||"").trim(),guestEmail=(($("#guestEmail")?.value)||"").trim();
- if(guestName.length<2)return toast("Name required","Enter the guest name.");
+ if(guestName.length<2||guestName.length>120)return toast("Name required","Enter the guest name.");
  if(!guestPhone&&!guestEmail)return toast("Contact required","Enter an email address or phone number.");
- if(guestEmail&&!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(guestEmail))return toast("Check email","Enter a valid email address.");
- if(guestPhone&&guestPhone.length<6)return toast("Check phone","Enter a valid phone number.");
+ if(guestEmail&&(guestEmail.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)))return toast("Check email","Enter a valid email address.");
+ if(guestPhone&&(guestPhone.length>40||!/^\+?[0-9 ()-]{6,40}$/.test(guestPhone)))return toast("Check phone","Enter a valid phone number.");
  if(!$("#bookingPolicyConsent")?.checked)return toast("Policy agreement required","Accept the booking and cancellation policy first.");
- const next=$("#bookNext");if(next)next.disabled=true;
+ guestBookingBusy=true; const next=$("#bookNext");if(next)next.disabled=true;
  try{
   const bookingResult=await createLiveBooking(guestName,guestPhone,guestEmail),bookingId=bookingResult?.booking_id,manageToken=bookingResult?.manage_token;
   state.guestManageToken=manageToken;state.guestManageUrl=guestManageUrl(manageToken);state.guestDeposit=0;state.guestPaymentStatus="not_collected";
-  state.guestBooking={id:bookingId,manageToken,customer:guestName,service:state.service,price:state.price,barber:state.barber,time:state.time,deposit:0,remaining:state.price,status:"Confirmed",backend:"supabase"};
+  state.guestBooking={id:bookingId,manageToken,date:bookingDate,customer:guestName,service:state.service,price:state.price,barber:state.barber,time:state.time,deposit:0,remaining:state.price,status:"Confirmed",backend:"supabase"};
   state.guestEvents.unshift({type:"BOOKING",result:"Confirmed",detail:"Live Supabase booking · online payment not collected"});
   state.appointments++;state.forecast+=state.price;saveDemoState();
   $$(".book-step").forEach(x=>x.classList.add("hidden"));$("#bookActions")?.classList.add("hidden");$("#bookingSuccess")?.classList.remove("hidden");
   const p=$("#bookingSuccess p");if(p)p.innerHTML=(state.guestLang==="EN"?"<b>BOOKING CONFIRMED</b><br>No online payment was charged.":"<b>BUCHUNG BESTÄTIGT</b><br>Es wurde keine Online-Zahlung abgebucht.")+'<br><button class="secondary small" data-action="manage-guest-booking">Manage booking</button>';
   bindGuestActions();applyGuestLanguage(state.guestLang);toast(state.guestLang==="EN"?"Booking confirmed":"Buchung bestätigt",state.guestLang==="EN"?"No online payment was charged":"Keine Online-Zahlung wurde abgebucht");
  }catch(e){console.error(e);state.bookStep=3;bookRefresh();await refreshLiveAvailability();toast(state.guestLang==="EN"?"Could not confirm booking":"Buchung konnte nicht bestätigt werden",state.guestLang==="EN"?"The time may no longer be available.":"Der Termin ist möglicherweise nicht mehr verfügbar.");}
- finally{if(next&&state.bookStep===4)next.disabled=false;}
+ finally{guestBookingBusy=false;bookRefresh();}
 }
 function guestManageUrl(token){const u=new URL(location.href);u.searchParams.set("manage",token);u.searchParams.delete("new_business");u.hash="";return u.toString();}
-function loadManageTokenFromUrl(){const u=new URL(location.href),token=u.searchParams.get("manage");if(!token)return false;if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(token)){u.searchParams.delete("manage");history.replaceState(null,"",u.pathname+(u.search?"?"+u.searchParams.toString():""));return false;}state.guestManageToken=token;u.searchParams.delete("manage");history.replaceState(null,"",u.pathname+(u.searchParams.toString()?"?"+u.searchParams.toString():""));return true;}
+function loadManageTokenFromUrl(){const u=new URL(location.href),token=u.searchParams.get("manage");if(!token)return false;if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(token)){u.searchParams.delete("manage");history.replaceState(null,"",u.pathname+(u.search?"?"+u.searchParams.toString():""));return false;}state.guestManageToken=token;sessionStorage.setItem("kavelyq-manage-token",token);return true;}
 async function openGuestBookingManager(){
- const token=state.guestBooking?.manageToken||state.guestManageToken;
+ const token=state.guestManageToken||state.guestBooking?.manageToken;
  if(!token)return toast(state.guestLang==="EN"?"Management link unavailable":"Buchungslink nicht verfügbar");
  try{
   const x=await supabaseRpc("get_public_booking_manage",{p_token:token});
   if(!x)return toast("Booking not found");
+  state.guestManageToken=token;
   const d=new Date(x.starts_at),locale=state.guestLang==="EN"?"en-GB":"de-AT";const date=d.toLocaleDateString(locale,{timeZone:x.timezone});const time=d.toLocaleTimeString(locale,{hour:"2-digit",minute:"2-digit",timeZone:x.timezone});
   openDrawer('<span class="drawer-kicker">KAVELYQ · BOOKING</span><h2>'+escLive(x.service_name)+'</h2><p>'+escLive(x.business_name)+' · '+escLive(x.staff_name)+'</p><div class="drawer-section"><div class="detail-grid"><div><small>DATE</small><b>'+date+'</b></div><div><small>TIME</small><b>'+time+'</b></div><div><small>STATUS</small><b>'+escLive(x.status)+'</b></div><div><small>POLICY</small><b>'+x.cancellation_window_hours+'h</b></div></div></div><label>New date<input id="guestManageDate" type="date"></label><button class="secondary" data-action="guest-load-slots">Find times</button><div id="guestManageSlots" class="slot-grid"></div><button class="danger" data-action="guest-self-cancel">Cancel booking</button>');
  }catch(e){toast("Could not open booking","The management link may no longer be valid.");}
 }
 async function loadGuestManageSlots(){
- const token=state.guestBooking?.manageToken||state.guestManageToken,date=$("#guestManageDate")?.value;if(!token||!date)return toast("Choose a date");
- try{const slots=await supabaseRpc("get_public_manage_availability",{p_token:token,p_date:date});const box=$("#guestManageSlots");box.innerHTML=(slots||[]).length?(slots||[]).map(t=>'<button data-manage-time="'+t+'">'+t+'</button>').join(""):'<span class="muted">No available times</span>';$("[data-manage-time]",box).forEach(b=>b.onclick=async()=>{try{await supabaseRpc("reschedule_public_booking_local",{p_token:token,p_date:date,p_time:b.dataset.manageTime+":00"});if(state.guestBooking)state.guestBooking.time=b.dataset.manageTime;saveDemoState();closeDrawer();toast("Booking rescheduled","Your appointment was updated.");}catch(e){toast("Could not reschedule","That time may no longer be available.");}});}catch(e){toast("Could not load times");}
+ const token=state.guestManageToken||state.guestBooking?.manageToken,date=$("#guestManageDate")?.value;if(!token||!date)return toast("Choose a date");
+ try{const slots=await supabaseRpc("get_public_manage_availability",{p_token:token,p_date:date});const box=$("#guestManageSlots");box.innerHTML=(slots||[]).length?(slots||[]).map(t=>'<button data-manage-time="'+t+'">'+t+'</button>').join(""):'<span class="muted">No available times</span>';$$("[data-manage-time]",box).forEach(b=>b.onclick=async()=>{try{await supabaseRpc("reschedule_public_booking_local",{p_token:token,p_date:date,p_time:b.dataset.manageTime+":00"});if(state.guestBooking?.manageToken===token){state.guestBooking.time=b.dataset.manageTime;state.guestBooking.date=date;}saveDemoState();closeDrawer();toast("Booking rescheduled","Your appointment was updated.");}catch(e){toast("Could not reschedule","That time may no longer be available.");}});}catch(e){toast("Could not load times");}
 }
 async function cancelGuestBooking(){
- const token=state.guestBooking?.manageToken||state.guestManageToken;if(!token)return;
+ const token=state.guestManageToken||state.guestBooking?.manageToken;if(!token)return;
  if(!confirm("Cancel this booking?"))return;
- try{const r=await supabaseRpc("cancel_public_booking",{p_token:token});if(state.guestBooking)state.guestBooking.status="Cancelled";saveDemoState();closeDrawer();toast("Booking cancelled",r?.within_policy?"Cancelled within policy.":"Cancelled after the policy deadline.");}catch(e){toast("Could not cancel booking");}
+ try{const r=await supabaseRpc("cancel_public_booking",{p_token:token});if(state.guestBooking?.manageToken===token)state.guestBooking.status="Cancelled";saveDemoState();closeDrawer();toast("Booking cancelled",r?.within_policy?"Cancelled within policy.":"Cancelled after the policy deadline.");}catch(e){toast("Could not cancel booking");}
 }
 function applyGuestLanguage(lang){
  state.guestLang=lang;saveDemoState();const en=lang==="EN";const set=(sel,html)=>{const n=$(sel);if(n)n.innerHTML=html};
@@ -1930,4 +1956,58 @@ window.applyGuestLanguage=applyGuestLanguage;
 $$(".lang [data-lang]").forEach(b=>b.onclick=()=>{applyGuestLanguage(b.dataset.lang);toast(b.dataset.lang==="EN"?"Language changed":"Sprache geändert",b.dataset.lang)});
 bind();
 renderModule(window.__pendingModule || "home");
+applyGuestLanguage(state.guestLang);
 bookRefresh();
+
+let routeRestoring=false;
+function saveRoute(){
+ if(routeRestoring)return;
+ const u=new URL(location.href),view=$('.view:not(.hidden)')?.id||'hq';
+ u.searchParams.set('view',view);
+ if(view==='hq')u.searchParams.set('module',state.module);else u.searchParams.delete('module');
+ if(view==='booking')u.searchParams.set('step',state.bookStep);else u.searchParams.delete('step');
+ const url=u.pathname+u.search+u.hash;
+ if(url!==location.pathname+location.search+location.hash)history.pushState(null,'',url);
+ try{sessionStorage.setItem('kavelyq-booking-draft',JSON.stringify({service:state.service,price:state.price,barber:state.barber,time:state.time,date:bookingDate,lang:state.guestLang}))}catch(e){}
+}
+function restoreRoute(){
+ routeRestoring=true;
+ try{
+  const q=new URLSearchParams(location.search),view=q.get('view');
+  if(['booking','hq','admin'].includes(view)){$('#salesEntry')?.classList.add('hidden');setView(view);}
+  const module=q.get('module');if(module&&titles[module])renderModule(module);
+  if(view==='booking'){
+    const d=JSON.parse(sessionStorage.getItem('kavelyq-booking-draft')||'null');
+    if(d){state.service=d.service||'';state.price=Number(d.price)||0;state.barber=d.barber||'';state.time=d.time||'';bookingDate=d.date>=viennaISODate()?d.date:viennaISODate();}
+    state.bookStep=Math.min(Math.max(1,Number(q.get('step'))||1),state.time?4:state.barber?3:state.service?2:1);
+    $('#sumService').textContent=state.service||'—';$('#sumBarber').textContent=state.barber||'—';$('#sumPrice').textContent=state.service?money(state.price):'—';$('#sumTime').textContent=state.time?bookingDate+' · '+state.time:'—';
+    bookRefresh();if(state.bookStep===3)refreshLiveAvailability();
+  }
+ }catch(e){}finally{routeRestoring=false;}
+}
+window.addEventListener('popstate',restoreRoute);
+document.addEventListener('DOMContentLoaded',restoreRoute);
+
+async function loadBookingCatalog(){
+ try{
+  const c=await supabaseRpc('get_public_booking_catalog',{p_business_slug:BOOKING_BUSINESS});
+  if(!c){if(BOOKING_BUSINESS!=='demo-studio'){$('#salesEntry')?.classList.add('hidden');setView('booking');$('#bookStep1').innerHTML='<h2>Booking unavailable</h2><p>This salon link is unavailable.</p>';}return;}
+  c.services.forEach(x=>SERVICE_SLUGS[x.name]=x.public_slug);c.staff.forEach(x=>STAFF_SLUGS[x.display_name]=x.public_slug);
+  if(BOOKING_BUSINESS==='demo-studio'){
+   $$('[data-service]').forEach(b=>{const x=c.services.find(x=>x.name===b.dataset.service);if(x){b.dataset.price=x.price_cents/100;b.querySelector('strong').textContent=money(x.price_cents/100)}else b.disabled=true;});
+   $$('.next-slot strong').forEach(n=>n.textContent='Check availability →');return;
+  }
+  Object.keys(SERVICE_SLUGS).forEach(k=>{if(!c.services.some(x=>x.name===k))delete SERVICE_SLUGS[k]});
+  Object.keys(STAFF_SLUGS).forEach(k=>{if(!c.staff.some(x=>x.display_name===k))delete STAFF_SLUGS[k]});
+  $('#salesEntry')?.classList.add('hidden');setView('booking');
+  $('.shop-brand strong').textContent=c.business.name;$('.shop-brand small').textContent=c.business.timezone;
+  $('.service-list').innerHTML=c.services.map(x=>'<button class="service-card" data-service="'+escLive(x.name)+'" data-price="'+x.price_cents/100+'"><span><b>'+escLive(x.name)+'</b><small>'+x.duration_minutes+' min</small></span><strong>'+money(x.price_cents/100)+'</strong></button>').join('');
+  $('.barber-grid').innerHTML=c.staff.map(x=>'<button class="barber-card barber-pro" data-barber="'+escLive(x.display_name)+'"><span class="barber-portrait"><span>'+escLive(x.display_name.slice(0,2))+'</span></span><span class="barber-copy"><b>'+escLive(x.display_name)+'</b></span><span class="next-slot"><small>AVAILABILITY</small><strong>Choose a date →</strong></span></button>').join('');
+  $$('.usual-card,[data-action="repeat-cut"],.location-select').forEach(n=>n.classList.add('hidden'));
+  $('.guest-map-head b').textContent=c.business.name;
+  $('.guest-map-foot span').textContent=c.business.address||'Address unavailable';
+  const directions=$('[data-action="demo-directions"]');directions.onclick=()=>{if(c.business.address)window.open('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(c.business.address),'_blank','noopener');else toast('Address unavailable');};directions.removeAttribute('data-action');
+  bindBookingChoices();restoreRoute();
+ }catch(e){toast('Booking data unavailable','Please reload to try again.');}
+}
+document.addEventListener('DOMContentLoaded',loadBookingCatalog);
