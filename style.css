@@ -3412,6 +3412,19 @@ button {
   background: #dff7e8;
   color: #17653a;
 }
+.preview {
+  background: #fff2cc;
+  color: #7a5610;
+}
+.coming {
+  background: #eceef1;
+  color: #686d76;
+}
+.core-card button:disabled {
+  cursor: default;
+  opacity: .48;
+  pointer-events: none;
+}
 .core-card h3 {
   font-size: 0.9rem;
   margin: 16px 0;
