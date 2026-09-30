@@ -1773,11 +1773,12 @@ function liveOwnerPanel(){
 parseAuthHash();
 ownerAccessToken=ownerAccessToken||sessionStorage.getItem("kavelyq-owner-token")||sessionStorage.getItem("operator-owner-token");
 document.addEventListener("DOMContentLoaded",()=>{
+ const manageFromUrl=loadManageTokenFromUrl();
  $("#ownerLoginBtn")?.addEventListener("click",sendOwnerMagicLink);
  $("#ownerDemoBtn")?.addEventListener("click",()=>showOwnerApp(true));
  $("#ownerTrialBtn")?.addEventListener("click",startOwnerTrial);
  $("#ownerSignOut")?.addEventListener("click",()=>{sessionStorage.removeItem("operator-owner-token");sessionStorage.removeItem("kavelyq-owner-token");ownerAccessToken=null;ownerDashboardData=null;showOwnerGate("Signed out.");});
- if(ownerAccessToken){ if(new URLSearchParams(location.search).get("new_business")==="1") openBusinessSetup(); else showOwnerApp(false); }else showOwnerGate();
+ if(ownerAccessToken){ if(new URLSearchParams(location.search).get("new_business")==="1") openBusinessSetup(); else showOwnerApp(false); }else showOwnerGate(); if(manageFromUrl)setTimeout(openGuestBookingManager,0);
 });
 
 function bookingChoiceConfirm(label) {
@@ -1887,7 +1888,7 @@ async function confirmLiveBooking(){
  const next=$("#bookNext");if(next)next.disabled=true;
  try{
   const bookingResult=await createLiveBooking(guestName,guestPhone,guestEmail),bookingId=bookingResult?.booking_id,manageToken=bookingResult?.manage_token;
-  state.guestManageToken=manageToken;state.guestDeposit=0;state.guestPaymentStatus="not_collected";
+  state.guestManageToken=manageToken;state.guestManageUrl=guestManageUrl(manageToken);state.guestDeposit=0;state.guestPaymentStatus="not_collected";
   state.guestBooking={id:bookingId,manageToken,customer:guestName,service:state.service,price:state.price,barber:state.barber,time:state.time,deposit:0,remaining:state.price,status:"Confirmed",backend:"supabase"};
   state.guestEvents.unshift({type:"BOOKING",result:"Confirmed",detail:"Live Supabase booking · online payment not collected"});
   state.appointments++;state.forecast+=state.price;saveDemoState();
@@ -1897,6 +1898,8 @@ async function confirmLiveBooking(){
  }catch(e){console.error(e);state.bookStep=3;bookRefresh();await refreshLiveAvailability();toast(state.guestLang==="EN"?"Could not confirm booking":"Buchung konnte nicht bestätigt werden",state.guestLang==="EN"?"The time may no longer be available.":"Der Termin ist möglicherweise nicht mehr verfügbar.");}
  finally{if(next&&state.bookStep===4)next.disabled=false;}
 }
+function guestManageUrl(token){const u=new URL(location.href);u.searchParams.set("manage",token);u.searchParams.delete("new_business");u.hash="";return u.toString();}
+function loadManageTokenFromUrl(){const u=new URL(location.href),token=u.searchParams.get("manage");if(!token)return false;if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(token)){u.searchParams.delete("manage");history.replaceState(null,"",u.pathname+(u.search?"?"+u.searchParams.toString():""));return false;}state.guestManageToken=token;u.searchParams.delete("manage");history.replaceState(null,"",u.pathname+(u.searchParams.toString()?"?"+u.searchParams.toString():""));return true;}
 async function openGuestBookingManager(){
  const token=state.guestBooking?.manageToken||state.guestManageToken;
  if(!token)return toast(state.guestLang==="EN"?"Management link unavailable":"Buchungslink nicht verfügbar");
