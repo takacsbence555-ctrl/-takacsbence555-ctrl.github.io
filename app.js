@@ -1633,7 +1633,7 @@ async function createLiveBooking(guestName,guestPhone,guestEmail){
 let ownerAccessToken=null, ownerDashboardData=null, ownerMetrics=null, ownerCrm=[], ownerRebooking=[], ownerOnboarding=null, ownerSubscription=null, ownerBusinessSettings=null, ownerSetup=null, ownerDemoMode=false;
 function ownerAuthHeaders(){return {"apikey":SUPABASE_KEY,"Authorization":"Bearer "+ownerAccessToken,"Content-Type":"application/json"}}
 function parseAuthHash(){
- const hash=new URLSearchParams((location.hash||"").replace(/^#/,"")),query=new URLSearchParams(location.search);
+ const hash=new URLSearchParams((location.hash||"").replace(/^#/,""));
  const token=hash.get("access_token");
  if(token){ownerAccessToken=token;sessionStorage.setItem("kavelyq-owner-token",token);sessionStorage.removeItem("operator-owner-token");history.replaceState(null,"",location.pathname+location.search);return true;}
  ownerAccessToken=sessionStorage.getItem("kavelyq-owner-token")||sessionStorage.getItem("operator-owner-token")||null;return !!ownerAccessToken;
@@ -1693,7 +1693,7 @@ async function sendOwnerMagicLink(){
  const email=$("#ownerEmail")?.value?.trim();if(!email||!/^\S+@\S+\.\S+$/.test(email))return showOwnerGate("Enter a valid owner email.");
  const btn=$("#ownerLoginBtn");if(btn)btn.disabled=true;
  try{
-  const res=await fetch(SUPABASE_URL+"/auth/v1/otp",{method:"POST",headers:{"apikey":SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify({email,create_user:false,gotrue_meta_security:{captcha_token:null}})});
+  const res=await fetch(SUPABASE_URL+"/auth/v1/otp",{method:"POST",headers:{"apikey":SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify({email,create_user:false,email_redirect_to:location.origin+location.pathname,gotrue_meta_security:{captcha_token:null}})});
   if(!res.ok)throw new Error(await res.text());showOwnerGate("Secure sign-in link sent. Open it on this device.");
  }catch(e){showOwnerGate("Could not send the sign-in link. Only provisioned owner accounts can sign in.");}
  finally{if(btn)btn.disabled=false;}
