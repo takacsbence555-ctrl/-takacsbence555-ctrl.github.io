@@ -1341,9 +1341,8 @@ function act(a, e) {
       manualBooking: true,
       appointments: state.appointments + 1,
       forecast: state.forecast + 42,
-      gap: state.gap - 42,
     });
-    saveDemoState();
+    syncRevenueMath();saveDemoState();
     closeDrawer();
     renderModule("calendar");
     return toast(
@@ -1357,9 +1356,8 @@ function act(a, e) {
       recurringCreated: true,
       appointments: state.appointments + 4,
       forecast: state.forecast + 168,
-      gap: state.gap - 168,
     });
-    saveDemoState();
+    syncRevenueMath();saveDemoState();
     renderModule("core");
     return toast(
       "Recurring series created",
@@ -1372,9 +1370,8 @@ function act(a, e) {
       groupCreated: true,
       appointments: state.appointments + 3,
       forecast: state.forecast + 156,
-      gap: state.gap - 156,
     });
-    saveDemoState();
+    syncRevenueMath();saveDemoState();
     renderModule("core");
     return toast("Group booking reserved", "3 customers · 2 resources · +€156");
   }
