@@ -4060,3 +4060,16 @@ button {
 @media(max-width:900px){#booking #bookBack::before,#booking #bookNext::before{display:none!important}}
 @media(max-width:900px){#booking #bookActions{z-index:100!important}}
 .live-booking-card{max-height:calc(100dvh - 40px);overflow-y:auto;box-sizing:border-box}
+
+/* Settings controls and iOS form focus: preserve the existing visual design. */
+.setting-card button.toggle{border:0;padding:0;cursor:pointer;touch-action:manipulation}
+.setting-card .toggle.is-off{background:#8b8b8b}
+.setting-card .toggle.is-off:after{right:20px}
+.setting-card .toggle:focus-visible{outline:2px solid #58813a;outline-offset:4px}
+.setting-mode{display:block;color:#777;font-size:11px;margin-top:10px}
+@media(max-width:900px){
+ #booking .form-grid input,#booking .form-grid select,#booking .form-grid textarea{font-size:16px!important;box-sizing:border-box;max-width:100%;min-width:0}
+ #booking .booking-main,#booking .book-step,#booking .form-grid,#booking .section-title>div{min-width:0;max-width:100%;box-sizing:border-box}
+ #booking .section-title{flex-wrap:wrap;gap:12px}
+ #booking .booking-main>h1{overflow-wrap:anywhere}
+}
