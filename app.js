@@ -53,7 +53,7 @@ const state = {
   guestGift: false,
   futureBooking: null,
   guestEvents: [],
-  guestLang: "DE",
+  guestLang: "EN",
   cutMemory: { service:"Skin Fade", barber:"Demo Barber A", time:"16:15" },
   permissions: {
     marketing: true,
@@ -1469,7 +1469,7 @@ function act(a, e) {
       guestGift: false,
       futureBooking: null,
       guestEvents: [],
-      guestLang: "DE",
+      guestLang: "EN",
       bookStep: 1,
       service: "",
       price: 0,
@@ -1482,7 +1482,7 @@ function act(a, e) {
     const gn=$("#guestName"),gp=$("#guestPhone"); if(gn)gn.value="Demo Guest";if(gp)gp.value="Demo phone";
     $$(".book-step").forEach((x,i)=>x.classList.toggle("hidden",i!==0));$$("[data-service],[data-barber],[data-time]").forEach(x=>x.classList.remove("selected"));
     const success=$("#bookingSuccess");if(success)success.classList.add("hidden");const actions=$("#bookActions");if(actions)actions.classList.remove("hidden");
-    bookingDate=viennaISODate();applyGuestLanguage("DE");bookRefresh();
+    bookingDate=viennaISODate();applyGuestLanguage("EN");bookRefresh();
     return renderModule("home");
   }
   if (a === "reasoning")
