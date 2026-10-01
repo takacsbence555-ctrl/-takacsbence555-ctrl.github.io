@@ -1973,7 +1973,7 @@ function applyGuestLanguage(lang){
  const descriptions=en?['Consultation, cut & styling · 45 min','Precise fade & finish · 50 min','Complete grooming · 60 min','Contour, hot towel & care · 30 min']:['Beratung, Schnitt & Styling · 45 Min','Präziser Übergang & Finish · 50 Min','Komplettes Grooming · 60 Min','Kontur, Hot Towel & Pflege · 30 Min'];
  if(BOOKING_BUSINESS==='demo-studio')$$('.service-card small').forEach((n,i)=>n.textContent=descriptions[i]);
  $$('[data-action="repeat-cut"]').forEach((b,i)=>b.textContent=i===0?(en?'↻ Repeat your last cut':'↻ Letzten Schnitt wiederholen'):(en?'Book again':'Erneut buchen'));
- $$('.date-strip button').forEach(b=>{const d=new Date(b.dataset.date+'T12:00:00Z');if(!Number.isNaN(d.getTime())){const n=b.querySelector('small');if(n)n.textContent=new Intl.DateTimeFormat(en?'en-GB':'de-AT',{weekday:'short',timeZone:'Europe/Vienna'}).format(d).toUpperCase();}});
+ $$('.date-strip button').forEach(b=>{const d=new Date(b.dataset.date+'T12:00:00Z');if(!Number.isNaN(d.getTime())){const n=b.querySelector('small');if(n)n.textContent=new Intl.DateTimeFormat(en?'en-GB':'de-AT',{weekday:'short',timeZone:bookingTimeZone}).format(d).toUpperCase();}});
 
  $$(".lang [data-lang]").forEach(x=>x.classList.toggle("active",x.dataset.lang===lang));
 }
