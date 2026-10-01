@@ -1599,13 +1599,13 @@ async function supabaseRpc(fn,params){
 }
 function selectedStaffSlug(){return STAFF_SLUGS[state.barber]||"demo-barber-a"}
 function selectedServiceSlug(){return SERVICE_SLUGS[state.service]||"skin-fade"}
-let availabilitySequence=0, slotStaffMap={};
+let availabilitySequence=0, slotStaffMap={}, selectedBookingStaffSlug=null;
 async function refreshLiveAvailability(){
   if(!state.service||!state.barber)return;
   const sequence=++availabilitySequence, serviceSlug=selectedServiceSlug(), barber=state.barber;
   const buttons=$$(".date-strip button"),grid=$("#booking .slot-grid");if(!grid)return;
   grid.innerHTML='<span class="muted">Loading available times…</span>';
-  state.time="";bookRefresh();
+  state.time="";selectedBookingStaffSlug=null;bookRefresh();
   try{
     const staffSlugs=barber==="First available"?Object.values(STAFF_SLUGS):[selectedStaffSlug()];
     const results=await Promise.all(buttons.map(async b=>{
@@ -1621,14 +1621,14 @@ async function refreshLiveAvailability(){
     grid.innerHTML=chosen.times.map(t=>'<button data-time="'+t+'">'+t+'</button>').join("");
     $$("[data-time]",grid).forEach(b=>b.onclick=()=>{
       state.time=b.dataset.time;
-      if(barber==="First available"){const slug=slotStaffMap[state.time];state.barber=Object.keys(STAFF_SLUGS).find(k=>STAFF_SLUGS[k]===slug);$("#sumBarber").textContent=state.barber;}
+      if(barber==="First available"){selectedBookingStaffSlug=slotStaffMap[state.time]||null;const name=Object.keys(STAFF_SLUGS).find(k=>STAFF_SLUGS[k]===selectedBookingStaffSlug);$("#sumBarber").textContent=name?("First available · "+name):"First available";}else selectedBookingStaffSlug=selectedStaffSlug();
       $("#sumTime").textContent=bookingDate+" · "+state.time;
       state.bookStep=4;bookRefresh();bookingChoiceConfirm(state.time+" selected");
     });
   }catch(e){if(sequence!==availabilitySequence)return;grid.innerHTML='<span class="muted">Availability could not be loaded. Please try again.</span>';}
 }
 async function createLiveBooking(guestName,guestPhone,guestEmail){
-  return await supabaseRpc("create_public_booking_local_v2",{p_business_slug:BOOKING_BUSINESS,p_staff_slug:selectedStaffSlug(),p_service_slug:selectedServiceSlug(),p_date:bookingDate,p_time:state.time+":00",p_display_name:guestName,p_email:guestEmail||null,p_phone:guestPhone});
+  return await supabaseRpc("create_public_booking_local_v2",{p_business_slug:BOOKING_BUSINESS,p_staff_slug:(selectedBookingStaffSlug||selectedStaffSlug()),p_service_slug:selectedServiceSlug(),p_date:bookingDate,p_time:state.time+":00",p_display_name:guestName,p_email:guestEmail||null,p_phone:guestPhone});
 }
 
 let ownerAccessToken=null, ownerDashboardData=null, ownerMetrics=null, ownerCrm=[], ownerRebooking=[], ownerOnboarding=null, ownerSubscription=null, ownerBusinessSettings=null, ownerSetup=null, ownerDemoMode=false;
