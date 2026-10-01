@@ -115,7 +115,7 @@ function toast(t, x = "") {
   window.tt = setTimeout(() => e.classList.add("hidden"), 3400);
 }
 function setView(id) {
-  if(!["booking","hq","admin"].includes(id))return;
+  if(!["booking","hq"].includes(id))return;
   $$(".view").forEach((v) => v.classList.toggle("hidden", v.id !== id));
   $$("[data-view]").forEach((b) => b.classList.toggle("active", b.dataset.view === id));
   window.scrollTo({ top: 0, behavior: "instant" });
@@ -2000,7 +2000,7 @@ function restoreRoute(){
  routeRestoring=true;
  try{
   const q=new URLSearchParams(location.search),view=q.get('view');
-  if(['booking','hq','admin'].includes(view)){$('#salesEntry')?.classList.add('hidden');setView(view);}
+  if(['booking','hq'].includes(view)){$('#salesEntry')?.classList.add('hidden');setView(view);}
   const module=q.get('module');if(module&&titles[module])renderModule(module);
   if(view==='booking'){
     const d=JSON.parse(sessionStorage.getItem('kavelyq-booking-draft')||'null');
