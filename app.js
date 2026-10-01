@@ -1654,12 +1654,12 @@ async function loadOwnerDashboard(){
 }
 function showOwnerApp(demo=false){
  ownerDemoMode=demo; if(demo)sessionStorage.setItem("kavelyq-owner-demo","1");else sessionStorage.removeItem("kavelyq-owner-demo"); $("#ownerAuthGate")?.classList.add("hidden"); $("#ownerAppShell")?.classList.remove("hidden");
- if(demo){renderModule(window.__pendingModule||"home");return;}
+ if(demo){renderModule(state.module||window.__pendingModule||"home");return;}
  Promise.all([loadOwnerDashboard(),ownerRpc("owner_business_metrics",{}).catch(()=>null),ownerRpc("owner_customer_crm",{}).catch(()=>[]),ownerRpc("owner_rebooking_opportunities",{}).catch(()=>[]),ownerRpc("owner_onboarding_snapshot",{}).catch(()=>null),ownerRpc("owner_subscription_snapshot",{}).catch(()=>null),ownerRpc("owner_business_settings",{}).catch(()=>null),ownerRpc("owner_setup_snapshot",{}).catch(()=>null)]).then(([data,metrics,crm,rebooking,onboarding,subscription,businessSettings,setup])=>{ ownerMetrics=metrics; ownerCrm=crm||[]; ownerRebooking=rebooking||[]; ownerOnboarding=onboarding; ownerSubscription=subscription; ownerBusinessSettings=businessSettings; ownerSetup=setup;
    if(!data){sessionStorage.removeItem("operator-owner-token");sessionStorage.removeItem("kavelyq-owner-token");ownerAccessToken=null;showOwnerGate("This account is not connected to a business yet.");return;}
    const brand=$(".brand small");if(brand)brand.textContent=(data.business?.name||"BUSINESS")+" · LIVE";
    const owner=$(".owner small");if(owner)owner.textContent=(data.business?.role||"owner").toUpperCase()+" · LIVE BACKEND";
-   renderModule(window.__pendingModule||"home");
+   renderModule(state.module||window.__pendingModule||"home");
  }).catch(()=>{sessionStorage.removeItem("operator-owner-token");sessionStorage.removeItem("kavelyq-owner-token");ownerAccessToken=null;showOwnerGate("Sign-in expired. Request a new secure link.");});
 }
 function showOwnerGate(message=""){
