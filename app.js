@@ -2,6 +2,8 @@ window.__pendingModule = new URLSearchParams(location.search).get("module") || w
 const $ = (s, r = document) => r.querySelector(s),
   $$ = (s, r = document) => [...r.querySelectorAll(s)];
 function eurosToCents(v){const s=String(v??"").trim().replace(",",".");if(!/^\d+(?:\.\d{1,2})?$/.test(s))return null;const [w,f=""]=s.split(".");const cents=Number(w)*100+Number((f+"00").slice(0,2));return Number.isSafeInteger(cents)?cents:null;}
+const MONTHLY_PLAN_EUR=49;
+function syncRevenueMath(){state.gap=state.target-state.forecast;}
 const money = (n) =>
   new Intl.NumberFormat("de-AT", {
     style: "currency",
@@ -804,7 +806,7 @@ modules.goals = () =>
       state.plan === "active" ? "79%" : "74%",
       state.plan === "active" ? "96%" : "90%",
     ],
-    ["Retention", "76%", state.plan === "active" ? "73%" : "71%", "93%"],
+    ["Retention", "76%", state.plan === "active" ? "73%" : "71%", Math.round((state.plan === "active" ? 73 : 71) / 76 * 100) + "%"],
     ["Average ticket", "€49", "€46", "94%"],
     ["Customer rating", "4.9", "4.9", "100%"],
     ["Profit margin", "24%", "22.8%", "95%"],
@@ -1052,8 +1054,8 @@ modules.impact = () =>
   '<section class="impact-hero"><div><span class="demo-chip">DEMO DATA · ATTRIBUTED</span><h2>' +
   money(state.impact) +
   ' <span>estimated business impact</span></h2><p>Every amount links to an AI action, customer and booking.</p></div><div class="roi">' +
-  Math.round(state.impact / 79) +
-  '×<small> impact / €79 subscription</small></div></section><div class="impact-grid"><article><small>REVENUE GENERATED</small><b>' +
+  Math.round(state.impact / MONTHLY_PLAN_EUR) +
+  '×<small> impact / €49 subscription</small></div></section><div class="impact-grid"><article><small>REVENUE GENERATED</small><b>' +
   money(state.plan === "active" ? 3610 : 2410) +
   "</b><span>from completed / expected bookings</span></article><article><small>REVENUE RECOVERED</small><b>" +
   money(state.plan === "active" ? 870 : 570) +
@@ -1507,7 +1509,7 @@ function act(a, e) {
   }
   if (a === "fill-live-slot") {
     if(state.liveSlotFilled) return toast("Slot already recovered","Duplicate AI attribution prevented");
-    state.liveSlotFilled=true; state.appointments++; state.forecast+=45; state.gap=Math.max(0,state.gap-45); state.impact+=45; state.filled++;
+    state.liveSlotFilled=true; state.appointments++; state.forecast+=45; syncRevenueMath(); state.impact+=45; state.filled++;
     saveDemoState(); renderModule("live");
     return toast("Cancellation recovered","€45 forecast + AI-attributed impact recorded");
   }
@@ -1529,7 +1531,7 @@ function act(a, e) {
   }
   if (a === "fill-gap") {
     if(state.liveSlotFilled) return toast("Slot already filled","No duplicate booking created");
-    state.liveSlotFilled=true; state.appointments++; state.forecast+=42; state.impact+=42; state.filled++;
+    state.liveSlotFilled=true; state.appointments++; state.forecast+=42; syncRevenueMath(); state.impact+=42; state.filled++;
     saveDemoState(); renderModule(state.module==="today"?"today":"live");
     return toast("Empty slot filled","Demo Waitlist Guest accepted · +€42 forecast and attributed impact");
   }
@@ -1680,7 +1682,7 @@ async function startOwnerTrial(){
 }
 function openBusinessSetup(){
  const wrap=document.createElement("div");wrap.className="live-booking-modal";
- wrap.innerHTML='<div class="live-booking-card"><small>KAVELYQ · NEW BUSINESS</small><h2>Create your salon</h2><p>14 days free · no card required</p><label>Business name<input id="setupBusiness" placeholder="Studio name"></label><label>Booking link<input id="setupSlug" placeholder="studio-name"></label><label>Your / first staff name<input id="setupStaff" placeholder="Your name"></label><label>First service<input id="setupService" placeholder="Haircut"></label><label>Duration (minutes)<input id="setupDuration" type="number" min="5" value="45"></label><label>Price (€)<input id="setupPrice" type="number" min="0" step="1" value="45"></label><button class="primary" id="setupCreate">Create business & start trial</button><span id="setupStatus"></span></div>';
+ wrap.innerHTML='<div class="live-booking-card"><small>KAVELYQ · NEW BUSINESS</small><h2>Create your salon</h2><p>14 days free · no card required</p><label>Business name<input id="setupBusiness" placeholder="Studio name"></label><label>Booking link<input id="setupSlug" placeholder="studio-name"></label><label>Your / first staff name<input id="setupStaff" placeholder="Your name"></label><label>First service<input id="setupService" placeholder="Haircut"></label><label>Duration (minutes)<input id="setupDuration" type="number" min="5" value="45"></label><label>Price (€)<input id="setupPrice" type="number" min="0" step="0.01" value="45.00"></label><button class="primary" id="setupCreate">Create business & start trial</button><span id="setupStatus"></span></div>';
  document.body.appendChild(wrap);
  wrap.querySelector("#setupCreate").onclick=async()=>{
   const st=wrap.querySelector("#setupStatus");st.textContent="Creating your Kavelyq workspace…";
@@ -1899,7 +1901,7 @@ function guestAction(a){
   if(a==="reschedule"){b.time=b.time==="16:15"?"17:45":"16:15"; state.guestEvents.unshift({type:"RESCHEDULE",result:"Moved to "+b.time,detail:"Owner Calendar synced"}); $("#sumTime").textContent="Demo date · "+b.time; saveDemoState();return toast("Booking rescheduled",b.time+" · Owner Calendar synced");}
   if(a==="cancel"){if(b.status==="Cancelled")return toast("Already cancelled");b.status="Cancelled";state.forecast=Math.max(0,state.forecast-b.price);if(state.guestPaymentStatus==="simulated_paid"&&state.guestDeposit>0){state.current=Math.max(0,state.current-state.guestDeposit);state.guestPaymentStatus="simulated_refunded";b.deposit=0;state.guestDeposit=0;}state.guestEvents.unshift({type:"CANCEL",result:"Slot released",detail:"€10 simulated refund"});saveDemoState();return toast("Booking cancelled","DEMO: calendar released · €10 refund simulated");}
   if(a==="manage-guest-booking")return openGuestBookingManager();
-  if(a==="rebook"){if(state.futureBooking)return toast("Next visit already reserved",state.futureBooking.time+" · duplicate prevented");state.futureBooking={service:b.service,price:b.price,barber:b.barber,time:"Demo future visit · 16:15",status:"Confirmed"};state.appointments++;state.forecast+=b.price;state.guestEvents.unshift({type:"REBOOK",result:"+€"+b.price+" forecast",detail:"Future visit reserved"});saveDemoState();return toast("Next visit reserved","DEMO: +1 future appointment · €"+b.price+" forecast");}
+  if(a==="rebook"){if(state.futureBooking)return toast("Next visit already reserved",state.futureBooking.time+" · duplicate prevented");state.futureBooking={service:b.service,price:b.price,barber:b.barber,time:"Demo future visit · 16:15",status:"Confirmed"};state.appointments++;state.forecast+=b.price;syncRevenueMath();state.guestEvents.unshift({type:"REBOOK",result:"+€"+b.price+" forecast",detail:"Future visit reserved"});saveDemoState();return toast("Next visit reserved","DEMO: +1 future appointment · €"+b.price+" forecast");}
   if(a==="pay-tip"){if(b.remaining===0)return toast("Balance already paid");const paid=b.remaining+5;state.current+=paid;b.remaining=0;state.guestEvents.unshift({type:"PAYMENT",result:"€"+paid+" recorded",detail:"Includes €5 demo tip"});saveDemoState();return toast("Demo payment complete","Remaining balance + €5 tip recorded");}
   if(a==="review"){state.guestReview=true;state.guestEvents.unshift({type:"REVIEW",result:"5★ recorded",detail:"Linked to customer timeline"});saveDemoState();return toast("5★ demo review recorded","Review linked to customer timeline");}
   if(a==="loyalty"){state.loyaltyPoints+=50; saveDemoState();return toast("Loyalty updated","+50 demo points");}
@@ -1923,7 +1925,7 @@ async function confirmLiveBooking(){
   state.guestManageToken=manageToken;state.guestManageUrl=guestManageUrl(manageToken);state.guestDeposit=0;state.guestPaymentStatus="not_collected";
   state.guestBooking={id:bookingId,manageToken,date:bookingDate,customer:guestName,service:state.service,price:state.price,barber:state.barber,time:state.time,deposit:0,remaining:state.price,status:"Confirmed",backend:"supabase"};
   state.guestEvents.unshift({type:"BOOKING",result:"Confirmed",detail:"Live Supabase booking · online payment not collected"});
-  state.appointments++;state.forecast+=state.price;saveDemoState();
+  state.appointments++;state.forecast+=state.price;syncRevenueMath();saveDemoState();
   $$(".book-step").forEach(x=>x.classList.add("hidden"));$("#bookActions")?.classList.add("hidden");$("#bookingSuccess")?.classList.remove("hidden");
   const p=$("#bookingSuccess p");if(p)p.innerHTML=(state.guestLang==="EN"?"<b>BOOKING CONFIRMED</b><br>No online payment was charged.":"<b>BUCHUNG BESTÄTIGT</b><br>Es wurde keine Online-Zahlung abgebucht.")+'<br><button class="secondary small" data-action="manage-guest-booking">Manage booking</button>';
   bindGuestActions();applyGuestLanguage(state.guestLang);saveRoute();toast(state.guestLang==="EN"?"Booking confirmed":"Buchung bestätigt",state.guestLang==="EN"?"No online payment was charged":"Keine Online-Zahlung wurde abgebucht");
