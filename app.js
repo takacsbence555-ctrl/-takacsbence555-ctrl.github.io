@@ -1589,7 +1589,8 @@ const SERVICE_SLUGS={"Classic Cut":"classic-cut","Skin Fade":"skin-fade","Cut + 
 const STAFF_SLUGS={"Demo Barber A":"demo-barber-a","Demo Barber B":"demo-barber-b","Demo Barber C":"demo-barber-c"};
 function formatDateTimeLocalInZone(value,timeZone){const p=new Intl.DateTimeFormat("en-CA",{timeZone,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date(value));const x={};p.forEach(v=>x[v.type]=v.value);return x.year+"-"+x.month+"-"+x.day+"T"+x.hour+":"+x.minute;}
 function splitLocalDateTime(value){const [d,t]=String(value||"").split("T");return {date:d,time:t&&t.length===5?t+":00":t};}
-function viennaISODate(offsetDays=0){const parts=new Intl.DateTimeFormat("en-US",{timeZone:"Europe/Vienna",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());const v={};parts.forEach(p=>v[p.type]=p.value);const d=new Date(Date.UTC(+v.year,+v.month-1,+v.day+offsetDays));return d.toISOString().slice(0,10)}
+let bookingTimeZone="Europe/Vienna";
+function viennaISODate(offsetDays=0){const parts=new Intl.DateTimeFormat("en-US",{timeZone:bookingTimeZone,year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());const v={};parts.forEach(p=>v[p.type]=p.value);const d=new Date(Date.UTC(+v.year,+v.month-1,+v.day+offsetDays));return d.toISOString().slice(0,10)}
 let bookingDate=viennaISODate();
 
 async function supabaseRpc(fn,params){
@@ -1851,7 +1852,7 @@ $$("[data-time]").forEach(b => b.onclick = () => {
   b.classList.add("selected"); state.time=b.dataset.time; $("#sumTime").textContent="Demo date · "+state.time;
   bookingChoiceConfirm(state.time+" selected"); state.bookStep=4; bookRefresh();
 });
-$$(".date-strip button").forEach((b,i)=>{b.dataset.date=viennaISODate(i);const d=new Date(b.dataset.date+"T12:00:00Z");const locale=state.guestLang==="EN"?"en-GB":"de-AT";const sm=b.querySelector("small"),bb=b.querySelector("b");if(sm)sm.textContent=new Intl.DateTimeFormat(locale,{weekday:"short",timeZone:"Europe/Vienna"}).format(d).toUpperCase();if(bb)bb.textContent=new Intl.DateTimeFormat(locale,{day:"2-digit",timeZone:"Europe/Vienna"}).format(d);b.onclick=async()=>{if(b.disabled)return;$$(".date-strip button").forEach(x=>x.classList.remove("active"));b.classList.add("active");bookingDate=b.dataset.date;state.time=null;const st=$("#sumTime");if(st)st.textContent="—";await refreshLiveAvailability();bookRefresh();};});
+$$(".date-strip button").forEach((b,i)=>{b.dataset.date=viennaISODate(i);const d=new Date(b.dataset.date+"T12:00:00Z");const locale=state.guestLang==="EN"?"en-GB":"de-AT";const sm=b.querySelector("small"),bb=b.querySelector("b");if(sm)sm.textContent=new Intl.DateTimeFormat(locale,{weekday:"short",timeZone:bookingTimeZone}).format(d).toUpperCase();if(bb)bb.textContent=new Intl.DateTimeFormat(locale,{day:"2-digit",timeZone:bookingTimeZone}).format(d);b.onclick=async()=>{if(b.disabled)return;$$(".date-strip button").forEach(x=>x.classList.remove("active"));b.classList.add("active");bookingDate=b.dataset.date;state.time=null;const st=$("#sumTime");if(st)st.textContent="—";await refreshLiveAvailability();bookRefresh();};});
 if($("#bookBack")) $("#bookBack").onclick = () => {
   if (state.bookStep > 1) {
     state.bookStep--;
@@ -2018,6 +2019,7 @@ async function loadBookingCatalog(){
  try{
   const c=await supabaseRpc('get_public_booking_catalog',{p_business_slug:BOOKING_BUSINESS});
   if(!c){if(BOOKING_BUSINESS!=='demo-studio'){$('#salesEntry')?.classList.add('hidden');setView('booking');$('#bookStep1').innerHTML='<h2>Booking unavailable</h2><p>This salon link is unavailable.</p>';}return;}
+  bookingTimeZone=c.business?.timezone||"Europe/Vienna";bookingDate=viennaISODate();
   c.services.forEach(x=>SERVICE_SLUGS[x.name]=x.public_slug);c.staff.forEach(x=>STAFF_SLUGS[x.display_name]=x.public_slug);
   if(BOOKING_BUSINESS==='demo-studio'){
    const locations=$('.location-select select');if(locations){[...locations.options].forEach((o,i)=>{if(i){o.disabled=true;o.textContent+=' · Preview';}});}
