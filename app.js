@@ -67,7 +67,7 @@ const state = {
 };
 
 const STORAGE_KEY="operator-demo-state-v2";
-const PERSIST_KEYS=["plan","target","current","forecast","gap","opportunity","impact","appointments","filled","recoveredCustomers","ownerHours","liveSlotFilled","waitlistInvited","ownerPaymentRecorded","recurringCreated","groupCreated","formSent","manualBooking","refundPending","poPrepared","loyaltyPoints","packageCredits","giftBalance","guestBooking","guestDeposit","guestPaymentStatus","guestWaitlist","guestReview","guestMembership","guestGift","futureBooking","guestLang","cutMemory","guestEvents"];
+const PERSIST_KEYS=["demoSettings","plan","target","current","forecast","gap","opportunity","impact","appointments","filled","recoveredCustomers","ownerHours","liveSlotFilled","waitlistInvited","ownerPaymentRecorded","recurringCreated","groupCreated","formSent","manualBooking","refundPending","poPrepared","loyaltyPoints","packageCredits","giftBalance","guestBooking","guestDeposit","guestPaymentStatus","guestWaitlist","guestReview","guestMembership","guestGift","futureBooking","guestLang","cutMemory","guestEvents"];
 function saveDemoState(){
   const safe={}; PERSIST_KEYS.forEach(k=>safe[k]=state[k]);
   try{localStorage.setItem(STORAGE_KEY,JSON.stringify(safe))}catch(e){}
@@ -1125,6 +1125,7 @@ document.addEventListener("click", (e) => {
   if (go) { e.preventDefault(); return renderModule(go.dataset.go); }
 
   const action = target?.closest("[data-action]");
+  if(action?.dataset.action==="guest-auth-info"){e.preventDefault();openDrawer('<h2>Apple / Google</h2><p>Apple- und Google-Anmeldung sind noch nicht eingerichtet. Buche ohne Konto mit Name und Email oder Telefon. / Apple and Google sign-in are not connected yet. Book without an account using your name and email or phone.</p><button class="secondary" data-action="close-drawer">OK</button>');return;}
   if(action?.dataset.action==="manage-guest-booking"){e.preventDefault();openGuestBookingManager();return;}
   if(action?.dataset.action==="crm-save-memory" && !ownerDemoMode){e.preventDefault();const id=action.dataset.customerId;ownerRpc("owner_save_cut_memory",{p_customer_id:id,p_notes:$("#crmMemory").value,p_rebook_interval_days:Number($("#crmDays").value)||28}).then(()=>refreshOwnerLive()).then(()=>{closeDrawer();toast("Customer memory saved");}).catch(()=>toast("Could not save"));return;}
   if(action?.dataset.action==="crm-save-consent" && !ownerDemoMode){e.preventDefault();const id=action.dataset.customerId;ownerRpc("owner_set_marketing_consent",{p_customer_id:id,p_consent:$("#crmConsent").checked}).then(()=>refreshOwnerLive()).then(()=>toast("Consent preference saved")).catch(()=>toast("Could not save consent"));return;}
@@ -1567,7 +1568,7 @@ function act(a, e) {
   if (a === "reorder") { state.poPrepared=true; saveDemoState(); return toast("Purchase order prepared", "Approval required above €50"); }
   if (a === "reviews")
     return toast("Review flow active", "14 requests scheduled");
-  if (a === "save-settings") { saveDemoState(); return toast("Settings saved", "Rules and channels synchronized"); }
+  if (a === "save-settings") { saveDemoState(); return toast("Settings saved", "Demo preferences saved on this device — no live integrations changed"); }
   if (a === "master-apply")
     return toast(
       "SIMULATED network playbook",
@@ -2039,6 +2040,17 @@ async function loadBookingCatalog(){
 document.addEventListener('DOMContentLoaded',loadBookingCatalog);
 
 function bindOwnerControls(){
+ $$('#moduleContent .setting-card .toggle').forEach((node,i)=>{
+  const title=node.parentElement.querySelector('h3').textContent;
+  const button=document.createElement('button');button.className='toggle';button.type='button';
+  button.setAttribute('aria-label',title+' settings');
+  node.replaceWith(button);
+  const values=state.demoSettings||(state.demoSettings={});
+  const update=()=>{button.setAttribute('role',ownerDemoMode?'switch':'button');button.setAttribute('aria-checked',String(values[i]!==false));button.classList.toggle('is-off',values[i]===false);};update();
+  button.onclick=()=>{if(ownerDemoMode){values[i]=values[i]===false;saveDemoState();update();toast(title,values[i]?'Demo preference enabled — no live service activated':'Demo preference disabled');}else{openDrawer('<h2>'+escLive(title)+'</h2><p>These cards describe available capabilities. Live service, staff and booking policy settings are configured in the setup panels. External payment and communication providers require a connected integration.</p><button class="secondary" data-action="close-drawer">Close</button>');}};
+  const note=document.createElement('small');note.className='setting-mode';note.textContent=ownerDemoMode?'Demo preference · saved on this device':'Open configuration details';button.after(note);
+ });
+
  const search=$('.head-actions .search');if(search)search.onclick=()=>{
   openDrawer('<span class="drawer-kicker">SEARCH KAVELYQ</span><h2>Find a workspace</h2><input id="workspaceSearch" placeholder="Search pages…"><div id="workspaceResults"></div>');
   const input=$('#workspaceSearch'),box=$('#workspaceResults');
