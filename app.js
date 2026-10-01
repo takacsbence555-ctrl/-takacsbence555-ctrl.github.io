@@ -1,3 +1,4 @@
+window.__pendingModule = new URLSearchParams(location.search).get("module") || window.__pendingModule || "home";
 const $ = (s, r = document) => r.querySelector(s),
   $$ = (s, r = document) => [...r.querySelectorAll(s)];
 function eurosToCents(v){const s=String(v??"").trim().replace(",",".");if(!/^\d+(?:\.\d{1,2})?$/.test(s))return null;const [w,f=""]=s.split(".");const cents=Number(w)*100+Number((f+"00").slice(0,2));return Number.isSafeInteger(cents)?cents:null;}
