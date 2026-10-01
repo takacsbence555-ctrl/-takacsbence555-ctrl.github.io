@@ -1577,10 +1577,10 @@ function act(a, e) {
   if (a) return toast("Demo feature", "This control is intentionally simulated in the current product demo.");
 }
 function checkout() {
-  let s = 52 + state.addon,
-    t = s * (1 + state.tip / 100);
-  if ($("#checkoutTotal")) $("#checkoutTotal").textContent = money(s);
-  if ($("#payAmount")) $("#payAmount").textContent = money(t);
+  const subtotalCents=(52+state.addon)*100;
+  const totalCents=Math.round(subtotalCents*(100+state.tip)/100);
+  if ($("#checkoutTotal")) $("#checkoutTotal").textContent = money(subtotalCents/100);
+  if ($("#payAmount")) $("#payAmount").textContent = money(totalCents/100);
 }
 const SUPABASE_URL="https://lpnewhfsbpwyjgdpoxqj.supabase.co";
 const SUPABASE_KEY="sb_publishable_3FRbG5Y2r1K_iLK27KErIQ_1CMH1a0Q";
