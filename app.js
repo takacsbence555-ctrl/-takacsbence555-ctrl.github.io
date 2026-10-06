@@ -80,6 +80,8 @@ function loadDemoState(){
 }
 function clearDemoState(){try{localStorage.removeItem(STORAGE_KEY);localStorage.removeItem("operator-demo-state-v1")}catch(e){}}
 loadDemoState();
+// Public demo is English-only. Migrate stale saved language from older builds.
+state.guestLang = "EN";
 const titles = {
   home: ["Home", "Executive overview · September 2026"],
   operator: ["AI Operator", "Goal-driven plan · owner approval required"],
@@ -1828,7 +1830,7 @@ function bookRefresh() {
   ][state.bookStep - 1];
   const success=$("#bookingSuccess");if(success&&!success.classList.contains("hidden"))return;
   if(document.readyState!=="loading")saveRoute();
-  const next=$("#bookNext"); if(next){ next.disabled=guestBookingBusy||!ok; next.textContent=state.bookStep===4?(state.guestLang==="EN"?"Confirm booking":"Buchung bestätigen"):(state.guestLang==="EN"?"Continue":"Weiter"); }
+  const next=$("#bookNext"); if(next){ next.disabled=guestBookingBusy||!ok; next.textContent=state.bookStep===4?("Confirm booking"):("Continue"); }
 }
 function bindBookingChoices(){
 $$("[data-service]").forEach(b => b.onclick = () => {
@@ -1926,7 +1928,7 @@ async function confirmLiveBooking(){
   state.appointments++;state.forecast+=state.price;syncRevenueMath();saveDemoState();
   $$(".book-step").forEach(x=>x.classList.add("hidden"));$("#bookActions")?.classList.add("hidden");$("#bookingSuccess")?.classList.remove("hidden");
   const p=$("#bookingSuccess p");if(p)p.innerHTML=(state.guestLang==="EN"?"<b>BOOKING CONFIRMED</b><br>No online payment was charged.":"<b>BUCHUNG BESTÄTIGT</b><br>Es wurde keine Online-Zahlung abgebucht.")+'<br><button class="secondary small" data-action="manage-guest-booking">Manage booking</button>';
-  bindGuestActions();applyGuestLanguage(state.guestLang);saveRoute();toast(state.guestLang==="EN"?"Booking confirmed":"Buchung bestätigt",state.guestLang==="EN"?"No online payment was charged":"Keine Online-Zahlung wurde abgebucht");
+  bindGuestActions();applyGuestLanguage();saveRoute();toast(state.guestLang==="EN"?"Booking confirmed":"Buchung bestätigt",state.guestLang==="EN"?"No online payment was charged":"Keine Online-Zahlung wurde abgebucht");
  }catch(e){console.error(e);state.bookStep=3;bookRefresh();await refreshLiveAvailability();toast(state.guestLang==="EN"?"Could not confirm booking":"Buchung konnte nicht bestätigt werden",state.guestLang==="EN"?"The time may no longer be available.":"Der Termin ist möglicherweise nicht mehr verfügbar.");}
  finally{guestBookingBusy=false;bookRefresh();}
 }
@@ -1955,30 +1957,32 @@ async function cancelGuestBooking(){
  if(!confirm("Cancel this booking?"))return;
  try{const r=await supabaseRpc("cancel_public_booking",{p_token:token});if(state.guestBooking?.manageToken===token)state.guestBooking.status="Cancelled";saveDemoState();closeDrawer();toast("Booking cancelled",r?.within_policy?"Cancelled within policy.":"Cancelled after the policy deadline.");}catch(e){toast("Could not cancel booking");}
 }
-function applyGuestLanguage(lang){
- state.guestLang=lang;saveDemoState();const en=lang==="EN";const set=(sel,html)=>{const n=$(sel);if(n)n.innerHTML=html};
- set(".booking-kicker",en?"ONLINE BOOKING · POWERED BY KAVELYQ":"ONLINE BUCHUNG · POWERED BY KAVELYQ");set(".booking-main>h1",en?"Your look.<br><em>Your appointment.</em>":"Dein Look.<br><em>Dein Termin.</em>");set(".booking-lead",en?"Premium grooming. Book in under a minute.":"Premium Grooming. In weniger als einer Minute gebucht.");
- const heads=$$(".section-title h2"),labels=en?["Choose service","Choose professional","Choose time","Almost done"]:["Service wählen","Professional wählen","Zeit wählen","Fast geschafft"];heads.forEach((n,i)=>{if(labels[i])n.textContent=labels[i]});
- if($("#bookBack"))$("#bookBack").textContent=en?"Back":"Zurück";if($("#bookNext"))$("#bookNext").textContent=state.bookStep===4?(en?"Confirm booking":"Buchung bestätigen"):(en?"Continue":"Weiter");
- set(".booking-summary>h3",en?"Your booking":"Deine Buchung");const sl=en?["Service","Professional","Appointment","Total"]:["Service","Barber","Termin","Gesamt"];$$(".booking-summary .sum-row>span").forEach((n,i)=>{if(sl[i])n.textContent=sl[i]});
- 
- const success=$("#bookingSuccess");if(success&&!success.classList.contains("hidden")){const sm=success.querySelector("small"),hh=success.querySelector("h2"),nb=success.querySelector('[data-action="new-booking"]');if(sm)sm.textContent=en?"CONFIRMED":"BESTÄTIGT";if(hh)hh.textContent=en?"Booking confirmed.":"Buchung bestätigt.";if(nb)nb.textContent=en?"New booking":"Neue Buchung";}
-
- $$('.book-step .section-title small').forEach((n,i)=>n.textContent=(en?'STEP ':'SCHRITT ')+(i+1));
- set('.or span',en?'or book without an account':'oder ohne Konto buchen');
- const phone=$('#guestPhone')?.parentElement;if(phone&&phone.firstChild?.nodeType===3)phone.firstChild.textContent=en?'Phone':'Telefon';
- set('.policy span',en?'Free cancellation up to 24 hours before your appointment. A 50% fee may apply afterwards.':'Kostenlose Stornierung bis 24 Stunden vor dem Termin. Danach können 50% verrechnet werden.');
- set('.waitlist-card span',en?'No suitable appointment?':'Kein passender Termin?');set('.waitlist-card strong',en?'Join the smart waitlist →':'Auf die intelligente Warteliste →');
- set('.deposit-card b',en?'Online payment coming soon':'Online-Zahlung demnächst verfügbar');set('.deposit-card small',en?'Confirm your appointment without an online charge.':'Bestätige deinen Termin ohne Online-Zahlung.');set('.deposit-card strong',en?'€0 now':'€0 jetzt');
- const descriptions=en?['Consultation, cut & styling · 45 min','Precise fade & finish · 50 min','Complete grooming · 60 min','Contour, hot towel & care · 30 min']:['Beratung, Schnitt & Styling · 45 Min','Präziser Übergang & Finish · 50 Min','Komplettes Grooming · 60 Min','Kontur, Hot Towel & Pflege · 30 Min'];
- if(BOOKING_BUSINESS==='demo-studio')$$('.service-card small').forEach((n,i)=>n.textContent=descriptions[i]);
- $$('[data-action="repeat-cut"]').forEach((b,i)=>b.textContent=i===0?(en?'↻ Repeat your last cut':'↻ Letzten Schnitt wiederholen'):(en?'Book again':'Erneut buchen'));
- $$('.date-strip button').forEach(b=>{const d=new Date(b.dataset.date+'T12:00:00Z');if(!Number.isNaN(d.getTime())){const n=b.querySelector('small');if(n)n.textContent=new Intl.DateTimeFormat(en?'en-GB':'de-AT',{weekday:'short',timeZone:bookingTimeZone}).format(d).toUpperCase();}});
-
- $$(".lang [data-lang]").forEach(x=>x.classList.toggle("active",x.dataset.lang===lang));
+function applyGuestLanguage(){
+ state.guestLang="EN";saveDemoState();
+ const set=(sel,html)=>{const n=$(sel);if(n)n.innerHTML=html};
+ set(".booking-kicker","ONLINE BOOKING · POWERED BY KAVELYQ");
+ set(".booking-main>h1","Your look.<br><em>Your appointment.</em>");
+ set(".booking-lead","Premium grooming. Book in under a minute.");
+ const heads=$$(".section-title h2"),labels=["Choose service","Choose professional","Choose time","Almost done"];heads.forEach((n,i)=>{if(labels[i])n.textContent=labels[i]});
+ if($("#bookBack"))$("#bookBack").textContent="Back";
+ if($("#bookNext"))$("#bookNext").textContent=state.bookStep===4?"Confirm booking":"Continue";
+ set(".booking-summary>h3","Your booking");
+ const sl=["Service","Professional","Appointment","Total"];$$(".booking-summary .sum-row>span").forEach((n,i)=>{if(sl[i])n.textContent=sl[i]});
+ const success=$("#bookingSuccess");if(success&&!success.classList.contains("hidden")){const sm=success.querySelector("small"),hh=success.querySelector("h2"),nb=success.querySelector('[data-action="new-booking"]');if(sm)sm.textContent="CONFIRMED";if(hh)hh.textContent="Booking confirmed.";if(nb)nb.textContent="New booking";}
+ $$('.book-step .section-title small').forEach((n,i)=>n.textContent='STEP '+(i+1));
+ set('.or span','or book without an account');
+ const phone=$('#guestPhone')?.parentElement;if(phone&&phone.firstChild?.nodeType===3)phone.firstChild.textContent='Phone';
+ set('.policy span','Free cancellation up to 24 hours before your appointment. A 50% fee may apply afterwards.');
+ set('.waitlist-card span','No suitable appointment?');set('.waitlist-card strong','Join the smart waitlist →');
+ set('.deposit-card b','Online payment coming soon');set('.deposit-card small','Confirm your appointment without an online charge.');set('.deposit-card strong','€0 now');
+ const descriptions=['Consultation, cut & styling · 45 min','Precise fade & finish · 50 min','Complete grooming · 60 min','Contour, hot towel & care · 30 min'];
+ if(BOOKING_BUSINESS==='demo-studio')$$('.service-card small').forEach((n,i)=>{if(descriptions[i])n.textContent=descriptions[i]});
+ $$('[data-action="repeat-cut"]').forEach((b,i)=>b.textContent=i===0?'↻ Repeat your last cut':'Book again');
+ $$('.date-strip button').forEach(b=>{const d=new Date(b.dataset.date+'T12:00:00Z');if(!Number.isNaN(d.getTime())){const n=b.querySelector('small');if(n)n.textContent=new Intl.DateTimeFormat('en-GB',{weekday:'short',timeZone:bookingTimeZone}).format(d).toUpperCase();}});
+ $$(".lang [data-lang]").forEach(x=>x.classList.toggle("active",x.dataset.lang==="EN"));
 }
 window.applyGuestLanguage=applyGuestLanguage;
-$$(".lang [data-lang]").forEach(b=>b.onclick=()=>{applyGuestLanguage(b.dataset.lang);toast(b.dataset.lang==="EN"?"Language changed":"Sprache geändert",b.dataset.lang)});
+$(".lang [data-lang]").forEach(b=>b.onclick=()=>applyGuestLanguage());
 bind();
 renderModule(window.__pendingModule || "home");
 applyGuestLanguage(state.guestLang);
