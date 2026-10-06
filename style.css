@@ -4132,3 +4132,18 @@ button {
  #booking .booking-kicker{font-size:.58rem!important;letter-spacing:.18em!important}
  #booking .book-step{padding-top:28px!important}
 }
+
+/* Sales entry interaction: make the next step unmistakable */
+.sales-revenue-proof .sales-plan-card{appearance:none;text-align:left;font:inherit;cursor:pointer;width:100%;transition:transform .18s ease,box-shadow .18s ease}
+.sales-revenue-proof .sales-plan-card:hover{transform:translateY(-2px);box-shadow:0 12px 35px rgba(255,255,255,.08)}
+.sales-revenue-proof .sales-plan-card span{display:block;margin-top:9px;font-size:10px;font-weight:800;letter-spacing:.08em;color:#5d5952}
+.sales-mobile-cta{display:none}
+@media(max-width:650px){
+ .sales-entry{place-items:start center!important;padding-top:max(30px,env(safe-area-inset-top))!important}
+ .sales-entry h1{font-size:clamp(43px,12.5vw,58px)!important;margin:20px 0!important}
+ .sales-entry-inner>p{font-size:15px!important}
+ .sales-revenue-proof{margin:24px 0 14px!important}
+ .sales-mobile-cta{display:block;margin:12px 0 20px}
+ .sales-mobile-cta button{width:100%;border:0;background:#f5f1e8;color:#111;padding:15px 18px;border-radius:999px;font-weight:900;font-size:14px;cursor:pointer}
+ .sales-proof{margin-top:22px!important}
+}
