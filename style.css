@@ -4081,3 +4081,54 @@ button {
 .sales-revenue-proof b{display:block;font-size:clamp(18px,2.4vw,28px);letter-spacing:-.03em}
 .sales-revenue-proof .sales-gap b{color:#f0b0a8}.sales-revenue-proof .sales-upside{background:#f2eee5;color:#111;border-color:#f2eee5}.sales-revenue-proof .sales-upside small{color:#6d6962}.sales-revenue-proof .sales-upside b{color:#111}
 @media(max-width:650px){.sales-revenue-proof{grid-template-columns:1fr 1fr;margin-top:24px}.sales-revenue-proof>div{padding:13px}.sales-revenue-proof b{font-size:19px}}
+
+/* Guest booking hero refinement — quieter, more human, mobile-first */
+#booking .booking-main>h1{
+  max-width:760px!important;
+  font-size:clamp(3.6rem,8vw,7.1rem)!important;
+  line-height:.88!important;
+  letter-spacing:-.055em!important;
+  margin:24px 0 24px!important;
+}
+#booking .booking-main>h1 em{
+  display:inline-block!important;
+  font-size:.72em!important;
+  line-height:1!important;
+  letter-spacing:-.035em!important;
+  color:#b8b3aa!important;
+}
+#booking .booking-lead{
+  max-width:560px!important;
+  font-size:clamp(.95rem,1.5vw,1.15rem)!important;
+  line-height:1.55!important;
+  color:#8e8b84!important;
+  margin-bottom:64px!important;
+}
+#booking .booking-kicker{
+  font-size:.65rem!important;
+  letter-spacing:.2em!important;
+  color:#77746e!important;
+}
+#booking .book-step{border-top:1px solid #2c2c29!important;padding-top:34px!important}
+#booking .section-title h2{letter-spacing:-.035em!important}
+@media(max-width:600px){
+ #booking .booking-main>h1{
+   font-size:clamp(3.35rem,15.2vw,4.7rem)!important;
+   line-height:.9!important;
+   margin:20px 0 22px!important;
+   overflow-wrap:normal!important;
+   word-break:normal!important;
+ }
+ #booking .booking-main>h1 em{
+   font-size:.67em!important;
+   line-height:1.04!important;
+ }
+ #booking .booking-lead{
+   max-width:92%!important;
+   font-size:.98rem!important;
+   line-height:1.5!important;
+   margin-bottom:54px!important;
+ }
+ #booking .booking-kicker{font-size:.58rem!important;letter-spacing:.18em!important}
+ #booking .book-step{padding-top:28px!important}
+}
