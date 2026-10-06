@@ -20,7 +20,7 @@ window.__guestLang=function(lang){
   if(typeof window.applyGuestLanguage==="function") window.applyGuestLanguage(lang);
 };
 </script>
-    <link rel="stylesheet" href="style.css?v=hero-refine-3" />
+    <link rel="stylesheet" href="style.css?v=cta-fix-4" />
   </head>
   <body><section class="sales-entry" id="salesEntry">
   <div class="sales-entry-inner">
@@ -31,7 +31,7 @@ window.__guestLang=function(lang){
       <div><small>MONTHLY TARGET</small><b>€25,000</b></div>
       <div><small>FORECAST</small><b>€23,680</b></div>
       <div class="sales-gap"><small>REVENUE GAP</small><b>−€1,320</b></div>
-      <div class="sales-upside"><small>KAVELYQ PLAN</small><b>+€1,500</b></div>
+      <button class="sales-upside sales-plan-card" type="button" aria-label="Open the KAVELYQ revenue plan" onclick="document.getElementById('salesEntry').classList.add('hidden');document.querySelector('[data-view=hq]').click();window.__openModule('operator')"><small>KAVELYQ PLAN</small><b>+€1,500</b><span>Open plan →</span></button>
     </div>
     <div class="sales-proof">
       <div><b>01</b><span>Find lost revenue</span></div>
@@ -39,6 +39,7 @@ window.__guestLang=function(lang){
       <div><b>03</b><span>Approve the plan</span></div>
       <div><b>04</b><span>Measure the impact</span></div>
     </div>
+    <div class="sales-mobile-cta"><button type="button" onclick="document.getElementById('salesEntry').classList.add('hidden');document.querySelector('[data-view=hq]').click();window.__openModule('operator')">See the revenue plan →</button></div>
     <div class="sales-actions">
       <button class="sales-primary" type="button" onclick="document.getElementById('salesEntry').classList.add('hidden');document.querySelector('[data-view=hq]').click();window.__openModule('operator')">See how KAVELYQ finds +€1,500 →</button>
       <button class="sales-secondary" type="button" onclick="document.getElementById('salesEntry').classList.add('hidden');document.querySelector('[data-view=booking]').click()">Try guest booking</button>
