@@ -4073,3 +4073,11 @@ button {
  #booking .section-title{flex-wrap:wrap;gap:12px}
  #booking .booking-main>h1{overflow-wrap:anywhere}
 }
+
+/* Revenue-first KAVELYQ sales proof */
+.sales-revenue-proof{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:30px 0 8px}
+.sales-revenue-proof>div{border:1px solid #303033;border-radius:14px;padding:16px 17px;background:#131416}
+.sales-revenue-proof small{display:block;font-size:9px;letter-spacing:.13em;color:#777;margin-bottom:8px}
+.sales-revenue-proof b{display:block;font-size:clamp(18px,2.4vw,28px);letter-spacing:-.03em}
+.sales-revenue-proof .sales-gap b{color:#f0b0a8}.sales-revenue-proof .sales-upside{background:#f2eee5;color:#111;border-color:#f2eee5}.sales-revenue-proof .sales-upside small{color:#6d6962}.sales-revenue-proof .sales-upside b{color:#111}
+@media(max-width:650px){.sales-revenue-proof{grid-template-columns:1fr 1fr;margin-top:24px}.sales-revenue-proof>div{padding:13px}.sales-revenue-proof b{font-size:19px}}
