@@ -78,11 +78,11 @@ window.__guestLang=function(lang){
             <div id="bookStep1" class="book-step">
               <div class="section-title">
                 <div>
-                  <small>SCHRITT 1</small>
-                  <h2>Service wählen</h2>
+                  <small>STEP 1</small>
+                  <h2>Choose service</h2>
                 </div>
                 <button class="text-btn" data-action="repeat-cut">
-                  ↻ Letzten Schnitt wiederholen
+                  ↻ Repeat your last cut
                 </button>
               </div>
               <label class="location-select"
@@ -102,7 +102,7 @@ window.__guestLang=function(lang){
                 >
                   <span
                     ><b>Classic Cut</b
-                    ><small>Beratung, Schnitt & Styling · 45 Min</small></span
+                    ><small>Consultation, cut & styling · 45 min</small></span
                   ><strong>36 €</strong>
                 </button>
                 <button
@@ -113,7 +113,7 @@ window.__guestLang=function(lang){
                 >
                   <span
                     ><b>Skin Fade</b
-                    ><small>Präziser Übergang & Finish · 50 Min</small></span
+                    ><small>Precise fade & finish · 50 min</small></span
                   ><strong>42 €</strong>
                 </button>
                 <button
@@ -124,7 +124,7 @@ window.__guestLang=function(lang){
                 >
                   <span
                     ><b>Cut + Beard</b
-                    ><small>Komplettes Grooming · 60 Min</small></span
+                    ><small>Complete grooming · 60 min</small></span
                   ><strong>52 €</strong>
                 </button>
                 <button
@@ -135,7 +135,7 @@ window.__guestLang=function(lang){
                 >
                   <span
                     ><b>Beard Ritual</b
-                    ><small>Kontur, Hot Towel & Pflege · 30 Min</small></span
+                    ><small>Contour, hot towel & care · 30 min</small></span
                   ><strong>28 €</strong>
                 </button>
               </div>
@@ -143,8 +143,8 @@ window.__guestLang=function(lang){
             <div id="bookStep2" class="book-step hidden">
               <div class="section-title">
                 <div>
-                  <small>SCHRITT 2</small>
-                  <h2>Barber wählen</h2>
+                  <small>STEP 2</small>
+                  <h2>Choose professional</h2>
                 </div>
                 <span class="ai-tag">AI MATCH</span>
               </div>
@@ -175,8 +175,8 @@ window.__guestLang=function(lang){
             <div id="bookStep3" class="book-step hidden">
               <div class="section-title">
                 <div>
-                  <small>SCHRITT 3</small>
-                  <h2>Zeit wählen</h2>
+                  <small>STEP 3</small>
+                  <h2>Choose time</h2>
                 </div>
                 <span class="muted">Europe/Vienna</span>
               </div>
@@ -187,7 +187,7 @@ window.__guestLang=function(lang){
                 ><button><small>FR</small><b>25</b></button
                 ><button><small>SA</small><b>26</b></button>
               </div>
-              <div class="slot-label">NÄCHSTE FREIE TERMINE</div>
+              <div class="slot-label">NEXT AVAILABLE TIMES</div>
               <div class="slot-grid">
                 <button data-time="15:30">15:30</button
                 ><button data-time="16:15">16:15</button
@@ -197,63 +197,62 @@ window.__guestLang=function(lang){
                 ><button data-time="19:15">19:15</button>
               </div>
               <button class="waitlist-card" data-action="waitlist">
-                <span>Kein passender Termin?</span
-                ><strong>Auf die intelligente Warteliste →</strong>
+                <span>No suitable appointment?</span
+                ><strong>Join the smart waitlist →</strong>
               </button>
             </div>
             <div id="bookStep4" class="book-step hidden">
               <div class="section-title">
                 <div>
-                  <small>SCHRITT 4</small>
-                  <h2>Fast geschafft</h2>
+                  <small>STEP 4</small>
+                  <h2>Almost done</h2>
                 </div>
                 <span class="safe">SECURE BOOKING</span>
               </div>
               <div class="social-login">
                 <button type="button" data-action="guest-auth-info" aria-label="Sign-in availability">● Apple · Demo</button><button type="button" data-action="guest-auth-info" aria-label="Sign-in availability">G Google · Demo</button>
               </div>
-              <div class="or"><span>oder ohne Konto buchen</span></div>
+              <div class="or"><span>or book without an account</span></div>
               <div class="form-grid">
-                <label>Name<input id="guestName" autocomplete="name" placeholder="Your name" /></label><label>Email<input id="guestEmail" type="email" autocomplete="email" placeholder="you@example.com" /></label><label>Telefon<input id="guestPhone" type="tel" autocomplete="tel" placeholder="+43 …" /></label>
+                <label>Name<input id="guestName" autocomplete="name" placeholder="Your name" /></label><label>Email<input id="guestEmail" type="email" autocomplete="email" placeholder="you@example.com" /></label><label>Phone<input id="guestPhone" type="tel" autocomplete="tel" placeholder="+43 …" /></label>
               </div>
               <div class="deposit-card"><span><b>Online payment coming soon</b><small>Your appointment can be confirmed now without an online charge.</small></span><strong>€0 now</strong></div><div class="policy">
                 <input id="bookingPolicyConsent" type="checkbox" />
                 <span
-                  >Kostenlose Stornierung bis 24 Stunden. Danach können 50%
-                  verrechnet werden.</span
+                  >Free cancellation up to 24 hours before your appointment. A 50% fee may apply afterwards.</span
                 >
               </div>
             </div>
             <div id="bookingSuccess" class="booking-success hidden">
-              <span>✓</span><small>BESTÄTIGT</small>
-              <h2>Buchung bestätigt.</h2>
-              <p>Deine Buchung wurde gespeichert. Es wurde keine Online-Zahlung abgebucht.</p>
+              <span>✓</span><small>CONFIRMED</small>
+              <h2>Booking confirmed.</h2>
+              <p>Your booking was saved. No online payment was charged.</p>
               <div class="post-booking-actions">
                 <button data-action="manage-guest-booking">Manage booking</button><button data-guest-action="rebook">Book again</button>
               </div>
               <button class="primary" data-action="new-booking">
-                Neue Buchung
+                New booking
               </button>
             </div>
             <div id="bookActions" class="book-actions"><span id="bookProgress" class="book-progress" aria-live="polite">01 / 04</span>
-              <button id="bookBack" class="secondary" disabled>Zurück</button
-              ><button id="bookNext" class="primary" disabled>Weiter</button>
+              <button id="bookBack" class="secondary" disabled>Back</button
+              ><button id="bookNext" class="primary" disabled>Continue</button>
             </div>
           </section>
           <aside class="booking-summary">
             <div class="summary-visual">
               <span>KAVELYQ</span><small>ONLINE BOOKING</small>
             </div>
-            <h3>Deine Buchung</h3>
+            <h3>Your booking</h3>
             <div class="sum-row">
               <span>Service</span><b id="sumService">—</b>
             </div>
             <div class="sum-row">
               <span>Barber</span><b id="sumBarber">—</b>
             </div>
-            <div class="sum-row"><span>Termin</span><b id="sumTime">—</b></div>
+            <div class="sum-row"><span>Appointment</span><b id="sumTime">—</b></div>
             <div class="sum-row total">
-              <span>Gesamt</span><b id="sumPrice">—</b>
+              <span>Total</span><b id="sumPrice">—</b>
             </div>
             <div class="guest-map-card">
   <div class="guest-map-head"><div><small>LOCATION</small><b>Demo Studio A · Vienna</b></div><span>DEMO MAP</span></div>
@@ -265,7 +264,7 @@ window.__guestLang=function(lang){
   </div>
   <div class="guest-map-foot"><span>Exact address hidden in demo</span><button type="button" data-action="demo-directions">Directions ↗</button></div>
 </div>
-<div class="feature-chips"><span>Booking confirmation</span><span>Online verwalten</span></div>
+<div class="feature-chips"><span>Booking confirmation</span><span>Manage online</span></div>
             <div class="review-quote">
               “Illustrative demo review.”<small>— Demo Guest</small>
             </div>
