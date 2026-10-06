@@ -1961,8 +1961,8 @@ function applyGuestLanguage(){
  state.guestLang="EN";saveDemoState();
  const set=(sel,html)=>{const n=$(sel);if(n)n.innerHTML=html};
  set(".booking-kicker","ONLINE BOOKING · POWERED BY KAVELYQ");
- set(".booking-main>h1","Your look.<br><em>Your appointment.</em>");
- set(".booking-lead","Premium grooming. Book in under a minute.");
+ set(".booking-main>h1","Look sharp.<br><em>Book your cut.</em>");
+ set(".booking-lead","Pick a service, choose your barber and find a time that works for you.");
  const heads=$$(".section-title h2"),labels=["Choose service","Choose professional","Choose time","Almost done"];heads.forEach((n,i)=>{if(labels[i])n.textContent=labels[i]});
  if($("#bookBack"))$("#bookBack").textContent="Back";
  if($("#bookNext"))$("#bookNext").textContent=state.bookStep===4?"Confirm booking":"Continue";
