@@ -4166,3 +4166,8 @@ button {
 @media(max-width:600px){.priority-head{flex-wrap:wrap;align-items:flex-start}.priority-head>div{min-width:0;flex:1 1 190px}.priority-head .text-btn{max-width:100%;white-space:normal}}
 
 @media(max-width:600px){.panel-head{flex-wrap:wrap;align-items:flex-start}.panel-head>div{min-width:0;flex:1 1 190px}.panel-head .text-btn{max-width:100%;white-space:normal}.panel-head h2{overflow-wrap:anywhere}}
+
+/* WCAG contrast repairs for the existing dark hero and light booking summary. */
+#booking .booking-kicker{color:#a39e94!important}
+#booking .sum-row span,#booking .guest-map-head small,#booking .guest-map-head>span,#booking .guest-map-foot,#booking .guest-map-foot>span,#booking .review-quote small{color:#555149!important}
+#booking .map-label{color:#403e38!important}
