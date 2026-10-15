@@ -21,7 +21,7 @@ window.__guestLang=function(lang){
   if(typeof window.applyGuestLanguage==="function") window.applyGuestLanguage(lang);
 };
 </script>
-    <link rel="stylesheet" href="style.css?v=cta-fix-4" />
+    <link rel="stylesheet" href="style.css?v=readiness-2" />
   </head>
   <body><section class="sales-entry" id="salesEntry">
   <div class="sales-entry-inner">
@@ -34,8 +34,8 @@ window.__guestLang=function(lang){
         <option value="barber">Barber &amp; Hair</option><option value="beauty">Beauty &amp; Makeup</option><option value="nails">Nails &amp; Lashes</option><option value="wellness">Massage &amp; Spa</option><option value="other">Other Services</option>
       </select>
       <p id="salesIndustryDescription" style="margin:10px 0 0;font-size:13px">Haircuts, beard grooming and repeat appointments.</p>
-      <button type="button" class="sales-secondary" id="salesIndustryPreview" style="margin-top:12px">Preview selected booking →</button>
-      <p style="font-size:11px;opacity:.75;margin-top:8px">Illustrative booking preview only. No real appointment is created.</p>
+      <button type="button" class="sales-secondary" id="salesIndustryPreview" disabled style="margin-top:12px">Preview selected booking →</button>
+      <p style="font-size:11px;opacity:.75;margin-top:8px">Explore the same booking engine with fictional demo businesses. No real appointment or fee.</p>
     </div>
     <div class="sales-revenue-proof" aria-label="Illustrative demo revenue plan">
       <div><small>DEMO MONTHLY TARGET</small><b>€25,000</b></div>
@@ -60,8 +60,8 @@ window.__guestLang=function(lang){
 </section>
     <header class="demo-header">
       <a class="demo-logo" href="/"
-        ><span>O</span>
-        <div>OPERATOR<small>FULL DEMO · WORKING BRAND</small></div></a
+        ><span>K</span>
+        <div>KAVELYQ<small>BUSINESS MANAGEMENT · DEMO</small></div></a
       >
       <nav class="view-switch" aria-label="Demo views">
         <button data-view="booking" type="button" onclick="document.querySelectorAll('.view').forEach(v=>v.classList.toggle('hidden',v.id!=='booking'));document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view==='booking'))">Guest Booking</button>
@@ -368,10 +368,9 @@ window.__guestLang=function(lang){
       <span>✓</span>
       <div><b id="toastTitle">Done</b><small id="toastText"></small></div>
     </div>
-    <script src="product-core.js?v=20261015"></script>
-    <script src="app.js?v=readiness-20261015"></script>
-    <script src="multi-industry-preview.js?v=20261015"></script>
-    
+    <script src="product-core.js?v=completion-4"></script>
+    <script src="app.js?v=completion-4"></script>
+    <script src="multi-industry-preview.js?v=completion"></script>
   </body>
 </html>
 

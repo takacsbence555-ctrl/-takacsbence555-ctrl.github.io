@@ -2,12 +2,11 @@
 (function(root){
 'use strict';
 const industryCatalog=Object.freeze({
- barber:Object.freeze({label:'Barber & Hair',professional:'Barber',examples:Object.freeze(['Haircut','Beard trim','Hair colour'])}),
- beauty:Object.freeze({label:'Beauty & Makeup',professional:'Artist',examples:Object.freeze(['Makeup session','Bridal trial','Facial'])}),
- tattoo:Object.freeze({label:'Tattoo Studio',professional:'Artist',examples:Object.freeze(['Consultation','Tattoo session','Touch-up'])}),
- nails:Object.freeze({label:'Nails & Lashes',professional:'Technician',examples:Object.freeze(['Manicure','Lash extensions','Refill'])}),
- wellness:Object.freeze({label:'Massage & Spa',professional:'Therapist',examples:Object.freeze(['Massage','Body treatment','Consultation'])}),
- other:Object.freeze({label:'Other Services',professional:'Professional',examples:Object.freeze(['Consultation','Appointment'])})
+ barber:Object.freeze({bookingTitle:'Look sharp. Book your cut.',bookingLead:'Pick a service, choose your barber and find a time that works for you.',label:'Barber & Hair',professional:'Barber',examples:Object.freeze(['Haircut','Beard trim','Hair colour'])}),
+ beauty:Object.freeze({bookingTitle:'Your beauty appointment starts here.',bookingLead:'Choose a makeup or beauty treatment and an available artist.',label:'Beauty & Makeup',professional:'Artist',examples:Object.freeze(['Makeup session','Bridal trial','Facial'])}),
+ nails:Object.freeze({bookingTitle:'Fresh nails. Easy booking.',bookingLead:'Choose a nail or lash service and a technician.',label:'Nails & Lashes',professional:'Technician',examples:Object.freeze(['Manicure','Lash extensions','Refill'])}),
+ wellness:Object.freeze({bookingTitle:'Make time for yourself.',bookingLead:'Choose a massage or wellness treatment and a therapist.',label:'Massage & Spa',professional:'Therapist',examples:Object.freeze(['Massage','Body treatment','Consultation'])}),
+ other:Object.freeze({bookingTitle:'Book your next appointment.',bookingLead:'Choose a service and an available professional.',label:'Other Services',professional:'Professional',examples:Object.freeze(['Consultation','Appointment'])})
 });
 function industryConfig(type){return industryCatalog[type]||industryCatalog.other;}
 const plans=Object.freeze({essential:{priceGBP:19,ai:false},intelligence:{priceGBP:39,ai:true},billingEnabled:false});
@@ -19,7 +18,7 @@ function insights(bookings,customers,now=new Date()){
  const future=bookings.filter(b=>b.status==='confirmed'&&new Date(b.starts_at)>=now),completed=bookings.filter(b=>b.status==='completed');
  const amount=b=>Number.isSafeInteger(b.price_cents)&&b.price_cents>=0?b.price_cents:null;
  const priced=future.filter(b=>amount(b)!==null);
- return {upcoming:future.length,bookedCents:priced.reduce((s,b)=>s+b.price_cents,0),missingPrices:future.length-priced.length,completed:completed.length,cancelled:bookings.filter(b=>b.status==='cancelled').length,noShows:bookings.filter(b=>b.status==='no_show').length,overdue:customers.filter(c=>{if(!c.last_visit)return false;return (now-new Date(c.last_visit))/86400000>(c.rebook_interval_days||28)*1.25}).length};
+ return {upcoming:future.length,bookedCents:priced.reduce((s,b)=>s+b.price_cents,0),missingPrices:future.length-priced.length,completed:completed.length,cancelled:bookings.filter(b=>b.status==='cancelled').length,noShows:bookings.filter(b=>b.status==='no_show').length,overdue:customers.filter(c=>{if(!(c.last_visit||c.last_visit_at))return false;return (now-new Date(c.last_visit||c.last_visit_at))/86400000>(c.rebook_interval_days||28)*1.25}).length};
 }
 function parseCSV(text){
  if(typeof text!=='string'||text.length>2e6)throw new Error('File must be under 2 MB');
@@ -32,5 +31,6 @@ function parseCSV(text){
  const seen=new Set(),records=[],errors=[];
  rows.forEach((r,i)=>{const record=Object.fromEntries(headers.map((h,j)=>[h,(r[j]||'').trim()]));const issues=[];if(r.length!==headers.length)issues.push('Column count mismatch');if(record.name.length<2||record.name.length>120)issues.push('Name must have 2–120 characters');if(record.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(record.email))issues.push('Invalid email');if(record.phone&&!/^\+?[0-9 ()-]{6,40}$/.test(record.phone))issues.push('Invalid phone');const key=record.email?.toLowerCase()||record.phone?.replace(/\D/g,'')||record.name.toLowerCase();if(seen.has(key))issues.push('Duplicate in file');seen.add(key);if(issues.length)errors.push({row:i+2,issues});else records.push(record);});return {headers,records,errors,total:rows.length};
 }
-const api={industryCatalog,industryConfig,plans,dateInZone,addDays,range,calendarRows,insights,parseCSV};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.KavelyqProduct=api;
+function brandingConfig(raw){const c={accent:raw.accent||'#c8e986',font:raw.font||'system',logo_url:raw.logo_url||'',hero_url:raw.hero_url||'',description:raw.description||''};if(!/^#[0-9a-f]{6}$/i.test(c.accent)||!['system','georgia','arial'].includes(c.font)||c.description.length>1000)throw new Error('Invalid branding');for(const key of ['logo_url','hero_url']){if(c[key]){const u=new URL(c[key]);if(u.protocol!=='https:'||c[key].length>2048)throw new Error('Images require HTTPS URLs')}}const rgb=c.accent.slice(1).match(/../g).map(x=>{const v=parseInt(x,16)/255;return v<=0.04045?v/12.92:((v+0.055)/1.055)**2.4});const l=rgb[0]*0.2126+rgb[1]*0.7152+rgb[2]*0.0722;c.foreground=l>0.179?'#000000':'#ffffff';return c;}
+const api={industryCatalog,industryConfig,plans,dateInZone,addDays,range,calendarRows,insights,parseCSV,brandingConfig};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.KavelyqProduct=api;
 })(typeof window==='undefined'?globalThis:window);
