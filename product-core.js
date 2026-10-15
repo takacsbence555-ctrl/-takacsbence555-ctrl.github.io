@@ -1,6 +1,15 @@
 /* Pure, testable product logic. No network requests or customer communications. */
 (function(root){
 'use strict';
+const industryCatalog=Object.freeze({
+ barber:Object.freeze({label:'Barber & Hair',professional:'Barber',examples:Object.freeze(['Haircut','Beard trim','Hair colour'])}),
+ beauty:Object.freeze({label:'Beauty & Makeup',professional:'Artist',examples:Object.freeze(['Makeup session','Bridal trial','Facial'])}),
+ tattoo:Object.freeze({label:'Tattoo Studio',professional:'Artist',examples:Object.freeze(['Consultation','Tattoo session','Touch-up'])}),
+ nails:Object.freeze({label:'Nails & Lashes',professional:'Technician',examples:Object.freeze(['Manicure','Lash extensions','Refill'])}),
+ wellness:Object.freeze({label:'Massage & Spa',professional:'Therapist',examples:Object.freeze(['Massage','Body treatment','Consultation'])}),
+ other:Object.freeze({label:'Other Services',professional:'Professional',examples:Object.freeze(['Consultation','Appointment'])})
+});
+function industryConfig(type){return industryCatalog[type]||industryCatalog.other;}
 const plans=Object.freeze({essential:{priceGBP:19,ai:false},intelligence:{priceGBP:39,ai:true},billingEnabled:false});
 function dateInZone(value,zone){return new Intl.DateTimeFormat('en-CA',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(value));}
 function addDays(date,n){const d=new Date(date+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10);}
@@ -23,5 +32,5 @@ function parseCSV(text){
  const seen=new Set(),records=[],errors=[];
  rows.forEach((r,i)=>{const record=Object.fromEntries(headers.map((h,j)=>[h,(r[j]||'').trim()]));const issues=[];if(r.length!==headers.length)issues.push('Column count mismatch');if(record.name.length<2||record.name.length>120)issues.push('Name must have 2–120 characters');if(record.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(record.email))issues.push('Invalid email');if(record.phone&&!/^\+?[0-9 ()-]{6,40}$/.test(record.phone))issues.push('Invalid phone');const key=record.email?.toLowerCase()||record.phone?.replace(/\D/g,'')||record.name.toLowerCase();if(seen.has(key))issues.push('Duplicate in file');seen.add(key);if(issues.length)errors.push({row:i+2,issues});else records.push(record);});return {headers,records,errors,total:rows.length};
 }
-const api={plans,dateInZone,addDays,range,calendarRows,insights,parseCSV};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.KavelyqProduct=api;
+const api={industryCatalog,industryConfig,plans,dateInZone,addDays,range,calendarRows,insights,parseCSV};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.KavelyqProduct=api;
 })(typeof window==='undefined'?globalThis:window);
