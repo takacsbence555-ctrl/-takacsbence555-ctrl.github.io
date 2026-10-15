@@ -1668,7 +1668,7 @@ async function loadOwnerDashboard(){
 function showOwnerApp(demo=false){
  ownerDemoMode=demo; if(demo)sessionStorage.setItem("kavelyq-owner-demo","1");else sessionStorage.removeItem("kavelyq-owner-demo"); $("#ownerAuthGate")?.classList.add("hidden"); $("#ownerAppShell")?.classList.remove("hidden");
  if(demo){renderModule(state.module||window.__pendingModule||"home");return;}
- Promise.all([loadOwnerDashboard(),ownerRpc("owner_business_metrics",{}).catch(()=>null),ownerRpc("owner_customer_crm",{}).catch(()=>[]),ownerRpc("owner_rebooking_opportunities",{}).catch(()=>[]),ownerRpc("owner_onboarding_snapshot",{}).catch(()=>null),ownerRpc("owner_subscription_snapshot",{}).catch(()=>null),ownerRpc("owner_business_settings",{}).catch(()=>null),ownerRpc("owner_setup_snapshot",{}).catch(()=>null)]).then(([data,metrics,crm,rebooking,onboarding,subscription,businessSettings,setup])=>{ ownerMetrics=metrics; ownerCrm=crm||[]; ownerRebooking=rebooking||[]; ownerOnboarding=onboarding; ownerSubscription=subscription; ownerBusinessSettings=businessSettings; ownerSetup=setup;
+ Promise.all([loadOwnerDashboard(),ownerRpc("owner_industry_profile",{}).catch(()=>null),ownerRpc("owner_business_metrics",{}).catch(()=>null),ownerRpc("owner_customer_crm",{}).catch(()=>[]),ownerRpc("owner_rebooking_opportunities",{}).catch(()=>[]),ownerRpc("owner_onboarding_snapshot",{}).catch(()=>null),ownerRpc("owner_subscription_snapshot",{}).catch(()=>null),ownerRpc("owner_business_settings",{}).catch(()=>null),ownerRpc("owner_setup_snapshot",{}).catch(()=>null)]).then(([data,industry,metrics,crm,rebooking,onboarding,subscription,businessSettings,setup])=>{ ownerIndustryProfile=industry; ownerMetrics=metrics; ownerCrm=crm||[]; ownerRebooking=rebooking||[]; ownerOnboarding=onboarding; ownerSubscription=subscription; ownerBusinessSettings=businessSettings; ownerSetup=setup;
    if(!data){sessionStorage.removeItem("operator-owner-token");sessionStorage.removeItem("kavelyq-owner-token");ownerAccessToken=null;showOwnerGate("This account is not connected to a business yet.");return;}
    const brand=$(".brand small");if(brand)brand.textContent=(data.business?.name||"BUSINESS")+" · LIVE";
    const owner=$(".owner small");if(owner)owner.textContent=(data.business?.role||"owner").toUpperCase()+" · LIVE BACKEND";
@@ -1776,6 +1776,12 @@ function openLiveSetup(){
  $$("[data-live-staff-service]").forEach(c=>c.onchange=async()=>{const [sid,vid]=c.dataset.liveStaffService.split("|");try{await ownerRpc("owner_set_staff_service",{p_staff_id:sid,p_service_id:vid,p_enabled:c.checked});ownerSetup=await ownerRpc("owner_setup_snapshot",{});toast("Service assignment saved");}catch(e){c.checked=!c.checked;toast("Could not save");}});
 }
 async function reloadLiveSetup(){ownerSetup=await ownerRpc("owner_setup_snapshot",{});openLiveSetup();}
+let ownerIndustryProfile=null;
+function liveIndustryPanel(){
+ if(ownerDemoMode||!ownerDashboardData)return '';
+ const kind=window.KavelyqProduct?.industryConfig(ownerIndustryProfile?.business_type||'barber');
+ return '<section class="pilot-ready"><small>BUSINESS PROFILE</small><h3>'+escLive(kind?.label||'Barber & Hair')+'</h3><p>Industry-specific workspace · '+escLive(kind?.professional||'Professional')+' · Booking and client records stay in your existing workspace.</p></section>';
+}
 function liveSettingsPanel(){
  if(ownerDemoMode||!ownerBusinessSettings)return "";
  const x=ownerBusinessSettings;
@@ -2115,7 +2121,7 @@ let liveCalendarView='day',liveCalendarDate=null,liveCalendarStaff='';
 function liveWorkspace(id){
  const d=ownerDashboardData,zone=d.business.timezone||'Europe/Vienna';
  const head='<p class="demo-chip" role="status">LIVE WORKSPACE · Database records only · No payments or customer messages sent</p>';
- if(id==='home'||id==='money')return head+liveMetricsPanel()+liveOwnerPanel()+'<p>Completed appointment value is not proof of payment collection. Reports cover the records returned by the backend.</p>';
+ if(id==='home'||id==='money')return head+(id==='home'?liveIndustryPanel():'')+liveMetricsPanel()+liveOwnerPanel()+'<p>Completed appointment value is not proof of payment collection. Reports cover the records returned by the backend.</p>';
  if(id==='calendar'){
   liveCalendarDate=liveCalendarDate||KavelyqProduct.dateInZone(new Date(),zone);
   const rows=KavelyqProduct.calendarRows(d.bookings||[],liveCalendarDate,liveCalendarView,liveCalendarStaff,zone);
