@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="referrer" content="no-referrer" />
     <meta name="theme-color" content="#101114" />
-    <title>KAVELYQ — AI Revenue Operator for Barbershops</title>
+    <title>KAVELYQ — AI Revenue Operator for Beauty & Wellness Businesses</title>
     <meta
       name="description"
-      content="KAVELYQ finds empty capacity, overdue clients and missed rebooking revenue, then builds a measurable recovery plan for barbershops."
+      content="KAVELYQ helps hair, beauty, nails and wellness studios recover missed bookings and grow repeat revenue."
     />
     <script>
 window.__pendingModule="home";
@@ -25,9 +25,18 @@ window.__guestLang=function(lang){
   </head>
   <body><section class="sales-entry" id="salesEntry">
   <div class="sales-entry-inner">
-    <small>KAVELYQ · AI REVENUE OPERATOR FOR BARBERSHOPS</small>
-    <h1>Find the revenue<br><em>your barbershop is missing.</em></h1>
-    <p>KAVELYQ spots empty chairs, overdue clients and missed rebooking opportunities — then builds a measurable plan to recover that revenue.</p>
+    <small>KAVELYQ · AI REVENUE OPERATOR FOR SERVICE BUSINESSES</small>
+    <h1>Find the revenue<br><em>your studio is missing.</em></h1>
+    <p>KAVELYQ helps hair, makeup, nail, lash and wellness studios spot empty appointments, reconnect with clients and recover missed revenue.</p>
+    <div class="sales-industry-selector" aria-label="Choose a demo business type" style="margin:22px 0;padding:18px;border:1px solid rgba(255,255,255,.2);border-radius:14px">
+      <label for="salesIndustry" style="display:block;margin-bottom:9px;font-size:13px">EXPLORE A STUDIO TYPE</label>
+      <select id="salesIndustry" style="width:100%;padding:12px;border-radius:8px;background:#202125;color:white;border:1px solid #777">
+        <option value="barber">Barber &amp; Hair</option><option value="beauty">Beauty &amp; Makeup</option><option value="nails">Nails &amp; Lashes</option><option value="wellness">Massage &amp; Spa</option><option value="other">Other Services</option>
+      </select>
+      <p id="salesIndustryDescription" style="margin:10px 0 0;font-size:13px">Haircuts, beard grooming and repeat appointments.</p>
+      <button type="button" class="sales-secondary" id="salesIndustryPreview" style="margin-top:12px">Preview selected booking →</button>
+      <p style="font-size:11px;opacity:.75;margin-top:8px">Illustrative booking preview only. No real appointment is created.</p>
+    </div>
     <div class="sales-revenue-proof" aria-label="Illustrative demo revenue plan">
       <div><small>DEMO MONTHLY TARGET</small><b>€25,000</b></div>
       <div><small>FORECAST</small><b>€23,680</b></div>
@@ -67,7 +76,7 @@ window.__guestLang=function(lang){
           <div class="shop-brand">
             <span class="shop-mark">N</span>
             <div>
-              <strong>NOIR BARBER</strong
+              <strong id="previewStudioName">NOIR BARBER</strong
               ><small>Demo location · Vienna · 4,9 ★</small>
             </div>
           </div>
@@ -76,7 +85,7 @@ window.__guestLang=function(lang){
         <div class="booking-layout">
           <section class="booking-main">
             <div class="booking-kicker">ONLINE BOOKING · POWERED BY KAVELYQ</div>
-            <h1>Look sharp.<br /><em>Book your cut.</em></h1><p class="booking-lead">Pick a service, choose your barber and find a time that works for you.</p>
+            <h1 id="previewBookingTitle">Look sharp.<br /><em>Book your cut.</em></h1><p class="booking-lead" id="previewBookingLead">Pick a service, choose your barber and find a time that works for you.</p>
             <div id="bookStep1" class="book-step">
               <div class="section-title">
                 <div>
@@ -95,7 +104,7 @@ window.__guestLang=function(lang){
                   <option>NOIR · Demo Studio C</option>
                 </select></label
               >
-              <div class="usual-card"><div><small>Your usual · Cut Memory</small><b>Skin Fade · 42 €</b><span>Demo Barber A · saved preference</span></div><button data-action="repeat-cut">Book again</button></div><div class="service-list">
+              <div class="usual-card"><div><small>Your usual · Cut Memory</small><b>Skin Fade · 42 €</b><span>Demo Barber A · saved preference</span></div><button data-action="repeat-cut">Book again</button></div><div class="service-list" id="previewServices">
                 <button
                   class="service-card"
                   data-service="Classic Cut"
@@ -150,7 +159,7 @@ window.__guestLang=function(lang){
                 </div>
                 <span class="ai-tag">AI MATCH</span>
               </div>
-              <div class="barber-grid barber-pro-grid">
+              <div class="barber-grid barber-pro-grid" id="previewProfessionals">
                 <button class="barber-card barber-pro recommended" data-barber="Demo Barber A">
                   <span class="recommend">98% MATCH</span>
                   <span class="barber-portrait portrait-a"><span>DA</span></span>
@@ -361,6 +370,8 @@ window.__guestLang=function(lang){
     </div>
     <script src="product-core.js?v=20261015"></script>
     <script src="app.js?v=readiness-20261015"></script>
+    <script src="multi-industry-preview.js?v=20261015"></script>
+    
   </body>
 </html>
 
