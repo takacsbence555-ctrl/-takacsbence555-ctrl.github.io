@@ -60,3 +60,15 @@ Preview browser: five industry catalogs; Beauty service → any professional →
 - Tattoo remains postponed. Legacy backend type is retained for compatibility but is absent from new onboarding.
 
 KAVELYQ must not yet be labelled production-ready. First-paying-business onboarding requires closing the identity/delivery, mobile/accessibility, recovery/monitoring and operational privacy gates above, followed by a controlled pilot.
+
+## Production evidence and final security follow-up
+
+PR #8 merged as 5e8e411e2ebda0d6ca6ab8f48f833935d22821df. Vercel production deployment dpl_5FBbgnqCAR666AcNDHFnLV3ZT3kS was independently confirmed READY on that exact commit. Checks 38805646077 and 38805653327 passed for tested head 9d806c42.
+
+Production browser verified the Nails catalog, service/professional/date/time/review, a persisted synthetic booking and refresh, then rescheduling. Independent DB reads confirmed £35, 45-minute duration and London timezone conversion, followed by the rescheduled date/time. Browser transport disconnected before final production cancellation could be verified in the UI; cancellation was completed through the existing booking RPC and DB read confirmed cancelled. Preview browser cancellation and restored cancelled summary passed. Do not report the disconnected browser step as passed. A repeat shell HTTP run was interrupted by transport/network approval cancellation; the earlier 15/15 live HTTP run remains the completed evidence.
+
+Supabase security advisor returned warnings for intentionally exposed guest SECURITY DEFINER RPCs and authenticated definer RPCs, plus informational notices for two deny-all RLS internal tables. These require threat review, not blind revocation that breaks guest booking. Guidance: https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable and https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable . No clean security certification is claimed.
+
+Follow-up inspection found owner_setup_snapshot and owner_subscription_snapshot still accepted same-tenant staff. Applied owner-snapshot-role-boundary.sql: both now limit reads to owners/managers. Removed obsolete €49/€490 pricing from the snapshot in favour of explicitly provisional £19/£39 values and live_billing_enabled=false. Executed snapshot-roles.test.sql: staff reads return null, owner setup remains available, proposed pricing matches and billing remains disabled; fixtures rolled back.
+
+Rollback: retain prior main/Vercel deployments and readiness/completion branches. Application rollback can target the previous confirmed deployment. Keep additive database migrations and security guards; do not drop tables or undo data while rolling back frontend assets. The two cancelled QA bookings and withdrawn QA waitlist request contain fictional data only.
