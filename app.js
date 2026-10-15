@@ -2055,7 +2055,7 @@ async function loadBookingCatalog(){
   if(BOOKING_BUSINESS==='demo-studio'){
    const locations=$('.location-select select');if(locations){[...locations.options].forEach((o,i)=>{if(i){o.disabled=true;o.textContent+=' · Preview';}});}
    $$('[data-service]').forEach(b=>{const x=c.services.find(x=>x.name===b.dataset.service);if(x){b.dataset.price=x.price_cents/100;b.querySelector('strong').textContent=money(x.price_cents/100)}else b.disabled=true;});
-   $$('.next-slot strong').forEach(n=>n.textContent='Check availability →');bookRefresh();return;
+   $$('.next-slot strong').forEach(n=>n.textContent='Check availability →');syncGuestBookingSummary();bookRefresh();return;
   }
   Object.keys(SERVICE_SLUGS).forEach(k=>{if(!c.services.some(x=>x.name===k))delete SERVICE_SLUGS[k]});
   Object.keys(STAFF_SLUGS).forEach(k=>{if(!c.staff.some(x=>x.display_name===k))delete STAFF_SLUGS[k]});
@@ -2068,7 +2068,7 @@ async function loadBookingCatalog(){
   $('.guest-map-head b').textContent=c.business.name;
   $('.guest-map-foot span').textContent=c.business.address||'Address unavailable';
   const directions=$('[data-action="demo-directions"]');directions.onclick=()=>{if(c.business.address)window.open('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(c.business.address),'_blank','noopener');else toast('Address unavailable');};directions.removeAttribute('data-action');
-  bindBookingChoices();restoreRoute();applyGuestLanguage();
+  bindBookingChoices();restoreRoute();syncGuestBookingSummary();applyGuestLanguage();
  }catch(e){bookingCatalogReady=false;$$('[data-service],[data-barber],[data-time]').forEach(b=>b.disabled=true);bookRefresh();let n=$('#bookingBackendStatus');if(!n){n=document.createElement('p');n.id='bookingBackendStatus';n.setAttribute('role','alert');$('.booking-main').prepend(n);}n.textContent='Online booking is temporarily unavailable. No booking can be confirmed. Please contact the business or reload to retry.';toast('Booking data unavailable','No appointment has been saved.');}
 }
 document.addEventListener('DOMContentLoaded',loadBookingCatalog);
