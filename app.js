@@ -1963,7 +1963,7 @@ async function openGuestBookingManager(){
  try{
   const x=await supabaseRpc("get_public_booking_manage",{p_token:token});
   if(!x)return toast("Booking not found");
-  state.guestManageToken=token;
+  state.guestManageToken=token;syncGuestBookingSummary(x);
   const d=new Date(x.starts_at),locale=state.guestLang==="EN"?"en-GB":"de-AT";const date=d.toLocaleDateString(locale,{timeZone:x.timezone});const time=d.toLocaleTimeString(locale,{hour:"2-digit",minute:"2-digit",timeZone:x.timezone});
   openDrawer('<span class="drawer-kicker">KAVELYQ · BOOKING</span><h2>'+escLive(x.service_name)+'</h2><p>'+escLive(x.business_name)+' · '+escLive(x.staff_name)+'</p><div class="drawer-section"><div class="detail-grid"><div><small>DATE</small><b>'+date+'</b></div><div><small>TIME</small><b>'+time+'</b></div><div><small>STATUS</small><b>'+escLive(x.status)+'</b></div><div><small>POLICY</small><b>'+x.cancellation_window_hours+'h</b></div></div></div><label>New date<input id="guestManageDate" type="date"></label><button class="secondary" data-action="guest-load-slots">Find times</button><div id="guestManageSlots" class="slot-grid"></div><button class="danger" data-action="guest-self-cancel">Cancel booking</button>');
   $('[data-action="guest-self-cancel"]').disabled=!x.can_cancel;
@@ -1973,12 +1973,12 @@ async function openGuestBookingManager(){
 }
 async function loadGuestManageSlots(){
  const token=state.guestManageToken||state.guestBooking?.manageToken,date=$("#guestManageDate")?.value;if(!token||!date)return toast("Choose a date");
- try{const slots=await supabaseRpc("get_public_manage_availability",{p_token:token,p_date:date});const box=$("#guestManageSlots");box.innerHTML=(slots||[]).length?(slots||[]).map(t=>'<button data-manage-time="'+t+'">'+t+'</button>').join(""):'<span class="muted">No available times</span>';$$("[data-manage-time]",box).forEach(b=>b.onclick=async()=>{try{await supabaseRpc("reschedule_public_booking_local",{p_token:token,p_date:date,p_time:b.dataset.manageTime+":00"});if(state.guestBooking?.manageToken===token){state.guestBooking.time=b.dataset.manageTime;state.guestBooking.date=date;}saveDemoState();closeDrawer();toast("Booking rescheduled","Your appointment was updated.");}catch(e){toast("Could not reschedule","That time may no longer be available.");}});}catch(e){toast("Could not load times");}
+ try{const slots=await supabaseRpc("get_public_manage_availability",{p_token:token,p_date:date});const box=$("#guestManageSlots");box.innerHTML=(slots||[]).length?(slots||[]).map(t=>'<button data-manage-time="'+t+'">'+t+'</button>').join(""):'<span class="muted">No available times</span>';$$("[data-manage-time]",box).forEach(b=>b.onclick=async()=>{try{await supabaseRpc("reschedule_public_booking_local",{p_token:token,p_date:date,p_time:b.dataset.manageTime+":00"});if(state.guestBooking?.manageToken===token){state.guestBooking.time=b.dataset.manageTime;state.guestBooking.date=date;}saveDemoState();syncGuestBookingSummary();closeDrawer();toast("Booking rescheduled","Your appointment was updated.");}catch(e){toast("Could not reschedule","That time may no longer be available.");}});}catch(e){toast("Could not load times");}
 }
 async function cancelGuestBooking(){
  const token=state.guestManageToken||state.guestBooking?.manageToken;if(!token)return;
  if(!confirm("Cancel this booking?"))return;
- try{const r=await supabaseRpc("cancel_public_booking",{p_token:token});if(state.guestBooking?.manageToken===token)state.guestBooking.status="Cancelled";saveDemoState();closeDrawer();toast("Booking cancelled",r?.within_policy?"Cancelled within policy.":"Cancelled after the policy deadline.");}catch(e){toast("Could not cancel booking");}
+ try{const r=await supabaseRpc("cancel_public_booking",{p_token:token});if(state.guestBooking?.manageToken===token)state.guestBooking.status="Cancelled";saveDemoState();syncGuestBookingSummary();closeDrawer();toast("Booking cancelled",r?.within_policy?"Cancelled within policy.":"Cancelled after the policy deadline.");}catch(e){toast("Could not cancel booking");}
 }
 function applyGuestLanguage(){
  state.guestLang="EN";saveDemoState();
@@ -2050,6 +2050,7 @@ async function loadBookingCatalog(){
   bookingCurrency=c.business.currency||'EUR';bookingCancellationPolicy='Cancellation window: '+(c.business.cancellation_window_hours??24)+' hours. '+(c.business.no_show_policy||'Contact the business for its policy.');bookingTimeZone=c.business?.timezone||"Europe/Vienna";if(bookingDate<viennaISODate())bookingDate=viennaISODate();
   $$(".date-strip button").forEach((b,i)=>{b.dataset.date=viennaISODate(i);const d=new Date(b.dataset.date+"T12:00:00Z");b.querySelector("b").textContent=new Intl.DateTimeFormat("en-GB",{day:"2-digit",timeZone:bookingTimeZone}).format(d)});
   $("#bookStep3 .section-title .muted").textContent=bookingTimeZone;
+  if(state.guestBooking?.manageToken){try{const saved=await supabaseRpc("get_public_booking_manage",{p_token:state.guestBooking.manageToken});if(saved)syncGuestBookingSummary(saved);else throw new Error("BOOKING_NOT_FOUND");}catch{$("#bookingSuccess")?.classList.add("hidden");state.bookStep=1;toast("Booking status unavailable","Open your private management link or retry.");}}
   c.services.forEach(x=>SERVICE_SLUGS[x.name]=x.public_slug);c.staff.forEach(x=>STAFF_SLUGS[x.display_name]=x.public_slug);
   if(BOOKING_BUSINESS==='demo-studio'){
    const locations=$('.location-select select');if(locations){[...locations.options].forEach((o,i)=>{if(i){o.disabled=true;o.textContent+=' · Preview';}});}
@@ -2063,6 +2064,7 @@ async function loadBookingCatalog(){
   $('.service-list').innerHTML=c.services.map(x=>'<button class="service-card" data-service="'+escLive(x.name)+'" data-price="'+x.price_cents/100+'"><span><b>'+escLive(x.name)+'</b><small>'+x.duration_minutes+' min</small></span><strong>'+money(x.price_cents/100)+'</strong></button>').join('');
   $('.barber-grid').innerHTML=c.staff.map(x=>'<button class="barber-card barber-pro" data-barber="'+escLive(x.display_name)+'"><span class="barber-portrait"><span>'+escLive(x.display_name.slice(0,2))+'</span></span><span class="barber-copy"><b>'+escLive(x.display_name)+'</b></span><span class="next-slot"><small>AVAILABILITY</small><strong>Choose a date →</strong></span></button>').join('')+'<button class="barber-card barber-pro" data-barber="First available"><span class="barber-copy"><b>First available</b><small>Any available professional</small></span></button>';
   $$('.usual-card,[data-action="repeat-cut"],.location-select').forEach(n=>n.classList.add('hidden'));
+  $('.ai-tag').textContent='AVAILABLE PROFESSIONALS';$('.map-label.l1').textContent='Illustrative map';$('.map-label.l2').textContent='Not a business location';
   $('.guest-map-head b').textContent=c.business.name;
   $('.guest-map-foot span').textContent=c.business.address||'Address unavailable';
   const directions=$('[data-action="demo-directions"]');directions.onclick=()=>{if(c.business.address)window.open('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(c.business.address),'_blank','noopener');else toast('Address unavailable');};directions.removeAttribute('data-action');
@@ -2185,3 +2187,13 @@ async function openIntelligenceReview(){
  }catch{const out=$('#intelligenceResult');if(out)out.textContent='Intelligence data could not be loaded. No action was taken.';}
 }
 (async()=>{const token=new URLSearchParams(location.search).get('withdraw_waitlist');if(!token)return;openDrawer('<h2>Withdraw waitlist request</h2><p>This removes contact permission for this request.</p><button id="withdrawWaitlist" class="primary">Withdraw request</button><p id="withdrawResult" role="status"></p>');$('#withdrawWaitlist').onclick=async()=>{const b=$('#withdrawWaitlist');b.disabled=true;try{const changed=await supabaseRpc('withdraw_public_waitlist',{p_token:token});$('#withdrawResult').textContent=changed?'Request withdrawn. Contact permission removed.':'Request is already withdrawn or the link is invalid.';}catch{$('#withdrawResult').textContent='Could not withdraw. Please retry.';b.disabled=false;}};})();
+
+function syncGuestBookingSummary(server){
+ const b=state.guestBooking;if(!b)return;
+ if(server){const local=formatDateTimeLocalInZone(server.starts_at,server.timezone);b.date=local.slice(0,10);b.time=local.slice(11,16);b.status=server.status;b.barber=server.staff_name||b.barber;saveDemoState();}
+ const cancelled=String(b.status).toLowerCase()==='cancelled';
+ $('#sumTime').textContent=b.date+' · '+b.time;$('#sumBarber').textContent=b.barber;
+ $('#bookingSuccess h2').textContent=cancelled?'Booking cancelled.':'Booking confirmed.';
+ const label=$('#bookingSuccess h2').previousElementSibling;if(label)label.textContent=cancelled?'CANCELLED':'CONFIRMED';
+ $('#bookingSuccess p').textContent=cancelled?'Your booking is cancelled. No online payment was charged.':'Your booking was saved. No online payment was charged.';
+}
