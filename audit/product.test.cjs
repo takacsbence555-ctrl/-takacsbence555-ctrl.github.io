@@ -1,0 +1,13 @@
+const assert=require('node:assert/strict'),p=require('../product-core.js');
+assert.equal(p.plans.billingEnabled,false);assert.equal(p.plans.essential.priceGBP,19);
+assert.deepEqual(p.range('2026-10-15','week'),{start:'2026-10-12',end:'2026-10-19'});
+assert.deepEqual(p.range('2028-02-29','month'),{start:'2028-02-01',end:'2028-03-01'});
+assert.equal(p.dateInZone('2026-10-25T23:30:00Z','Europe/Vienna'),'2026-10-26');
+const bookings=[{starts_at:'2026-10-15T09:00Z',staff:'A',status:'confirmed',price_cents:4200},{starts_at:'2026-10-16T09:00Z',staff:'B',status:'confirmed'},{starts_at:'2026-10-01T09:00Z',status:'completed'}];
+assert.equal(p.calendarRows(bookings,'2026-10-15','day','A','Europe/London').length,1);
+assert.equal(p.calendarRows(bookings,'2026-10-15','week','','Europe/London').length,2);
+assert.deepEqual(p.insights(bookings,[{last_visit:'2026-08-01',rebook_interval_days:28}],new Date('2026-10-15T08:00Z')),{upcoming:2,bookedCents:4200,missingPrices:1,completed:1,cancelled:0,noShows:0,overdue:1});
+let x=p.parseCSV('name,email\r\n"Test, Guest",test@example.invalid\r\nAnother,test@example.invalid');assert.equal(x.records[0].name,'Test, Guest');assert.equal(x.errors.length,1);
+x=p.parseCSV('name,email\n"Quoted ""Name""",bad\nValid,valid@example.invalid');assert.equal(x.errors[0].row,2);assert.equal(x.records.length,1);
+assert.throws(()=>p.parseCSV('name\n"unclosed'));assert.throws(()=>p.parseCSV('email\nx@example.invalid'));assert.throws(()=>p.parseCSV('x'.repeat(2000001)));
+console.log('PASS 12 product checks: calendar, timezone, insights, pricing guard, CSV validation and duplicates');

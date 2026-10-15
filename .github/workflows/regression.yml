@@ -1,0 +1,21 @@
+name: Product regression
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: audit/package-lock.json
+      - run: npm ci --ignore-scripts
+        working-directory: audit
+      - run: npm test
+        working-directory: audit
+      - run: node --check app.js && node --check product-core.js

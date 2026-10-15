@@ -71,12 +71,15 @@ const state = {
 
 const STORAGE_KEY="operator-demo-state-v2";
 const PERSIST_KEYS=["demoSettings","plan","target","current","forecast","gap","opportunity","impact","appointments","filled","recoveredCustomers","ownerHours","liveSlotFilled","waitlistInvited","ownerPaymentRecorded","recurringCreated","groupCreated","formSent","manualBooking","refundPending","poPrepared","loyaltyPoints","packageCredits","giftBalance","guestBooking","guestDeposit","guestPaymentStatus","guestWaitlist","guestReview","guestMembership","guestGift","futureBooking","guestLang","cutMemory","guestEvents"];
+const PRIVATE_GUEST_KEYS=["guestBooking","guestEvents","futureBooking","guestWaitlist","guestReview"];
+const GUEST_SESSION_KEY="kavelyq-guest:"+(new URLSearchParams(location.search).get("salon")||"demo-studio");
 function saveDemoState(){
-  const safe={}; PERSIST_KEYS.forEach(k=>safe[k]=state[k]);
+  const safe={}; PERSIST_KEYS.filter(k=>!PRIVATE_GUEST_KEYS.includes(k)).forEach(k=>safe[k]=state[k]);
+  try{const guest={};PRIVATE_GUEST_KEYS.forEach(k=>guest[k]=state[k]);sessionStorage.setItem(GUEST_SESSION_KEY,JSON.stringify(guest))}catch(e){}
   try{localStorage.setItem(STORAGE_KEY,JSON.stringify(safe))}catch(e){}
 }
 function loadDemoState(){
-  try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||"null");if(saved)Object.assign(state,saved)}catch(e){}
+  try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||"null");if(saved){PRIVATE_GUEST_KEYS.forEach(k=>delete saved[k]);Object.assign(state,saved);localStorage.setItem(STORAGE_KEY,JSON.stringify(saved));}const guest=JSON.parse(sessionStorage.getItem(GUEST_SESSION_KEY)||"null");if(guest)PRIVATE_GUEST_KEYS.forEach(k=>{if(guest[k]!==undefined)state[k]=guest[k]})}catch(e){}
 }
 function clearDemoState(){try{localStorage.removeItem(STORAGE_KEY);localStorage.removeItem("operator-demo-state-v1")}catch(e){}}
 loadDemoState();
@@ -1074,10 +1077,11 @@ function renderModule(id) {
   if(!titles[id]||!modules[id])return;
   state.module = id;
   saveDemoState();
+  if(!ownerDemoMode&&ownerDashboardData){$("#pageTitle").textContent=titles[id][0];$("#pageSub").textContent=ownerDashboardData.business.name+" · Live workspace";$("#moduleContent").innerHTML=liveWorkspace(id);bindLiveWorkspace();bind();bindLiveOwnerRows();if(document.readyState!=="loading")saveRoute();return;}
   let t = titles[id];
   $("#pageTitle").textContent = t[0];
   $("#pageSub").textContent = t[1];
-  $("#moduleContent").innerHTML = modules[id]();
+  $("#moduleContent").innerHTML = '<p class="demo-chip" role="status">ILLUSTRATIVE DEMO · Sample metrics and simulated actions. Live data is explicitly labelled below.</p>'+modules[id]();
   if (!ownerDemoMode && ownerDashboardData && ["home","calendar","customers"].includes(id)) { $("#moduleContent").insertAdjacentHTML("afterbegin",liveSubscriptionPanel()+liveOnboardingPanel()+liveMetricsPanel()+liveOwnerPanel()+(id==="customers"||id==="home"?liveCrmPanel():"")); bindOnboarding(); bindLiveCrm(); }
   if (!ownerDemoMode && ownerAccessToken && id==="settings") { if(ownerBusinessSettings) $("#moduleContent").insertAdjacentHTML("afterbegin",liveSettingsPanel()); if(ownerSetup) $("#moduleContent").insertAdjacentHTML("afterbegin",liveSetupPanel()); }
   if (!ownerDemoMode && ownerAccessToken && id==="operator") { loadLiveOperator().then(()=>{ if(state.module==="operator" && liveOperatorSnapshot) $("#moduleContent").insertAdjacentHTML("afterbegin",liveOperatorBanner()); }); }
@@ -1088,7 +1092,7 @@ function renderModule(id) {
     synced.className = "synced-booking";
     synced.innerHTML =
       '<div><span>SYNCED GUEST BOOKING · WORKING DEMO</span><h3>' +
-      (id === "money" ? "€10 simulated deposit recorded" :
+      (id === "money" ? "No online payment collected" :
        id === "impact" ? "Direct booking · excluded from AI attribution" :
        id === "customers" ? "Demo Guest profile updated" :
        id === "decisions" ? "Guest lifecycle audit trail" :
@@ -1213,15 +1217,20 @@ function bind() {
       }),
   );
 }
+let drawerReturnFocus=null;
 function openDrawer(h) {
+  drawerReturnFocus=document.activeElement;
   $("#drawerContent").innerHTML = h;
   $("#drawer").classList.remove("hidden");
   $("#overlay").classList.remove("hidden");
+  const drawer=$("#drawer");drawer.setAttribute("aria-label",drawer.querySelector("h2")?.textContent||"Details");
+  drawer.querySelector("button,input,select,textarea,a[href]")?.focus();
   // Dynamic actions use the single delegated controller.
 }
 function closeDrawer() {
   $("#drawer").classList.add("hidden");
   $("#overlay").classList.add("hidden");
+  if(drawerReturnFocus?.isConnected)drawerReturnFocus.focus();
 }
 function appointment() {
   openDrawer(
@@ -1311,7 +1320,7 @@ function completePlan() {
 }
 function act(a, e) {
   if (a === "start-pilot") { $("#salesEntry")?.classList.add("hidden");setView("hq");showOwnerGate("Enter your email to request a free-trial link.");return;}
-  if (a === "unused-pilot-preview") return openDrawer('<span class="drawer-kicker">KAVELYQ PRO · FREE TRIAL</span><h2>14 days free. No card required.</h2><p class="muted">Use the complete Kavelyq Pro experience before deciding.</p><div class="drawer-section"><div class="detail-grid"><div><small>FREE TRIAL</small><b>14 days</b></div><div><small>AFTER TRIAL</small><b>€49 / month</b></div><div><small>SETUP FEE</small><b>€0</b></div><div><small>BOOKING COMMISSION</small><b>€0</b></div></div></div><p class="muted">Cancel anytime. The demo does not charge money; live billing is enabled only after payment setup is connected.</p><button class="primary" data-action="close-drawer">CONTINUE</button>');
+  if (a === "unused-pilot-preview") return openDrawer('<span class="drawer-kicker">KAVELYQ PRO · FREE TRIAL</span><h2>14 days free. No card required.</h2><p class="muted">Use the complete Kavelyq Pro experience before deciding.</p><div class="drawer-section"><div class="detail-grid"><div><small>FREE TRIAL</small><b>14 days</b></div><div><small>AFTER TRIAL</small><b>Proposed £19 / £39 · billing disabled</b></div><div><small>SETUP FEE</small><b>€0</b></div><div><small>BOOKING COMMISSION</small><b>€0</b></div></div></div><p class="muted">Cancel anytime. The demo does not charge money; live billing is enabled only after payment setup is connected.</p><button class="primary" data-action="close-drawer">CONTINUE</button>');
   if (a === "new-appointment") return act("manual-booking", e);
   if (a === "demo-directions") return toast("Demo location", "Directions are simulated · no real address is exposed");
   if (a === "reschedule") return toast("Reschedule prepared", "DEMO: choose a new time from Calendar");
@@ -1599,11 +1608,11 @@ async function supabaseRpc(fn,params){
   const res=await fetch(SUPABASE_URL+"/rest/v1/rpc/"+fn,{method:"POST",headers:{"apikey":SUPABASE_KEY,"Authorization":"Bearer "+SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify(params)});
   const body=await res.text(); if(!res.ok) throw new Error(body||("HTTP "+res.status)); return body?JSON.parse(body):null;
 }
-function selectedStaffSlug(){return STAFF_SLUGS[state.barber]||"demo-barber-a"}
-function selectedServiceSlug(){return SERVICE_SLUGS[state.service]||"skin-fade"}
-let availabilitySequence=0, slotStaffMap={}, selectedBookingStaffSlug=null;
+function selectedStaffSlug(){return STAFF_SLUGS[state.barber]||null}
+function selectedServiceSlug(){return SERVICE_SLUGS[state.service]||null}
+let availabilitySequence=0, slotStaffMap={}, selectedBookingStaffSlug=null,bookingCatalogReady=false;
 async function refreshLiveAvailability(){
-  if(!state.service||!state.barber)return;
+  if(!bookingCatalogReady||!state.service||!state.barber)return;
   const sequence=++availabilitySequence, serviceSlug=selectedServiceSlug(), barber=state.barber;
   const buttons=$$(".date-strip button"),grid=$("#booking .slot-grid");if(!grid)return;
   grid.innerHTML='<span class="muted">Loading available times…</span>';
@@ -1630,6 +1639,7 @@ async function refreshLiveAvailability(){
   }catch(e){if(sequence!==availabilitySequence)return;grid.innerHTML='<span class="muted">Availability could not be loaded. Please try again.</span>';}
 }
 async function createLiveBooking(guestName,guestPhone,guestEmail){
+  if(!bookingCatalogReady||!selectedServiceSlug()||!selectedBookingStaffSlug)throw new Error("SELECTION_EXPIRED");
   return await supabaseRpc("create_public_booking_local_v2",{p_business_slug:BOOKING_BUSINESS,p_staff_slug:(selectedBookingStaffSlug||selectedStaffSlug()),p_service_slug:selectedServiceSlug(),p_date:bookingDate,p_time:state.time+":00",p_display_name:guestName,p_email:guestEmail||null,p_phone:guestPhone});
 }
 
@@ -1773,7 +1783,7 @@ function liveSubscriptionPanel(){
  const x=ownerSubscription, days=Math.max(0,Number(x.trial_days_remaining||0)), trial=x.status==="trialing";
  const label=trial?(days+" DAYS LEFT"):(String(x.status||"").toUpperCase());
  return '<section class="pilot-ready"><small>KAVELYQ PRO · SUBSCRIPTION</small><h3>'+label+'</h3><p>'+(trial?'Your full 14-day trial is active. No card is required during the trial.':'Subscription status: '+x.status)+
- '</p><div class="detail-grid"><div><small>PLAN</small><b>Kavelyq Pro</b></div><div><small>PRICE</small><b>€49 / month</b></div><div><small>BOOKING COMMISSION</small><b>€0</b></div><div><small>SETUP</small><b>€0</b></div></div>'+
+ '</p><div class="detail-grid"><div><small>PLAN</small><b>Kavelyq Pro</b></div><div><small>PRICE</small><b>Proposed £19 / £39 · billing disabled</b></div><div><small>BOOKING COMMISSION</small><b>€0</b></div><div><small>SETUP</small><b>€0</b></div></div>'+
  (trial&&days===0?'<p><b>Trial ended.</b> Connect billing to continue live owner operations.</p>':'')+'</section>';
 }
 function liveOnboardingPanel(){
@@ -1791,8 +1801,8 @@ function liveMetricsPanel(){
 }
 function liveOwnerPanel(){
  const d=ownerDashboardData;if(!d)return "";
- const rows=(d.bookings||[]).slice(0,8).map(b=>'<div class="guest-event" data-live-booking-id="'+b.id+'"><b>'+new Date(b.starts_at).toLocaleString("en-GB",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})+'</b><span>'+escLive(b.customer)+' · '+escLive(b.service)+' · '+escLive(b.staff)+'</span><strong>'+b.status.toUpperCase()+'</strong></div>').join("");
- return '<section class="synced-booking"><div><span>LIVE BUSINESS DATA · SUPABASE</span><h3>'+d.business.name+'</h3><p>'+d.counts.bookings+' bookings · '+d.counts.customers+' customers · '+d.counts.staff+' staff · '+d.counts.services+' services</p></div><b>LIVE</b></section>'+(rows?'<section class="guest-audit-trail"><div class="panel-head"><h2>Live bookings</h2><span class="demo-chip">DATABASE</span></div>'+rows+'</section>':'');
+ const rows=(d.bookings||[]).slice(0,8).map(b=>'<div class="guest-event" data-live-booking-id="'+b.id+'"><b>'+escLive(formatDateTimeLocalInZone(b.starts_at,d.business.timezone||'Europe/Vienna').replace('T',' · '))+'</b><span>'+escLive(b.customer)+' · '+escLive(b.service)+' · '+escLive(b.staff)+'</span><strong>'+b.status.toUpperCase()+'</strong></div>').join("");
+ return '<section class="synced-booking"><div><span>LIVE BUSINESS DATA · SUPABASE</span><h3>'+escLive(d.business.name)+'</h3><p>'+(d.counts?.bookings||0)+' bookings · '+(d.counts?.customers||0)+' customers · '+(d.counts?.staff||0)+' staff · '+(d.counts?.services||0)+' services</p></div><b>LIVE</b></section>'+(rows?'<section class="guest-audit-trail"><div class="panel-head"><h2>Live bookings</h2><span class="demo-chip">DATABASE</span></div>'+rows+'</section>':'');
 }
 parseAuthHash();
 ownerAccessToken=ownerAccessToken||sessionStorage.getItem("kavelyq-owner-token")||sessionStorage.getItem("operator-owner-token");
@@ -1830,7 +1840,7 @@ function bookRefresh() {
   ][state.bookStep - 1];
   const success=$("#bookingSuccess");if(success&&!success.classList.contains("hidden"))return;
   if(document.readyState!=="loading")saveRoute();
-  const next=$("#bookNext"); if(next){ next.disabled=guestBookingBusy||!ok; next.textContent=state.bookStep===4?("Confirm booking"):("Continue"); }
+  const next=$("#bookNext"); if(next){ next.disabled=guestBookingBusy||!bookingCatalogReady||!ok; next.textContent=state.bookStep===4?("Confirm booking"):("Continue"); }
 }
 function bindBookingChoices(){
 $$("[data-service]").forEach(b => b.onclick = () => {
@@ -1912,7 +1922,7 @@ bindGuestActions();
 let guestBookingBusy=false;
 async function confirmLiveBooking(){
  if(guestBookingBusy)return;
- if(!state.service||!state.barber||!state.time)return toast("Choose service, professional and time");
+ if(!bookingCatalogReady||!state.service||!state.barber||!state.time)return toast("Choose service, professional and time");
  const guestName=(($("#guestName")?.value)||"").trim(),guestPhone=(($("#guestPhone")?.value)||"").trim(),guestEmail=(($("#guestEmail")?.value)||"").trim();
  if(guestName.length<2||guestName.length>120)return toast("Name required","Enter the guest name.");
  if(!guestPhone&&!guestEmail)return toast("Contact required","Enter an email address or phone number.");
@@ -1922,6 +1932,7 @@ async function confirmLiveBooking(){
  guestBookingBusy=true; const next=$("#bookNext");if(next)next.disabled=true;
  try{
   const bookingResult=await createLiveBooking(guestName,guestPhone,guestEmail),bookingId=bookingResult?.booking_id,manageToken=bookingResult?.manage_token;
+  if(!bookingId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(manageToken||""))throw new Error("INVALID_BOOKING_RESPONSE");
   state.guestManageToken=manageToken;state.guestManageUrl=guestManageUrl(manageToken);state.guestDeposit=0;state.guestPaymentStatus="not_collected";
   state.guestBooking={id:bookingId,manageToken,date:bookingDate,customer:guestName,service:state.service,price:state.price,barber:state.barber,time:state.time,deposit:0,remaining:state.price,status:"Confirmed",backend:"supabase"};
   state.guestEvents.unshift({type:"BOOKING",result:"Confirmed",detail:"Live Supabase booking · online payment not collected"});
@@ -1982,7 +1993,7 @@ function applyGuestLanguage(){
  $$(".lang [data-lang]").forEach(x=>x.classList.toggle("active",x.dataset.lang==="EN"));
 }
 window.applyGuestLanguage=applyGuestLanguage;
-$(".lang [data-lang]").forEach(b=>b.onclick=()=>applyGuestLanguage());
+$$(".lang [data-lang]").forEach(b=>b.onclick=()=>applyGuestLanguage());
 bind();
 renderModule(window.__pendingModule || "home");
 applyGuestLanguage(state.guestLang);
@@ -1998,7 +2009,7 @@ function saveRoute(){
  if(view==='booking'&&!$('#bookingSuccess').classList.contains('hidden'))u.searchParams.set('completed','1');else u.searchParams.delete('completed');
  const url=u.pathname+u.search+u.hash;
  if(url!==location.pathname+location.search+location.hash)history.pushState(null,'',url);
- try{sessionStorage.setItem('kavelyq-booking-draft',JSON.stringify({service:state.service,price:state.price,barber:state.barber,time:state.time,date:bookingDate,lang:state.guestLang}))}catch(e){}
+ try{sessionStorage.setItem('kavelyq-booking-draft',JSON.stringify({service:state.service,price:state.price,barber:state.barber,time:state.time,date:bookingDate,staffSlug:selectedBookingStaffSlug,lang:state.guestLang,business:BOOKING_BUSINESS}))}catch(e){}
 }
 function restoreRoute(){
  routeRestoring=true;
@@ -2008,7 +2019,7 @@ function restoreRoute(){
   const module=q.get('module');if(module&&titles[module])renderModule(module);
   if(view==='booking'){
     const d=JSON.parse(sessionStorage.getItem('kavelyq-booking-draft')||'null');
-    if(d){state.service=d.service||'';state.price=Number(d.price)||0;state.barber=d.barber||'';state.time=d.time||'';bookingDate=d.date>=viennaISODate()?d.date:viennaISODate();}
+    if(d&&d.business===BOOKING_BUSINESS){selectedBookingStaffSlug=d.staffSlug||STAFF_SLUGS[d.barber]||null;state.service=d.service||'';state.price=Number(d.price)||0;state.barber=d.barber||'';state.time=d.time||'';bookingDate=d.date>=viennaISODate()?d.date:viennaISODate();if(d.date<viennaISODate()){state.time="";selectedBookingStaffSlug=null;}}
     state.bookStep=Math.min(Math.max(1,Number(q.get('step'))||1),state.time?4:state.barber?3:state.service?2:1);
     $('#sumService').textContent=state.service||'—';$('#sumBarber').textContent=state.barber||'—';$('#sumPrice').textContent=state.service?money(state.price):'—';$('#sumTime').textContent=state.time?bookingDate+' · '+state.time:'—';
     if(q.get('completed')==='1'&&state.guestBooking?.id){$('#bookingSuccess').classList.remove('hidden');$('#bookActions').classList.add('hidden');}
@@ -2022,13 +2033,16 @@ document.addEventListener('DOMContentLoaded',restoreRoute);
 async function loadBookingCatalog(){
  try{
   const c=await supabaseRpc('get_public_booking_catalog',{p_business_slug:BOOKING_BUSINESS});
-  if(!c){if(BOOKING_BUSINESS!=='demo-studio'){$('#salesEntry')?.classList.add('hidden');setView('booking');$('#bookStep1').innerHTML='<h2>Booking unavailable</h2><p>This salon link is unavailable.</p>';}return;}
-  bookingTimeZone=c.business?.timezone||"Europe/Vienna";bookingDate=viennaISODate();
+  if(!c || !c.business || !Array.isArray(c.services) || !Array.isArray(c.staff))throw new Error("CATALOG_UNAVAILABLE");
+  bookingCatalogReady=true;
+  bookingTimeZone=c.business?.timezone||"Europe/Vienna";if(bookingDate<viennaISODate())bookingDate=viennaISODate();
+  $$(".date-strip button").forEach((b,i)=>{b.dataset.date=viennaISODate(i);const d=new Date(b.dataset.date+"T12:00:00Z");b.querySelector("b").textContent=new Intl.DateTimeFormat("en-GB",{day:"2-digit",timeZone:bookingTimeZone}).format(d)});
+  $("#bookStep3 .section-title .muted").textContent=bookingTimeZone;
   c.services.forEach(x=>SERVICE_SLUGS[x.name]=x.public_slug);c.staff.forEach(x=>STAFF_SLUGS[x.display_name]=x.public_slug);
   if(BOOKING_BUSINESS==='demo-studio'){
    const locations=$('.location-select select');if(locations){[...locations.options].forEach((o,i)=>{if(i){o.disabled=true;o.textContent+=' · Preview';}});}
    $$('[data-service]').forEach(b=>{const x=c.services.find(x=>x.name===b.dataset.service);if(x){b.dataset.price=x.price_cents/100;b.querySelector('strong').textContent=money(x.price_cents/100)}else b.disabled=true;});
-   $$('.next-slot strong').forEach(n=>n.textContent='Check availability →');return;
+   $$('.next-slot strong').forEach(n=>n.textContent='Check availability →');bookRefresh();return;
   }
   Object.keys(SERVICE_SLUGS).forEach(k=>{if(!c.services.some(x=>x.name===k))delete SERVICE_SLUGS[k]});
   Object.keys(STAFF_SLUGS).forEach(k=>{if(!c.staff.some(x=>x.display_name===k))delete STAFF_SLUGS[k]});
@@ -2041,7 +2055,7 @@ async function loadBookingCatalog(){
   $('.guest-map-foot span').textContent=c.business.address||'Address unavailable';
   const directions=$('[data-action="demo-directions"]');directions.onclick=()=>{if(c.business.address)window.open('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(c.business.address),'_blank','noopener');else toast('Address unavailable');};directions.removeAttribute('data-action');
   bindBookingChoices();restoreRoute();
- }catch(e){toast('Booking data unavailable','Please reload to try again.');}
+ }catch(e){bookingCatalogReady=false;$$('[data-service],[data-barber],[data-time]').forEach(b=>b.disabled=true);bookRefresh();let n=$('#bookingBackendStatus');if(!n){n=document.createElement('p');n.id='bookingBackendStatus';n.setAttribute('role','alert');$('.booking-main').prepend(n);}n.textContent='Online booking is temporarily unavailable. No booking can be confirmed. Please contact the business or reload to retry.';toast('Booking data unavailable','No appointment has been saved.');}
 }
 document.addEventListener('DOMContentLoaded',loadBookingCatalog);
 
@@ -2063,7 +2077,7 @@ function bindOwnerControls(){
   const update=()=>{box.innerHTML=Object.entries(titles).filter(([id,t])=>t[0].toLowerCase().includes(input.value.toLowerCase())).map(([id,t])=>'<p><button class="secondary" data-go="'+id+'">'+escLive(t[0])+'</button></p>').join('')||'<p>No results.</p>';};input.oninput=update;update();input.focus();
  };
  const notification=$('.head-actions [aria-label="Notifications"]');if(notification)notification.onclick=()=>openDrawer('<span class="drawer-kicker">'+(ownerDemoMode?'DEMO':'KAVELYQ')+' · NOTIFICATIONS</span><h2>Business updates</h2><p>'+(ownerDemoMode?'Demo: review the prepared AI plan and empty capacity in Live Business.':'Live customer notifications are managed by the delivery integration.')+'</p><button class="secondary" data-go="live">Open Live Business</button>');
- $$('#moduleContent .filters button:not([data-action])').forEach(b=>{
+ $$('#moduleContent .filters button:not([data-action]):not([data-calendar-view])').forEach(b=>{
   const text=b.textContent.trim();
   if(state.module==='calendar'&&text==='Day')b.onclick=()=>{closeDrawer();renderModule('calendar');};
   else if(state.module==='calendar'&&text==='Week')b.onclick=()=>{
@@ -2086,3 +2100,37 @@ function bindOwnerControls(){
  $$('#moduleContent .core-links span').forEach(n=>{n.setAttribute('role','button');n.tabIndex=0;n.onclick=()=>{if(n.textContent==='Customers')renderModule('customers');else if(!ownerDemoMode&&ownerSetup)openLiveSetup();else openDrawer('<span class="drawer-kicker">PREVIEW</span><h2>'+escLive(n.textContent)+'</h2><p>Live staff, services and working hours are available under Settings after owner sign-in.</p><button class="secondary" data-go="settings">Open settings</button>');};n.onkeydown=e=>{if(e.key==='Enter')n.click()};});
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer();if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('.head-actions .search')?.click();}});
+
+document.addEventListener("keydown",e=>{const d=$("#drawer");if(!d||d.classList.contains("hidden")||e.key!=="Tab")return;const a=[...d.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),a[href],[tabindex="0"]')];const first=a[0],last=a[a.length-1];if(!first)return;if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}});
+
+// Real owner views never fall back to simulated business metrics or actions.
+let liveCalendarView='day',liveCalendarDate=null,liveCalendarStaff='';
+function liveWorkspace(id){
+ const d=ownerDashboardData,zone=d.business.timezone||'Europe/Vienna';
+ const head='<p class="demo-chip" role="status">LIVE WORKSPACE · Database records only · No payments or customer messages sent</p>';
+ if(id==='home'||id==='money')return head+liveMetricsPanel()+liveOwnerPanel()+'<p>Completed appointment value is not proof of payment collection. Reports cover the records returned by the backend.</p>';
+ if(id==='calendar'){
+  liveCalendarDate=liveCalendarDate||KavelyqProduct.dateInZone(new Date(),zone);
+  const rows=KavelyqProduct.calendarRows(d.bookings||[],liveCalendarDate,liveCalendarView,liveCalendarStaff,zone);
+  return head+'<section class="panel"><h2>Appointment calendar</h2><p>'+escLive(zone)+' · '+rows.length+' appointments in loaded records</p><div class="filters">'+['day','week','month'].map(v=>'<button type="button" data-calendar-view="'+v+'" aria-pressed="'+(v===liveCalendarView)+'">'+v[0].toUpperCase()+v.slice(1)+'</button>').join('')+'</div><label>Date<input id="liveCalendarDate" type="date" value="'+liveCalendarDate+'"></label><label>Professional<select id="liveCalendarStaff"><option value="">All professionals</option>'+(d.staff||[]).map(s=>'<option '+(liveCalendarStaff===s.display_name?'selected':'')+' value="'+escLive(s.display_name)+'">'+escLive(s.display_name)+'</option>').join('')+'</select></label><button class="primary" data-action="new-appointment">New appointment</button><div>'+rows.map(b=>'<button class="crm-row" data-live-booking-id="'+escLive(b.id)+'"><b>'+escLive(formatDateTimeLocalInZone(b.starts_at,zone).replace('T',' · '))+'</b><span>'+escLive(b.customer)+' · '+escLive(b.service)+' · '+escLive(b.staff)+'</span><em>'+escLive(b.status)+'</em></button>').join('')+(rows.length?'':'<p>No appointments in this period. Data is not fabricated.</p>')+'</div></section>';
+ }
+ if(id==='customers')return head+'<section class="panel"><h2>Customers</h2><label>Search customers<input id="liveCustomerSearch" placeholder="Name or contact"></label><label>Segment<select id="liveCustomerSegment"><option value="all">All</option><option value="returning">Returning (2+ visits)</option><option value="inactive">Inactive (overdue)</option></select></label><div id="liveCustomerResults"></div></section>';
+ if(id==='staff'||id==='core'||id==='settings')return head+liveSetupPanel()+liveSettingsPanel()+'<section class="panel"><h2>Migration preview</h2><p>Preview authorised customer CSV files before import. Nothing is uploaded during preview. Database import is disabled pending backend recovery and validation.</p><button class="secondary" id="migrationPreview">Preview customer CSV</button></section>';
+ if(id==='operator'){
+ const x=KavelyqProduct.insights(d.bookings||[],ownerCrm||[]);
+ return head+'<section class="panel"><h2>Business intelligence · rules-based foundation</h2><p>No AI provider is connected. These calculations use loaded booking and CRM records. They do not predict guaranteed revenue or record completed business actions.</p><div class="detail-grid"><div><small>UPCOMING BOOKINGS</small><b>'+x.upcoming+'</b></div><div><small>KNOWN BOOKED VALUE</small><b>€'+(x.bookedCents/100).toFixed(2)+'</b></div><div><small>OVERDUE CUSTOMERS</small><b>'+x.overdue+'</b></div><div><small>CANCELLATIONS</small><b>'+x.cancelled+'</b></div></div><p>Revenue outlook: known confirmed service value only. '+x.missingPrices+' upcoming records lack price snapshots and are excluded. Assumes attended appointments at the recorded price; cancellations, discounts and refunds can reduce revenue. Confidence cannot be calibrated without complete history.</p><h3>Suggested actions</h3><p>Review overdue customers for rebooking, inspect cancelled times for waitlist opportunities, and verify marketing consent. Expected uplift and messaging cost are unknown; no uplift is attributed until a resulting booking is measured. Risk includes unwanted contact and discount costs.</p><button class="secondary" data-go="customers">Review customers</button><p>Customer communications remain disabled. Provider setup, applicable consent checks and explicit owner approval are required.</p></section>';
+ }
+ return head+'<section class="panel"><h2>'+escLive(titles[id]?.[0]||'Workspace')+'</h2><p>This capability is not connected to live data. Use the demo workspace to explore simulated examples.</p></section>';
+}
+function bindLiveWorkspace(){
+ $$('[data-calendar-view]').forEach(b=>b.onclick=()=>{liveCalendarView=b.dataset.calendarView;renderModule('calendar')});
+ const date=$('#liveCalendarDate');if(date)date.onchange=()=>{if(date.value){liveCalendarDate=date.value;renderModule('calendar')}};
+ const staff=$('#liveCalendarStaff');if(staff)staff.onchange=()=>{liveCalendarStaff=staff.value;renderModule('calendar')};
+ const search=$('#liveCustomerSearch'),segment=$('#liveCustomerSegment');
+ if(search){const update=()=>{const q=search.value.trim().toLowerCase(),now=new Date();const customers=(ownerCrm||[]).filter(c=>[c.display_name,c.email,c.phone].join(' ').toLowerCase().includes(q)&&(segment.value!=='returning'||c.visit_count>=2)&&(segment.value!=='inactive'||(c.last_visit&&(now-new Date(c.last_visit))/86400000>(c.rebook_interval_days||28)*1.25)));$('#liveCustomerResults').innerHTML=customers.map(c=>'<button class="crm-row" data-crm-customer="'+escLive(c.id)+'"><b>'+escLive(c.display_name)+'</b><span>'+(Number(c.visit_count)||0)+' visits · Last visit: '+escLive(c.last_visit||'No completed visits')+'</span></button>').join('')||'<p>No matching customers.</p>';bindLiveCrm()};search.oninput=update;segment.onchange=update;update();}
+ const preview=$('#migrationPreview');if(preview)preview.onclick=openMigrationPreview;
+}
+function openMigrationPreview(){
+ openDrawer('<h2>Customer import preview</h2><p>Use an authorised CSV with name, email and phone columns. Maximum 2 MB / 5,000 records. Consent is never inferred from an import.</p><label>Customer CSV<input id="migrationFile" type="file" accept=".csv,text/csv"></label><div id="migrationResults" role="status"></div><button class="primary" disabled>Import unavailable · backend recovery required</button>');
+ $('#migrationFile').onchange=async e=>{const file=e.target.files?.[0],out=$('#migrationResults');if(!file)return;try{if(file.size>2000000)throw new Error('File must be under 2 MB');const result=KavelyqProduct.parseCSV(await file.text());out.innerHTML='<p>'+result.total+' rows · '+result.records.length+' valid · '+result.errors.length+' errors</p><p>Preview only. Existing-customer duplicate checks require the restored database.</p>'+result.errors.slice(0,30).map(x=>'<p>Row '+x.row+': '+escLive(x.issues.join('; '))+'</p>').join('')+'<h3>First 10 valid rows</h3>'+result.records.slice(0,10).map(x=>'<p>'+escLive(x.name)+' · '+escLive(x.email||x.phone||'No contact')+'</p>').join('');}catch(err){out.textContent=err.message;}};
+}

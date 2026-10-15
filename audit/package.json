@@ -2,6 +2,6 @@
   "name": "kavelyq-production-audit",
   "version": "1.0.0",
   "private": true,
-  "scripts": { "test": "node ui.test.cjs", "test:http": "python3 http.test.py" },
+  "scripts": { "test": "node product.test.cjs && node ui.test.cjs", "test:http": "python3 http.test.py" },
   "devDependencies": { "jsdom": "26.1.0" }
 }
