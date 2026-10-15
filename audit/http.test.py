@@ -17,6 +17,11 @@ for table in ['bookings','customers','business_members','notification_queue','pu
  tests.append((table+' anonymous data isolation','/rest/v1/'+table+'?select=*',None,None,True))
 tests.extend([
  ('owner endpoint denies anonymous','/rest/v1/rpc/owner_dashboard',{},[401,403],False),
+ ('email claim denies anonymous','/rest/v1/rpc/claim_due_email_notifications',{'p_limit':1},[401,403],False),
+ ('email completion denies anonymous','/rest/v1/rpc/complete_email_notification',{'p_id':'11111111-1111-4111-8111-111111111111','p_provider_message_id':'audit'},[401,403],False),
+ ('email failure denies anonymous','/rest/v1/rpc/fail_email_notification',{'p_id':'11111111-1111-4111-8111-111111111111','p_error':'audit'},[401,403],False),
+ ('email queue denies anonymous','/rest/v1/rpc/queue_booking_notifications',{},[401,403],False),
+ ('trial expiry denies anonymous','/rest/v1/rpc/expire_finished_trials',{},[401,403],False),
  ('unknown manage token has no booking','/rest/v1/rpc/get_public_booking_manage',{'p_token':'11111111-1111-4111-8111-111111111111'},[200],False),
  ('public catalog','/rest/v1/rpc/get_public_booking_catalog',{'p_business_slug':'demo-studio'},[200],False),
  ('invalid manage token rejected','/rest/v1/rpc/get_public_booking_manage',{'p_token':'invalid'},[400],False),
