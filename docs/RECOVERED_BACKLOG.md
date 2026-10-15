@@ -36,3 +36,27 @@ At reconciliation, main was f5c04ffa; production dpl_8mcuNAA6Kij18tKcEGRCU7PAXHb
 Critical integration debt: backend and frontend branches drifted. READY deployments did not imply all requested code was in main. Initial no-schema finding was transient during Supabase restoration and has been superseded; do not rebuild the database.
 
 Marketing outreach, domain purchasing, live billing and tattoo-specific features are outside this completion scope. Do not send marketing emails.
+
+## Integrated verification checkpoint — 15 October 2026
+
+Integrated readiness branch and all merged multi-industry work. Persisted five industry catalogs, shared booking routing, industry/timezone/currency onboarding, waitlist with private withdrawal, rules-based forecast and consent-aware prepare/approve decisions implemented. Owner-only mutation/export/intelligence guards added; customer-facing delivery remains disabled.
+
+Executed: 25 jsdom UI scenarios, 16 product/branding checks, 15 live HTTP security/API checks, 12 original database scenario groups, 12 extension groups, and 6 industry/intelligence/RBAC groups. SQL suites rolled back their fixtures. True simultaneous HTTP booking attempts previously produced one success and one SLOT_ALREADY_BOOKED after the staff lock fix; the original deadlock was resolved. GitHub workflow 38804451629 passed for 13b3152f.
+
+Preview browser: five industry catalogs; Beauty service → any professional → future slot → synthetic phone-only booking confirmed; direct database read confirmed price/duration/timezone persistence; refresh → private manager → reschedule → database confirmation → cancel → database confirmation. Waitlist save → private link → withdrawal confirmed in database. The run exposed stale guest confirmation time/status and an industry-button startup race; both fixed, with regression assertions. Preview build READY is checked separately from functional verification.
+
+### Remaining release gates / limitations
+
+- Full earlier Work transcripts unavailable; recovery is based on nine branches, seven PRs, source, saved context and infrastructure records.
+- Actual owner magic-link delivery, signup and browser login require a controlled owner account/inbox and configured authentication delivery; SQL-authenticated role tests and token-refresh simulations are not equivalent.
+- Real mobile viewport/touch, screen-reader, full keyboard audit and device matrix remain unverified; current cloud browser exposes no viewport control. Desktop DOM tests do not satisfy mobile QA.
+- Outbound communication provider/sender, scheduler, opt-out delivery and country-specific campaign requirements have not been operationally verified. No customer messages were sent. Approved drafts do not dispatch.
+- No connected generative AI. Operator is explicitly rules-based; forecasts are service-value heuristics with uncertainty, not guaranteed revenue or cash collection.
+- Payments, subscription activation and live billing disabled. No payment collection or commission enabled. Financial reconciliation/refunds are outside recorded-service reporting.
+- Backup retention/PITR entitlement, actual restore drill, production error alerting, load testing and disaster recovery remain operational gates. Database restoration during this work is not a tested backup recovery procedure.
+- Branding accepts validated HTTPS image URLs; managed upload library is absent. CSV imports use fixed documented columns; no arbitrary competitor mapping or undo workflow.
+- Non-core illustrative modules (inventory, simulator, goals, multi-location operations and some automation demonstrations) remain demo-only or explicitly unavailable in live mode. Do not equate these with implemented business operations.
+- Public demonstration bookings use fictional contacts and the real persistence engine. Five catalogs have no real customers or paid subscriptions. Disposable QA lifecycle records are identified by QA names and test phone numbers.
+- Tattoo remains postponed. Legacy backend type is retained for compatibility but is absent from new onboarding.
+
+KAVELYQ must not yet be labelled production-ready. First-paying-business onboarding requires closing the identity/delivery, mobile/accessibility, recovery/monitoring and operational privacy gates above, followed by a controlled pilot.
