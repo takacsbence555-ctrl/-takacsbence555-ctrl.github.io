@@ -1692,12 +1692,19 @@ async function startOwnerTrial(){
 }
 function openBusinessSetup(){
  const wrap=document.createElement("div");wrap.className="live-booking-modal";
- wrap.innerHTML='<div class="live-booking-card"><small>KAVELYQ · NEW BUSINESS</small><h2>Create your salon</h2><p>14 days free · no card required</p><label>Business name<input id="setupBusiness" placeholder="Studio name"></label><label>Booking link<input id="setupSlug" placeholder="studio-name"></label><label>Your / first staff name<input id="setupStaff" placeholder="Your name"></label><label>First service<input id="setupService" placeholder="Haircut"></label><label>Duration (minutes)<input id="setupDuration" type="number" min="5" value="45"></label><label>Price (€)<input id="setupPrice" type="number" min="0" step="0.01" value="45.00"></label><button class="primary" id="setupCreate">Create business & start trial</button><span id="setupStatus"></span></div>';
+ wrap.innerHTML='<div class="live-booking-card"><small>KAVELYQ · NEW BUSINESS</small><h2>Create your business</h2><p>14 days free · no card required</p><label>Business type<select id="setupIndustry"><option value="barber">Barber &amp; Hair</option><option value="beauty">Beauty &amp; Makeup</option><option value="tattoo">Tattoo Studio</option><option value="nails">Nails &amp; Lashes</option><option value="wellness">Massage &amp; Spa</option><option value="other">Other Services</option></select></label><label>Business name<input id="setupBusiness" placeholder="Studio name"></label><label>Booking link<input id="setupSlug" placeholder="studio-name"></label><label>Your / first staff name<input id="setupStaff" placeholder="Your name"></label><label>First service<input id="setupService" placeholder="Haircut"></label><label>Duration (minutes)<input id="setupDuration" type="number" min="5" value="45"></label><label>Price (€)<input id="setupPrice" type="number" min="0" step="0.01" value="45.00"></label><button class="primary" id="setupCreate">Create business & start trial</button><span id="setupStatus"></span></div>';
  document.body.appendChild(wrap);
+ wrap.querySelector("#setupIndustry").onchange=()=>{
+  const kind=window.KavelyqProduct?.industryConfig(wrap.querySelector("#setupIndustry").value);
+  if(!kind)return;
+  wrap.querySelector("#setupService").placeholder=kind.examples[0];
+  wrap.querySelector("#setupStaff").placeholder=kind.professional+" name";
+ };
+ wrap.querySelector("#setupIndustry").dispatchEvent(new Event("change"));
  wrap.querySelector("#setupCreate").onclick=async()=>{
   const st=wrap.querySelector("#setupStatus");st.textContent="Creating your Kavelyq workspace…";
   try{
-   const out=await ownerRpc("create_owner_business",{p_name:wrap.querySelector("#setupBusiness").value,p_public_slug:wrap.querySelector("#setupSlug").value,p_staff_name:wrap.querySelector("#setupStaff").value,p_service_name:wrap.querySelector("#setupService").value,p_duration_minutes:Number(wrap.querySelector("#setupDuration").value),p_price_cents:eurosToCents(wrap.querySelector("#setupPrice").value)});
+   const out=await ownerRpc("create_owner_business_industry",{p_business_type:wrap.querySelector("#setupIndustry").value,p_name:wrap.querySelector("#setupBusiness").value,p_public_slug:wrap.querySelector("#setupSlug").value,p_staff_name:wrap.querySelector("#setupStaff").value,p_service_name:wrap.querySelector("#setupService").value,p_duration_minutes:Number(wrap.querySelector("#setupDuration").value),p_price_cents:eurosToCents(wrap.querySelector("#setupPrice").value)});
    wrap.remove();history.replaceState(null,"",location.pathname);await showOwnerApp(false);toast("Kavelyq workspace created","Your 14-day free trial is active · booking link: ?salon="+out.public_slug);
   }catch(e){st.textContent=e.message.includes("SLUG_TAKEN")?"That booking link is already taken.":e.message.includes("BUSINESS_ALREADY_EXISTS")?"This account already has a business.":"Check the fields and try again.";}
  };
