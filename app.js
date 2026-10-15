@@ -2003,6 +2003,7 @@ function applyGuestLanguage(){
  $$('[data-action="repeat-cut"]').forEach((b,i)=>b.textContent=i===0?'↻ Repeat your last cut':'Book again');
  $$('.date-strip button').forEach(b=>{const d=new Date(b.dataset.date+'T12:00:00Z');if(!Number.isNaN(d.getTime())){const n=b.querySelector('small');if(n)n.textContent=new Intl.DateTimeFormat('en-GB',{weekday:'short',timeZone:bookingTimeZone}).format(d).toUpperCase();}});
  $$(".lang [data-lang]").forEach(x=>x.classList.toggle("active",x.dataset.lang==="EN"));
+ syncGuestBookingSummary();
 }
 window.applyGuestLanguage=applyGuestLanguage;
 $$(".lang [data-lang]").forEach(b=>b.onclick=()=>applyGuestLanguage());
@@ -2191,6 +2192,8 @@ async function openIntelligenceReview(){
 function syncGuestBookingSummary(server){
  const b=state.guestBooking;if(!b)return;
  if(server){const local=formatDateTimeLocalInZone(server.starts_at,server.timezone);b.date=local.slice(0,10);b.time=local.slice(11,16);b.status=server.status;b.barber=server.staff_name||b.barber;saveDemoState();}
+ if($('#bookingSuccess').classList.contains('hidden'))return;
+ $('#sumService').textContent=b.service;$('#sumPrice').textContent=money(b.price);
  const cancelled=String(b.status).toLowerCase()==='cancelled';
  $('#sumTime').textContent=b.date+' · '+b.time;$('#sumBarber').textContent=b.barber;
  $('#bookingSuccess h2').textContent=cancelled?'Booking cancelled.':'Booking confirmed.';
