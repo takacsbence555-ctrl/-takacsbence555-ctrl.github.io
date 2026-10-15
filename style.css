@@ -4171,3 +4171,5 @@ button {
 #booking .booking-kicker{color:#a39e94!important}
 #booking .sum-row span,#booking .guest-map-head small,#booking .guest-map-head>span,#booking .guest-map-foot,#booking .guest-map-foot>span,#booking .review-quote small{color:#555149!important}
 #booking .map-label{color:#403e38!important}
+
+@media(max-width:600px){.operator-plan-dock .plan-actions{display:grid;grid-template-columns:minmax(0,1fr);padding:0;gap:8px}.operator-plan-dock .plan-actions button{min-width:0;white-space:normal}}
