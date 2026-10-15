@@ -1712,7 +1712,7 @@ function openBusinessSetup(){
   button.disabled=true;st.textContent="Creating your Kavelyq workspace…";
   try{
    const out=await ownerRpc("create_owner_business_industry_v2",{p_business_type:wrap.querySelector("#setupIndustry").value,p_timezone:wrap.querySelector("#setupTimezone").value,p_currency:wrap.querySelector("#setupCurrency").value,p_name:wrap.querySelector("#setupBusiness").value,p_public_slug:wrap.querySelector("#setupSlug").value,p_staff_name:wrap.querySelector("#setupStaff").value,p_service_name:wrap.querySelector("#setupService").value,p_duration_minutes:Number(wrap.querySelector("#setupDuration").value),p_price_cents:eurosToCents(wrap.querySelector("#setupPrice").value)});
-   if(!out?.id||!out.public_slug)throw new Error("INVALID_SETUP_RESPONSE");close();history.replaceState(null,"",location.pathname);await showOwnerApp(false);toast("Kavelyq workspace created","Your 14-day free trial is active · booking link: ?salon="+out.public_slug);
+   if(!out?.business_id||!out.public_slug)throw new Error("INVALID_SETUP_RESPONSE");close();history.replaceState(null,"",location.pathname);await showOwnerApp(false);toast("Kavelyq workspace created","Your 14-day free trial is active · booking link: ?salon="+out.public_slug);
   }catch(e){st.textContent=e.message.includes("SLUG_TAKEN")?"That booking link is already taken.":e.message.includes("BUSINESS_ALREADY_EXISTS")?"This account already has a business.":"Check the fields and try again.";}finally{button.disabled=false;}
  };
 }
