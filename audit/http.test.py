@@ -11,7 +11,11 @@ def check(name,path,data=None,status=None,empty=False):
  except urllib.error.HTTPError as e:r=e
  code=r.code;body=r.read().decode()
  if status: assert code in status,(name,code,body[:100])
- if empty: assert code in (401,403) or json.loads(body)==[],(name,'data exposed')
+ if empty:
+  assert code in (200,401,403),(name,'backend table unavailable',code)
+  assert code in (401,403) or json.loads(body)==[],(name,'anonymous rows exposed')
+ if name=='public catalog': assert isinstance(json.loads(body),dict) and json.loads(body).get('business'),(name,'catalog missing')
+ if name=='unknown manage token has no booking': assert json.loads(body) is None,(name,'unknown token returned data')
  return name+' PASS '+str(code)
 for table in ['bookings','customers','business_members','notification_queue','public_booking_rate_limits']:
  tests.append((table+' anonymous data isolation','/rest/v1/'+table+'?select=*',None,None,True))
@@ -22,6 +26,11 @@ tests.extend([
  ('invalid manage token rejected','/rest/v1/rpc/get_public_booking_manage',{'p_token':'invalid'},[400],False),
  ('invalid booking contact rejected','/rest/v1/rpc/create_public_booking_local_v2',{'p_business_slug':'demo-studio','p_staff_slug':'demo-barber-a','p_service_slug':'classic-cut','p_date':'2026-10-02','p_time':'10:00','p_display_name':'Audit','p_email':'bad-email','p_phone':None},[400],False)
 ])
+passed=0
 with concurrent.futures.ThreadPoolExecutor(max_workers=5) as pool:
- for result in pool.map(lambda args:check(*args),tests): print(result)
-print(str(len(tests))+' production HTTP checks passed')
+ futures={pool.submit(check,*args):args[0] for args in tests}
+ for future in concurrent.futures.as_completed(futures):
+  try: print(future.result());passed+=1
+  except Exception as exc: print('FAIL',futures[future],str(exc))
+print(f'{passed}/{len(tests)} production HTTP checks passed')
+raise SystemExit(0 if passed==len(tests) else 1)

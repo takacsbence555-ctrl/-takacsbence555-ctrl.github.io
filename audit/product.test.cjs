@@ -11,3 +11,5 @@ let x=p.parseCSV('name,email\r\n"Test, Guest",test@example.invalid\r\nAnother,te
 x=p.parseCSV('name,email\n"Quoted ""Name""",bad\nValid,valid@example.invalid');assert.equal(x.errors[0].row,2);assert.equal(x.records.length,1);
 assert.throws(()=>p.parseCSV('name\n"unclosed'));assert.throws(()=>p.parseCSV('email\nx@example.invalid'));assert.throws(()=>p.parseCSV('x'.repeat(2000001)));
 console.log('PASS 12 product checks: calendar, timezone, insights, pricing guard, CSV validation and duplicates');
+
+assert.equal(p.brandingConfig({accent:'#ffffff'}).foreground,'#000000');assert.equal(p.brandingConfig({accent:'#000000'}).foreground,'#ffffff');assert.throws(()=>p.brandingConfig({logo_url:'javascript:alert(1)'}));assert.throws(()=>p.brandingConfig({font:'untrusted'}));console.log('PASS 4 branding validation and contrast checks');
