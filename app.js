@@ -1685,16 +1685,18 @@ async function startOwnerTrial(){
  const btn=$("#ownerTrialBtn");if(btn)btn.disabled=true;
  try{
   const redirect=location.origin+location.pathname+"?new_business=1";
-  const res=await fetch(SUPABASE_URL+"/auth/v1/otp",{method:"POST",headers:{"apikey":SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify({email,create_user:true,email_redirect_to:redirect})});
+  const res=await fetch(SUPABASE_URL+"/auth/v1/otp?redirect_to="+encodeURIComponent(redirect),{method:"POST",headers:{"apikey":SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify({email,create_user:true})});
   if(!res.ok)throw new Error(await res.text());
-  showOwnerGate("Trial link sent. Open the email on this device to create your salon.");
+  showOwnerGate("Trial link sent. Open the email on this device to create your business.");
  }catch(e){showOwnerGate("Could not start the trial. Please try again.");}
  finally{if(btn)btn.disabled=false;}
 }
 function openBusinessSetup(){
  const wrap=document.createElement("div");wrap.className="live-booking-modal";
- wrap.innerHTML='<div class="live-booking-card"><small>KAVELYQ · NEW BUSINESS</small><h2>Create your business</h2><p>14 days free · no card required</p><label>Business type<select id="setupIndustry"><option value="barber">Barber &amp; Hair</option><option value="beauty">Beauty &amp; Makeup</option><option value="nails">Nails &amp; Lashes</option><option value="wellness">Massage &amp; Spa</option><option value="other">Other Services</option></select></label><label>Business name<input id="setupBusiness" placeholder="Studio name"></label><label>Booking link<input id="setupSlug" placeholder="studio-name"></label><label>Your / first staff name<input id="setupStaff" placeholder="Your name"></label><label>First service<input id="setupService" placeholder="Haircut"></label><label>Duration (minutes)<input id="setupDuration" type="number" min="5" value="45"></label><label>Currency<select id="setupCurrency"><option value="GBP">GBP</option><option value="EUR">EUR</option><option value="USD">USD</option><option value="CAD">CAD</option><option value="AUD">AUD</option><option value="NZD">NZD</option><option value="CHF">CHF</option></select></label><label>Business timezone<input id="setupTimezone" value="Europe/London"></label><label>Price in selected currency<input id="setupPrice" type="number" min="0" step="0.01" value="45.00"></label><button class="primary" id="setupCreate">Create business & start trial</button><span id="setupStatus"></span></div>';
- document.body.appendChild(wrap);
+ wrap.innerHTML='<div class="live-booking-card" role="dialog" aria-modal="true" aria-label="Create your business"><button type="button" class="modal-close" aria-label="Close business setup">×</button><small>KAVELYQ · NEW BUSINESS</small><h2>Create your business</h2><p>14 days free · no card required</p><label>Business type<select id="setupIndustry"><option value="barber">Barber &amp; Hair</option><option value="beauty">Beauty &amp; Makeup</option><option value="nails">Nails &amp; Lashes</option><option value="wellness">Massage &amp; Spa</option><option value="other">Other Services</option></select></label><label>Business name<input id="setupBusiness" placeholder="Studio name"></label><label>Booking link<input id="setupSlug" placeholder="studio-name"></label><label>Your / first staff name<input id="setupStaff" placeholder="Your name"></label><label>First service<input id="setupService" placeholder="Haircut"></label><label>Duration (minutes)<input id="setupDuration" type="number" min="5" value="45"></label><label>Currency<select id="setupCurrency"><option value="GBP">GBP</option><option value="EUR">EUR</option><option value="USD">USD</option><option value="CAD">CAD</option><option value="AUD">AUD</option><option value="NZD">NZD</option><option value="CHF">CHF</option></select></label><label>Business timezone<input id="setupTimezone" value="Europe/London"></label><label>Price in selected currency<input id="setupPrice" type="number" min="0" step="0.01" value="45.00"></label><button class="primary" id="setupCreate">Create business & start trial</button><span id="setupStatus"></span></div>';
+ const previousFocus=document.activeElement;document.body.appendChild(wrap);
+ const close=()=>{wrap.remove();if(previousFocus?.isConnected)previousFocus.focus();};wrap.querySelector(".modal-close").onclick=close;
+ wrap.onkeydown=e=>{if(e.key==="Escape"){e.preventDefault();close();}if(e.key==="Tab"){const a=[...wrap.querySelectorAll("button,input,select")].filter(x=>!x.disabled),first=a[0],last=a[a.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}};wrap.querySelector("#setupIndustry").focus();
  wrap.querySelector("#setupIndustry").onchange=()=>{
   const kind=window.KavelyqProduct?.industryConfig(wrap.querySelector("#setupIndustry").value);
   if(!kind)return;
@@ -1703,18 +1705,22 @@ function openBusinessSetup(){
  };
  wrap.querySelector("#setupIndustry").dispatchEvent(new Event("change"));
  wrap.querySelector("#setupCreate").onclick=async()=>{
-  const st=wrap.querySelector("#setupStatus");st.textContent="Creating your Kavelyq workspace…";
+  const st=wrap.querySelector("#setupStatus"),button=wrap.querySelector("#setupCreate");if(button.disabled)return;
+  const name=wrap.querySelector("#setupBusiness").value.trim(),slug=wrap.querySelector("#setupSlug").value.trim(),staff=wrap.querySelector("#setupStaff").value.trim(),service=wrap.querySelector("#setupService").value.trim(),duration=Number(wrap.querySelector("#setupDuration").value),price=eurosToCents(wrap.querySelector("#setupPrice").value);
+  if([name,staff,service].some(x=>x.length<2||x.length>120)||!/^[-a-z0-9]{3,80}$/.test(slug)||!Number.isInteger(duration)||duration<5||duration>480||price===null){st.textContent="Check names, booking link, duration (5–480 minutes) and price.";return;}
+  try{new Intl.DateTimeFormat("en",{timeZone:wrap.querySelector("#setupTimezone").value}).format();}catch{st.textContent="Enter a valid business timezone, such as Europe/London.";return;}
+  button.disabled=true;st.textContent="Creating your Kavelyq workspace…";
   try{
    const out=await ownerRpc("create_owner_business_industry_v2",{p_business_type:wrap.querySelector("#setupIndustry").value,p_timezone:wrap.querySelector("#setupTimezone").value,p_currency:wrap.querySelector("#setupCurrency").value,p_name:wrap.querySelector("#setupBusiness").value,p_public_slug:wrap.querySelector("#setupSlug").value,p_staff_name:wrap.querySelector("#setupStaff").value,p_service_name:wrap.querySelector("#setupService").value,p_duration_minutes:Number(wrap.querySelector("#setupDuration").value),p_price_cents:eurosToCents(wrap.querySelector("#setupPrice").value)});
-   wrap.remove();history.replaceState(null,"",location.pathname);await showOwnerApp(false);toast("Kavelyq workspace created","Your 14-day free trial is active · booking link: ?salon="+out.public_slug);
-  }catch(e){st.textContent=e.message.includes("SLUG_TAKEN")?"That booking link is already taken.":e.message.includes("BUSINESS_ALREADY_EXISTS")?"This account already has a business.":"Check the fields and try again.";}
+   if(!out?.id||!out.public_slug)throw new Error("INVALID_SETUP_RESPONSE");close();history.replaceState(null,"",location.pathname);await showOwnerApp(false);toast("Kavelyq workspace created","Your 14-day free trial is active · booking link: ?salon="+out.public_slug);
+  }catch(e){st.textContent=e.message.includes("SLUG_TAKEN")?"That booking link is already taken.":e.message.includes("BUSINESS_ALREADY_EXISTS")?"This account already has a business.":"Check the fields and try again.";}finally{button.disabled=false;}
  };
 }
 async function sendOwnerMagicLink(){
  const email=$("#ownerEmail")?.value?.trim();if(!email||!/^\S+@\S+\.\S+$/.test(email))return showOwnerGate("Enter a valid owner email.");
  const btn=$("#ownerLoginBtn");if(btn)btn.disabled=true;
  try{
-  const res=await fetch(SUPABASE_URL+"/auth/v1/otp",{method:"POST",headers:{"apikey":SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify({email,create_user:false,email_redirect_to:location.origin+location.pathname,gotrue_meta_security:{captcha_token:null}})});
+  const res=await fetch(SUPABASE_URL+"/auth/v1/otp?redirect_to="+encodeURIComponent(location.origin+location.pathname+"?view=hq"),{method:"POST",headers:{"apikey":SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify({email,create_user:false})});
   if(!res.ok)throw new Error(await res.text());showOwnerGate("Secure sign-in link sent. Open it on this device.");
  }catch(e){showOwnerGate("Could not send the sign-in link. Only provisioned owner accounts can sign in.");}
  finally{if(btn)btn.disabled=false;}
