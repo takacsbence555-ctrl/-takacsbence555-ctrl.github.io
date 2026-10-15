@@ -1,4 +1,9 @@
 const assert=require('node:assert/strict'),p=require('../product-core.js');
+assert.equal(Object.keys(p.industryCatalog).length,6);
+assert.equal(p.industryConfig('tattoo').professional,'Artist');
+assert.equal(p.industryConfig('beauty').examples[1],'Bridal trial');
+assert.equal(p.industryConfig('barber').professional,'Barber');
+assert.equal(p.industryConfig('unknown').professional,'Professional');
 assert.equal(p.plans.billingEnabled,false);assert.equal(p.plans.essential.priceGBP,19);
 assert.deepEqual(p.range('2026-10-15','week'),{start:'2026-10-12',end:'2026-10-19'});
 assert.deepEqual(p.range('2028-02-29','month'),{start:'2028-02-01',end:'2028-03-01'});
