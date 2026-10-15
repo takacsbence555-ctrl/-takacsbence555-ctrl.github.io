@@ -12,5 +12,6 @@ assert.equal(p.calendarRows(bookings,'2026-10-15','week','','Europe/London').len
 assert.deepEqual(p.insights(bookings,[{last_visit:'2026-08-01',rebook_interval_days:28}],new Date('2026-10-15T08:00Z')),{upcoming:2,bookedCents:4200,missingPrices:1,completed:1,cancelled:0,noShows:0,overdue:1});
 let x=p.parseCSV('name,email\r\n"Test, Guest",test@example.invalid\r\nAnother,test@example.invalid');assert.equal(x.records[0].name,'Test, Guest');assert.equal(x.errors.length,1);
 x=p.parseCSV('name,email\n"Quoted ""Name""",bad\nValid,valid@example.invalid');assert.equal(x.errors[0].row,2);assert.equal(x.records.length,1);
-assert.throws(()=>p.parseCSV('name\n"unclosed'));assert.throws(()=>p.parseCSV('email\nx@example.invalid'));assert.throws(()=>p.parseCSV('x'.repeat(2000001)));
+assert.throws(()=>p.parseCSV('name\n"unclosed'));assert.throws(()=>p.parseCSV('email\nx@example.invalid'));assert.throws(()=>p.parseCSV('name,,email\nTest,x,test@example.invalid'),/Empty column header/);
+assert.throws(()=>p.parseCSV('x'.repeat(2000001)));
 console.log('PASS 12 product checks: calendar, timezone, insights, pricing guard, CSV validation and duplicates');
