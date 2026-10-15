@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict'),p=require('../product-core.js');
-assert.equal(Object.keys(p.industryCatalog).length,6);
-assert.equal(p.industryConfig('tattoo').professional,'Artist');
+assert.equal(Object.keys(p.industryCatalog).length,5);
+assert.equal(p.industryCatalog.tattoo,undefined);
 assert.equal(p.industryConfig('beauty').examples[1],'Bridal trial');
 assert.equal(p.industryConfig('barber').professional,'Barber');
 assert.equal(p.industryConfig('unknown').professional,'Professional');
@@ -20,3 +20,5 @@ x=p.parseCSV('name,email\n"Quoted ""Name""",bad\nValid,valid@example.invalid');a
 assert.throws(()=>p.parseCSV('name\n"unclosed'));assert.throws(()=>p.parseCSV('email\nx@example.invalid'));assert.throws(()=>p.parseCSV('name,,email\nTest,x,test@example.invalid'),/Empty column header/);
 assert.throws(()=>p.parseCSV('x'.repeat(2000001)));
 console.log('PASS 12 product checks: calendar, timezone, insights, pricing guard, CSV validation and duplicates');
+
+assert.equal(p.brandingConfig({accent:'#ffffff'}).foreground,'#000000');assert.equal(p.brandingConfig({accent:'#000000'}).foreground,'#ffffff');assert.throws(()=>p.brandingConfig({logo_url:'javascript:alert(1)'}));assert.throws(()=>p.brandingConfig({font:'untrusted'}));console.log('PASS 4 branding validation and contrast checks');
