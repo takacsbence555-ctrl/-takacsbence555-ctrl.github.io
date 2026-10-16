@@ -59,7 +59,7 @@ def main():
         bad=subprocess.run(['openssl','cms','-decrypt','-binary','-inform','DER','-in',str(p/'damaged.cms'),'-recip',str(p/'cert.pem'),'-inkey',str(p/'key.pem')],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
         assert bad.returncode!=0,'Encrypted archive corruption was not rejected'
         db(['createdb','-U','postgres',target])
-        db(['pg_restore','-U','postgres','-d',target,'--exit-on-error','--single-transaction'],input=plain)
+        db(['pg_restore','-U','postgres','-d',target,'--clean','--if-exists','--exit-on-error','--single-transaction'],input=plain)
         after=manifest(target);assert before==after,'Restored rows, functions, policies or grants differ'
         verify_boundaries(target)
         assert manifest('postgres')==before,'Source data changed during drill'
