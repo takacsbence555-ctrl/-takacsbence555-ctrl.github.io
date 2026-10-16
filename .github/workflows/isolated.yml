@@ -25,6 +25,7 @@ jobs:
       - name: Load schema-only fixture and start PostgREST
         run: |
           docker compose -f audit/isolated/compose.yml exec -T db psql -U postgres -v ON_ERROR_STOP=1 < audit/isolated/schema.sql
+          docker compose -f audit/isolated/compose.yml exec -T db psql -U postgres -v ON_ERROR_STOP=1 < audit/notification-adapter.pending.sql
           docker compose -f audit/isolated/compose.yml up -d rest
           python3 audit/isolated/wait.py http://127.0.0.1:3000/
       - name: Run desktop and mobile signed-owner journeys
