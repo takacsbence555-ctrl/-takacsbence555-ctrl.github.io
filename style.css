@@ -1564,7 +1564,7 @@ button {
   display: block;
 }
 .detail-grid small {
-  color: var(--muted);
+  color: #62656c;
   font-size: 0.64rem;
 }
 .drawer-actions {
