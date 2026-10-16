@@ -65,9 +65,14 @@ def main():
         if before!=after:
             print(json.dumps({'restore_mismatch_tables':[k for k in before['tables'] if before['tables'][k]!=after['tables'].get(k)],'restore_mismatch_components':[k for k in before['components'] if before['components'][k]!=after['components'].get(k)]}))
         assert before==after,'Restored rows, functions, policies or grants differ'
+        # Prove catalog-name normalization does not hide a changed permission.
+        query(target,'grant select on public.customers to anon')
+        assert manifest(target)['components']['grants']!=before['components']['grants'],'Grant tampering was not detected'
+        query(target,'revoke select on public.customers from anon')
+        assert manifest(target)==before,'Grant rollback did not restore the expected permissions'
         verify_boundaries(target)
         assert manifest('postgres')==before,'Source data changed during drill'
-        result={'scope':'isolated synthetic CI database only','tables_verified':len(before['tables']),'backup_sha256':hashlib.sha256(archive).hexdigest(),'encrypted_roundtrip':True,'corruption_rejected':True,'rows_schema_policies_grants_equal':True,'restored_rls_verified':True,'source_unchanged':True,'duration_seconds':round(time.monotonic()-started,2),'production_backup_verified':False}
+        result={'scope':'isolated synthetic CI database only','tables_verified':len(before['tables']),'backup_sha256':hashlib.sha256(archive).hexdigest(),'encrypted_roundtrip':True,'corruption_rejected':True,'rows_schema_policies_grants_equal':True,'restored_rls_verified':True,'grant_tampering_detected':True,'source_unchanged':True,'duration_seconds':round(time.monotonic()-started,2),'production_backup_verified':False}
         (ROOT/'audit/isolated/recovery-result.json').write_text(json.dumps(result,indent=2)+'\n')
         print(json.dumps(result))
     # The whole isolated Compose cluster is removed by CI; no real database is touched.
