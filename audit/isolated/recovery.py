@@ -24,7 +24,7 @@ def manifest(database):
         value=query(database,"select coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text),'[]')::text from "+table+' t')
         rows[table]={'count':len(json.loads(value)),'sha256':hashlib.sha256(value.encode()).hexdigest()}
     structural=query(database,"select jsonb_build_object('policies',(select jsonb_agg(to_jsonb(p) order by schemaname,tablename,policyname) from pg_policies p where schemaname in('public','kavelyq_private')),'functions',(select jsonb_agg(pg_get_functiondef(p.oid) order by n.nspname,p.proname,pg_get_function_identity_arguments(p.oid)) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in('public','kavelyq_private')),'grants',(select jsonb_agg(to_jsonb(g) order by table_schema,table_name,grantee,privilege_type) from information_schema.role_table_grants g where table_schema in('public','kavelyq_private')),'constraints',(select jsonb_agg(pg_get_constraintdef(c.oid) order by n.nspname,t.relname,c.conname) from pg_constraint c join pg_class t on t.oid=c.conrelid join pg_namespace n on n.oid=t.relnamespace where n.nspname in('public','kavelyq_private')))::text")
-    return {'tables':rows,'structure_sha256':hashlib.sha256(structural.encode()).hexdigest()}
+    return {'tables':rows,'structure_sha256':hashlib.sha256(structural.encode()).hexdigest(),'components':{k:hashlib.sha256(json.dumps(v,sort_keys=True).encode()).hexdigest() for k,v in json.loads(structural).items()}}
 
 def verify_boundaries(database):
     query(database,"""begin; do $$ declare u uuid;b uuid;n integer;begin
@@ -60,7 +60,10 @@ def main():
         assert bad.returncode!=0,'Encrypted archive corruption was not rejected'
         db(['createdb','-U','postgres',target])
         db(['pg_restore','-U','postgres','-d',target,'--clean','--if-exists','--exit-on-error','--single-transaction'],input=plain)
-        after=manifest(target);assert before==after,'Restored rows, functions, policies or grants differ'
+        after=manifest(target)
+        if before!=after:
+            print(json.dumps({'restore_mismatch_tables':[k for k in before['tables'] if before['tables'][k]!=after['tables'].get(k)],'restore_mismatch_components':[k for k in before['components'] if before['components'][k]!=after['components'].get(k)]}))
+        assert before==after,'Restored rows, functions, policies or grants differ'
         verify_boundaries(target)
         assert manifest('postgres')==before,'Source data changed during drill'
         result={'scope':'isolated synthetic CI database only','tables_verified':len(before['tables']),'backup_sha256':hashlib.sha256(archive).hexdigest(),'encrypted_roundtrip':True,'corruption_rejected':True,'rows_schema_policies_grants_equal':True,'restored_rls_verified':True,'source_unchanged':True,'duration_seconds':round(time.monotonic()-started,2),'production_backup_verified':False}

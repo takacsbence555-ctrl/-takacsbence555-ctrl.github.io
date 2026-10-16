@@ -23,6 +23,7 @@ jobs:
           docker compose -f audit/isolated/compose.yml up -d auth
           python3 audit/isolated/wait.py http://127.0.0.1:9999/health
       - name: Load schema-only fixture and start PostgREST
+        id: infrastructure
         run: |
           docker compose -f audit/isolated/compose.yml exec -T db psql -U postgres -v ON_ERROR_STOP=1 < audit/isolated/schema.sql
           docker compose -f audit/isolated/compose.yml exec -T db psql -U postgres -v ON_ERROR_STOP=1 < audit/notification-adapter.pending.sql
@@ -33,13 +34,13 @@ jobs:
         run: |
           docker run --rm --ipc=host --network=host -v "$PWD:/work" -w /work/audit/browser mcr.microsoft.com/playwright:v1.64.1-noble bash -c 'npm ci --ignore-scripts --omit=optional && npx playwright test --config owner.config.cjs'
       - name: Business-local hours and DST database regression
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.infrastructure.outcome == 'success' }}
         run: docker compose -f audit/isolated/compose.yml exec -T db psql -U postgres -v ON_ERROR_STOP=1 < audit/isolated/timezone.test.sql
       - name: Backup and restore only disposable CI data
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.infrastructure.outcome == 'success' }}
         run: python3 audit/isolated/recovery.py
       - name: Transactional provider contract and durable webhook integration
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.infrastructure.outcome == 'success' }}
         run: node audit/isolated/notification.test.cjs
       - name: Diagnostic service logs
         if: failure()
