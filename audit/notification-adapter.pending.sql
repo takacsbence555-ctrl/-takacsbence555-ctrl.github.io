@@ -9,7 +9,7 @@ end loop;
 end $$;
 create table kavelyq_private.notification_delivery_events(event_id text primary key,notification_id uuid not null references public.notification_queue(id),event_type text not null,received_at timestamptz not null default now());
 create table kavelyq_private.notification_delivery_state(notification_id uuid primary key references public.notification_queue(id),outcome text not null,updated_at timestamptz not null default now());
-create table kavelyq_private.notification_suppressions(business_id uuid not null references public.businesses(id),destination text not null,reason text not null,primary key(business_id,destination));
+create table kavelyq_private.notification_suppressions(business_id uuid not null references public.businesses(id),destination_hash text not null check(length(destination_hash)=64),reason text not null,primary key(business_id,destination_hash));
 alter table kavelyq_private.notification_delivery_events enable row level security;
 alter table kavelyq_private.notification_delivery_state enable row level security;
 alter table kavelyq_private.notification_suppressions enable row level security;
@@ -19,7 +19,7 @@ declare q public.notification_queue;begin
 if coalesce(auth.jwt()->>'role','')<>'service_role' then raise exception 'SERVICE_ROLE_REQUIRED';end if;
 select * into q from public.notification_queue where id=p_id and status='processing' and attempt_count=p_attempt and claimed_at>now()-interval '15 minutes' for update;
 if q.id is null then return false;end if;
-if exists(select 1 from kavelyq_private.notification_suppressions s where s.business_id=q.business_id and s.destination=lower(q.destination)) then update public.notification_queue set status='cancelled' where id=q.id;return false;end if;
+if exists(select 1 from kavelyq_private.notification_suppressions s where s.business_id=q.business_id and s.destination_hash=encode(extensions.digest(lower(q.destination),'sha256'),'hex')) then update public.notification_queue set status='cancelled' where id=q.id;return false;end if;
 return q.template in('booking_confirmation','booking_reminder','booking_cancelled')
 and exists(select 1 from kavelyq_private.communication_delivery c where c.business_id=q.business_id and c.transactional_enabled and c.provider_verified)
 and not exists(select 1 from kavelyq_private.demo_businesses d where d.business_id=q.business_id)
@@ -44,7 +44,7 @@ select * into q from public.notification_queue where provider_message_id=p_provi
 insert into kavelyq_private.notification_delivery_events(event_id,notification_id,event_type) values(p_event_id,q.id,p_type) on conflict do nothing;if not found then return 'duplicate';end if;
 insert into kavelyq_private.notification_delivery_state(notification_id,outcome) values(q.id,p_type) on conflict(notification_id) do update set outcome=excluded.outcome,updated_at=now() where notification_delivery_state.outcome not in('email.bounced','email.complained','email.suppressed','email.failed');
 if p_type in('email.bounced','email.complained','email.suppressed') then
-insert into kavelyq_private.notification_suppressions values(q.business_id,lower(q.destination),p_type) on conflict do nothing;
+insert into kavelyq_private.notification_suppressions values(q.business_id,encode(extensions.digest(lower(q.destination),'sha256'),'hex'),p_type) on conflict do nothing;
 update public.notification_queue set status='cancelled' where business_id=q.business_id and lower(destination)=lower(q.destination) and status in('pending','failed','processing');end if;
 return 'recorded';end $$;
 revoke all on function public.notification_claim_current(uuid,integer),public.notification_finish_claim(uuid,integer,text),public.notification_fail_claim(uuid,integer,text,boolean),public.notification_record_event(text,text,text) from public,anon,authenticated;
