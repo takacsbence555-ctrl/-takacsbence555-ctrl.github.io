@@ -25,5 +25,10 @@
         }
       ]
     }
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "release/final-20261015": false
+    }
+  }
 }

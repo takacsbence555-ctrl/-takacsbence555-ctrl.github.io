@@ -1,0 +1,48 @@
+name: Isolated owner and recovery
+on:
+  push:
+    branches: [release/final-20261015]
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: isolated-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  owner-recovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Start isolated database and email sink
+        run: docker compose -f audit/isolated/compose.yml up -d --wait db mail
+      - name: Start real Auth service
+        run: |
+          docker compose -f audit/isolated/compose.yml up -d auth
+          python3 audit/isolated/wait.py http://127.0.0.1:9999/health
+      - name: Load schema-only fixture and start PostgREST
+        run: |
+          docker compose -f audit/isolated/compose.yml exec -T db psql -U postgres -v ON_ERROR_STOP=1 < audit/isolated/schema.sql
+          docker compose -f audit/isolated/compose.yml up -d rest
+          python3 audit/isolated/wait.py http://127.0.0.1:3000/
+      - name: Run desktop and mobile signed-owner journeys
+        run: |
+          docker run --rm --ipc=host --network=host -v "$PWD:/work" -w /work/audit/browser mcr.microsoft.com/playwright:v1.64.1-noble bash -c 'npm ci --ignore-scripts --omit=optional && npx playwright test --config owner.config.cjs'
+      - name: Backup and restore only disposable CI data
+        run: python3 audit/isolated/recovery.py
+      - name: Diagnostic service logs
+        if: failure()
+        run: docker compose -f audit/isolated/compose.yml logs --tail=50 db auth rest
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: isolated-summary
+          path: |
+            audit/browser/owner-results.json
+            audit/isolated/recovery-result.json
+          retention-days: 7
+      - name: Remove disposable services
+        if: always()
+        run: docker compose -f audit/isolated/compose.yml down -v
