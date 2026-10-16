@@ -1646,35 +1646,56 @@ async function createLiveBooking(guestName,guestPhone,guestEmail){
 
 let ownerAccessToken=null, ownerDashboardData=null, ownerMetrics=null, ownerCrm=[], ownerRebooking=[], ownerOnboarding=null, ownerSubscription=null, ownerBusinessSettings=null, ownerSetup=null, ownerDemoMode=false;
 function ownerAuthHeaders(){return {"apikey":SUPABASE_KEY,"Authorization":"Bearer "+ownerAccessToken,"Content-Type":"application/json"}}
+let ownerSessionEpoch=0,ownerAuthCallbackError='';
+function clearOwnerSession(){
+ ownerSessionEpoch++;ownerAccessToken=null;ownerPending.clear();ownerRefreshPending=null;
+ ['kavelyq-owner-token','operator-owner-token','kavelyq-owner-refresh','kavelyq-owner-demo'].forEach(k=>sessionStorage.removeItem(k));
+ ownerDashboardData=null;ownerMetrics=null;ownerCrm=[];ownerRebooking=[];ownerOnboarding=null;ownerSubscription=null;ownerBusinessSettings=null;ownerSetup=null;ownerIndustryProfile=null;ownerDemoMode=false;
+ liveCalendarSequence++;liveCalendarCache={key:null,rows:[],error:null};livePerformanceCache={key:null,data:null,error:false};
+ document.querySelectorAll('.live-booking-modal').forEach(n=>n.remove());closeDrawer();const content=$('#moduleContent');if(content)content.replaceChildren();
+}
+function expireOwnerSession(message){clearOwnerSession();showOwnerGate(message);}
 function parseAuthHash(){
  const hash=new URLSearchParams((location.hash||"").replace(/^#/,""));
- const token=hash.get("access_token");const refresh=hash.get("refresh_token");if(token&&refresh)sessionStorage.setItem("kavelyq-owner-refresh",refresh);
- if(token){ownerAccessToken=token;sessionStorage.setItem("kavelyq-owner-token",token);sessionStorage.removeItem("operator-owner-token");history.replaceState(null,"",location.pathname+location.search);return true;}
+ const token=hash.get("access_token"),refresh=hash.get("refresh_token");
+ if(token||refresh||hash.has("error")||hash.has("error_code")){
+  history.replaceState(null,"",location.pathname+location.search);
+  ['kavelyq-owner-token','operator-owner-token','kavelyq-owner-refresh','kavelyq-owner-demo'].forEach(k=>sessionStorage.removeItem(k));ownerAccessToken=null;ownerSessionEpoch++;
+  if(!token||!refresh||hash.has("error")||hash.has("error_code")){ownerAuthCallbackError="This sign-in link is invalid or expired. Request a new secure link.";return false;}
+  ownerAccessToken=token;sessionStorage.setItem("kavelyq-owner-token",token);sessionStorage.setItem("kavelyq-owner-refresh",refresh);return true;
+ }
  ownerAccessToken=sessionStorage.getItem("kavelyq-owner-token")||sessionStorage.getItem("operator-owner-token")||null;return !!ownerAccessToken;
 }
-function ownerSignOut(){const token=ownerAccessToken;if(token)fetch(SUPABASE_URL+"/auth/v1/logout",{method:"POST",headers:ownerAuthHeaders()}).catch(()=>{});sessionStorage.removeItem("kavelyq-owner-refresh");sessionStorage.removeItem("kavelyq-owner-demo");ownerAccessToken=null;sessionStorage.removeItem("kavelyq-owner-token");sessionStorage.removeItem("operator-owner-token");ownerDashboardData=null;ownerCrm=[];ownerSetup=null;showOwnerGate("Signed out securely.");}
+function ownerSignOut(){
+ const token=ownerAccessToken,headers=ownerAuthHeaders();clearOwnerSession();const epoch=ownerSessionEpoch;showOwnerGate("Signed out on this device.");
+ if(token)fetch(SUPABASE_URL+"/auth/v1/logout",{method:"POST",headers}).then(r=>{if(!r.ok)throw new Error("Sign-out unavailable");}).catch(()=>{if(epoch===ownerSessionEpoch)showOwnerGate("Signed out on this device. Server sign-out could not be confirmed.");});
+}
 const ownerPending=new Map();
 async function ownerRpc(fn,params={}){
- const key=fn+JSON.stringify(params);if(ownerPending.has(key))return ownerPending.get(key);
+ const key=ownerSessionEpoch+fn+JSON.stringify(params);if(ownerPending.has(key))return ownerPending.get(key);
  const pending=performOwnerRpc(fn,params);ownerPending.set(key,pending);try{return await pending}finally{ownerPending.delete(key)}
 }
 async function performOwnerRpc(fn,params={},retried=false){
+ const epoch=ownerSessionEpoch;
  const res=await fetch(SUPABASE_URL+"/rest/v1/rpc/"+fn,{method:"POST",headers:ownerAuthHeaders(),body:JSON.stringify(params)});
- if(res.status===401){if(!retried&&await refreshOwnerSession())return performOwnerRpc(fn,params,true);showOwnerGate("Session expired. Request a new secure link.");throw new Error("AUTH_REQUIRED");} const t=await res.text();if(!res.ok)throw new Error(t||("HTTP "+res.status));return t?JSON.parse(t):null;
+ if(epoch!==ownerSessionEpoch)throw new Error("SESSION_CHANGED");
+ if(res.status===401){if(!retried&&await refreshOwnerSession()){if(epoch!==ownerSessionEpoch)throw new Error("SESSION_CHANGED");return performOwnerRpc(fn,params,true);}if(epoch===ownerSessionEpoch)expireOwnerSession("Session expired. Request a new secure link.");throw new Error("AUTH_REQUIRED");}
+ const t=await res.text();if(epoch!==ownerSessionEpoch)throw new Error("SESSION_CHANGED");if(!res.ok)throw new Error(t||("HTTP "+res.status));return t?JSON.parse(t):null;
 }
 async function loadOwnerDashboard(){
  if(!ownerAccessToken)return null;
- const data=await ownerRpc("owner_dashboard",{}); ownerDashboardData=data; return data;
+ const epoch=ownerSessionEpoch,data=await ownerRpc("owner_dashboard",{});if(epoch!==ownerSessionEpoch)throw new Error("SESSION_CHANGED");ownerDashboardData=data;return data;
 }
 function showOwnerApp(demo=false){
+ const epoch=ownerSessionEpoch;
  ownerDemoMode=demo;$(".live-pill").innerHTML=demo?"<i></i> Demo workspace":"<i></i> Live owner workspace";$(".owner b").textContent=demo?"Demo Owner":"Business account";$$("#sideNav [data-module] i:not(.ai-dot)").forEach(n=>n.style.display=demo?"":"none"); if(demo)sessionStorage.setItem("kavelyq-owner-demo","1");else sessionStorage.removeItem("kavelyq-owner-demo"); $("#ownerAuthGate")?.classList.add("hidden"); $("#ownerAppShell")?.classList.remove("hidden");
  if(demo){renderModule(state.module||window.__pendingModule||"home");return;}
- Promise.all([loadOwnerDashboard(),ownerRpc("owner_industry_profile",{}).catch(()=>null),ownerRpc("owner_business_metrics",{}).catch(()=>null),ownerRpc("owner_customer_crm",{}).catch(()=>[]),ownerRpc("owner_rebooking_opportunities",{}).catch(()=>[]),ownerRpc("owner_onboarding_snapshot",{}).catch(()=>null),ownerRpc("owner_subscription_snapshot",{}).catch(()=>null),ownerRpc("owner_business_settings",{}).catch(()=>null),ownerRpc("owner_setup_snapshot",{}).catch(()=>null)]).then(([data,industry,metrics,crm,rebooking,onboarding,subscription,businessSettings,setup])=>{ ownerIndustryProfile=industry; ownerMetrics=metrics; ownerCrm=crm||[]; ownerRebooking=rebooking||[]; ownerOnboarding=onboarding; ownerSubscription=subscription; ownerBusinessSettings=businessSettings; ownerSetup=setup;
-   if(!data){sessionStorage.removeItem("operator-owner-token");sessionStorage.removeItem("kavelyq-owner-token");ownerAccessToken=null;showOwnerGate("This account is not connected to a business yet.");return;}
+ Promise.all([loadOwnerDashboard(),ownerRpc("owner_industry_profile",{}).catch(()=>null),ownerRpc("owner_business_metrics",{}).catch(()=>null),ownerRpc("owner_customer_crm",{}).catch(()=>[]),ownerRpc("owner_rebooking_opportunities",{}).catch(()=>[]),ownerRpc("owner_onboarding_snapshot",{}).catch(()=>null),ownerRpc("owner_subscription_snapshot",{}).catch(()=>null),ownerRpc("owner_business_settings",{}).catch(()=>null),ownerRpc("owner_setup_snapshot",{}).catch(()=>null)]).then(([data,industry,metrics,crm,rebooking,onboarding,subscription,businessSettings,setup])=>{ if(epoch!==ownerSessionEpoch)return;ownerIndustryProfile=industry; ownerMetrics=metrics; ownerCrm=crm||[]; ownerRebooking=rebooking||[]; ownerOnboarding=onboarding; ownerSubscription=subscription; ownerBusinessSettings=businessSettings; ownerSetup=setup;
+   if(!data){expireOwnerSession("This account is not connected to a business yet.");return;}
    const brand=$(".brand small");if(brand)brand.textContent=(data.business?.name||"BUSINESS")+" · LIVE";
    const owner=$(".owner small");if(owner)owner.textContent=(data.business?.role||"owner").toUpperCase()+" · LIVE BACKEND";
    renderModule(state.module||window.__pendingModule||"home");
- }).catch(()=>{sessionStorage.removeItem("operator-owner-token");sessionStorage.removeItem("kavelyq-owner-token");ownerAccessToken=null;showOwnerGate("Sign-in expired. Request a new secure link.");});
+ }).catch(()=>{if(epoch===ownerSessionEpoch)expireOwnerSession("Sign-in expired. Request a new secure link.");});
 }
 function showOwnerGate(message=""){
  $("#ownerAppShell")?.classList.add("hidden");$("#ownerAuthGate")?.classList.remove("hidden");const s=$("#ownerAuthStatus");if(s)s.textContent=message;
@@ -1833,7 +1854,7 @@ document.addEventListener("DOMContentLoaded",()=>{
  $("#ownerDemoBtn")?.addEventListener("click",()=>showOwnerApp(true));
  $("#ownerTrialBtn")?.addEventListener("click",startOwnerTrial);
  $("#ownerSignOut")?.addEventListener("click",ownerSignOut);
- if(ownerAccessToken){ if(new URLSearchParams(location.search).get("new_business")==="1") openBusinessSetup(); else showOwnerApp(false); }else if(sessionStorage.getItem("kavelyq-owner-demo"))showOwnerApp(true);else showOwnerGate(); if(manageFromUrl)setTimeout(openGuestBookingManager,0);
+ if(ownerAccessToken){ if(new URLSearchParams(location.search).get("new_business")==="1") openBusinessSetup(); else showOwnerApp(false); }else if(sessionStorage.getItem("kavelyq-owner-demo"))showOwnerApp(true);else showOwnerGate(ownerAuthCallbackError); if(manageFromUrl)setTimeout(openGuestBookingManager,0);
 });
 
 function bookingChoiceConfirm(label) {
@@ -2172,7 +2193,17 @@ async function openBrandingEditor(){let c={};try{c=await ownerRpc('owner_brandin
 }
 
 let ownerRefreshPending=null;
-async function refreshOwnerSession(){if(ownerRefreshPending)return ownerRefreshPending;const refresh=sessionStorage.getItem('kavelyq-owner-refresh');if(!refresh)return false;ownerRefreshPending=(async()=>{try{const r=await fetch(SUPABASE_URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:refresh})});const data=JSON.parse(await r.text());if(!r.ok||!data.access_token||!data.refresh_token)throw new Error('Expired');ownerAccessToken=data.access_token;sessionStorage.setItem('kavelyq-owner-token',data.access_token);sessionStorage.setItem('kavelyq-owner-refresh',data.refresh_token);return true;}catch{sessionStorage.removeItem('kavelyq-owner-token');sessionStorage.removeItem('kavelyq-owner-refresh');ownerAccessToken=null;return false;}finally{ownerRefreshPending=null;}})();return ownerRefreshPending;}
+async function refreshOwnerSession(){
+ if(ownerRefreshPending)return ownerRefreshPending;const refresh=sessionStorage.getItem('kavelyq-owner-refresh');if(!refresh)return false;
+ const epoch=ownerSessionEpoch;
+ const pending=(async()=>{try{
+  const r=await fetch(SUPABASE_URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:refresh})});
+  const data=JSON.parse(await r.text());if(epoch!==ownerSessionEpoch)return false;
+  if(!r.ok||!data.access_token||!data.refresh_token)throw new Error('Expired');
+  ownerAccessToken=data.access_token;sessionStorage.setItem('kavelyq-owner-token',data.access_token);sessionStorage.setItem('kavelyq-owner-refresh',data.refresh_token);return true;
+ }catch{if(epoch===ownerSessionEpoch)expireOwnerSession('Session expired. Request a new secure link.');return false;}
+ finally{if(epoch===ownerSessionEpoch)ownerRefreshPending=null;}})();ownerRefreshPending=pending;return pending;
+}
 
 let livePerformanceCache={key:null,data:null,error:false};
 function livePerformancePanel(){const zone=ownerDashboardData.business.timezone||'Europe/Vienna',date=KavelyqProduct.dateInZone(new Date(),zone),r=KavelyqProduct.range(date,'month'),key=ownerDashboardData.business.id+'|'+r.start;
