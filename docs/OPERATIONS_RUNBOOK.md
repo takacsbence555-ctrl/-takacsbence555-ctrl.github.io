@@ -54,7 +54,7 @@ Suggested drill after provisioning:
 4. Verify row counts, constraints, RLS, membership boundaries, booking exclusion/locking and representative application journeys.
 5. Record restore duration and measured data-loss window, then require approval before destroying the drill target.
 
-This drill has not run. No paid plan, PITR upgrade or new paid resource was activated.
+The isolated CI workflow implements this drill using only synthetic application/Auth records. Its result is recorded in recovery-result.json when that step passes. This is not evidence that a hosted production backup exists. No paid plan, PITR upgrade or new paid resource was activated.
 
 ## Rollback
 
@@ -69,26 +69,15 @@ https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_securit
 
 Automated checks are evidence of tested paths, not a comprehensive penetration-test certification.
 
-## 2026-10-16 verified continuation and required setup
 
-The owner logout/refresh race was reproduced with a failing regression before the application fix. Session generations now reject late refresh/RPC responses after logout, clear rendered owner data and close owner forms. Incomplete callbacks cannot reuse a previous account's refresh token; expired-link fragments are removed and an explicit error remains visible. Local logout is distinguished from an unconfirmed server logout.
+## Pending PR #10 release changes (not deployed)
 
-Desktop browser testing passed these cases; mobile testing then reproduced an inaccessible sign-out control because the sidebar footer is hidden. The candidate adds the same sign-out action to the mobile header. Current-head browser results must pass before release; the earlier 21/22 run is a failure, not release evidence.
+Keep automatic Vercel deployment disabled for release/final-20261015. Do not merge or deploy until required checks and release approval are satisfied. Preserve production commit 81edb461569b0eb8d80cde8873f298219c903c9f for rollback.
 
-The connected provider inspection returned zero Resend domains, zero Resend inboxes and zero webhooks. Supabase returned zero auth users, zero non-demo businesses, zero enabled delivery configurations and no Edge Functions. These facts block real email-to-authentication and provider delivery E2E; mocked session tests are deliberately separate.
+The form refresh fix locks setup controls until mutation and both setup/dashboard reads finish. Weekly hours remain business-local SQL `time without time zone`; the atomic owner_set_staff_week_hours RPC never converts them to UTC. Apply audit/owner-atomic-hours.pending.sql before releasing the frontend that calls it. It adds an owner-checked, authenticated-only transaction that validates the entire week before writing. A failed week cannot partially persist. Existing RPCs remain available for rollback.
 
-### Minimal manual inputs
+The notification adapter in server/notifications.cjs is disabled by default and has no deployed route or scheduler. audit/notification-adapter.pending.sql adds service-role-only acknowledgement/webhook/lease functions, private delivery-event records and per-business hashed suppression records, and corrects modern JWT role lookup in legacy acknowledgements. Apply only during an authorised coordinated release, after checking deployed schema compatibility. Keep service credentials in secure server configuration; never expose them to the static frontend. Require an approved recipient allowlist, verified sender, signature-verified webhook and durable event ledger before enabling delivery. Provider acceptance and final delivery are distinct states.
 
-1. Provide the address of a dedicated inbox you control and explicitly permit authentication and transactional test messages to that inbox. Do not provide its password, access tokens or magic links in the PR or chat. A second controlled identity is needed for signed-session cross-business browser tests. The current database tests create only temporary synthetic identities inside rolled-back transactions.
-2. In Resend, add a sending domain you own at https://resend.com/domains and configure the displayed DNS records at its DNS host until verification succeeds. No domain or paid resource has been purchased. In Supabase at https://supabase.com/dashboard/project/lpnewhfsbpwyjgdpoxqj/auth/smtp configure SMTP using a securely stored provider credential. Configure the app's existing production and authorised preview callback URLs at https://supabase.com/dashboard/project/lpnewhfsbpwyjgdpoxqj/auth/url-configuration. Existing-owner callback is /?view=hq; onboarding is /?new_business=1. Never disable email confirmation to bypass this gate.
-3. Supply database access through a secret manager/protected runtime environment, encrypted off-site backup storage, and an isolated disposable Postgres/Supabase restore target. The connection details are available from the project's Connect dialog: https://supabase.com/dashboard/project/lpnewhfsbpwyjgdpoxqj. Do not paste the database password into chat or commit it. A paid plan or branching upgrade requires separate approval; no upgrade was made.
+CI notification integration uses an explicit loopback provider contract server, not the actual Resend service. It covers a real database queue, 429 backoff/retry, stable provider idempotency, stale leases, signature verification, durable duplicate events, bounces and suppression. To verify Resend at zero purchase cost, the owner must approve a permitted test sender and controlled recipient (or Resend simulator address) and configure existing credentials securely. A custom production sender needs a verified domain; no domain has been purchased or sender activated here.
 
-With those inputs, run real email receipt/callback and authenticated owner journeys; configure and test a worker/provider adapter and signed delivery webhooks against synthetic recipients; perform an actual isolated backup restore and record measured RPO/RTO. Sender verification alone does not implement a worker or prove delivery. A queue retry SQL assertion does not test a provider failure. Source control does not contain a recoverable customer-data backup.
-
-### Database checks rerun
-
-The production database passed the existing booking/CRM/settings suite (12 groups), branding/import/calendar/report suite (12 groups), industry/waitlist/intelligence suite (6 groups), five-industry onboarding and snapshot-role checks, table-role checks, queue retry/privacy checks, appointment/time-off conflicts and local timezone/DST checks. The added tenant matrix checks 14 foreign-object RPCs, all business_id table boundaries and staff-linked schedule tables. Foreign updates that return false are valid no-ops; no successful mutation or private export is accepted. All test identities, appointments and edits are rolled back.
-
-The read-only permission inspection found RLS enabled on all public tables, no anonymous direct-table grants, no client TRUNCATE/TRIGGER/REFERENCES grants, no publicly executable queue worker functions and an explicit search_path on public SECURITY DEFINER functions. Remaining advisor warnings identify intentionally callable guest/owner SECURITY DEFINER RPCs; review is not a penetration-test certification.
-
-No database migration was needed in this continuation. No production restore, real customer communication or billing activation was performed.
+For a hosted backup drill at zero additional infrastructure cost, securely provide a read/export-capable database connection, an encryption public certificate (retain the private key outside CI), existing private off-site storage, and agree retention/RPO/RTO. Restore only into the disposable local Docker target; never restore over production. Supabase Storage object bytes and project configuration are separate recovery assets and are not included in pg_dump. Do not publish dumps or decryption keys as GitHub artifacts. Pending migrations must be included in schema review and future recovery manifests.

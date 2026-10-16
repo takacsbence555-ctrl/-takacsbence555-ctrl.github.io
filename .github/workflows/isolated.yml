@@ -33,10 +33,13 @@ jobs:
         run: |
           docker run --rm --ipc=host --network=host -v "$PWD:/work" -w /work/audit/browser mcr.microsoft.com/playwright:v1.64.1-noble bash -c 'npm ci --ignore-scripts --omit=optional && npx playwright test --config owner.config.cjs'
       - name: Business-local hours and DST database regression
+        if: ${{ !cancelled() }}
         run: docker compose -f audit/isolated/compose.yml exec -T db psql -U postgres -v ON_ERROR_STOP=1 < audit/isolated/timezone.test.sql
       - name: Backup and restore only disposable CI data
+        if: ${{ !cancelled() }}
         run: python3 audit/isolated/recovery.py
       - name: Transactional provider contract and durable webhook integration
+        if: ${{ !cancelled() }}
         run: node audit/isolated/notification.test.cjs
       - name: Diagnostic service logs
         if: failure()

@@ -3953,7 +3953,7 @@ button {
 
 .live-metric-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:0 0 14px}
 .live-metric-grid>div{background:#fff;border:1px solid rgba(16,17,20,.1);border-radius:16px;padding:16px;display:grid;gap:4px}
-.live-metric-grid small{font-size:10px;letter-spacing:.12em;font-weight:800;color:#777}.live-metric-grid b{font-size:25px}.live-metric-grid span{font-size:12px;color:#777}
+.live-metric-grid small{font-size:10px;letter-spacing:.12em;font-weight:800;color:#666}.live-metric-grid b{font-size:25px}.live-metric-grid span{font-size:12px;color:#666}
 @media(max-width:900px){.live-metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.live-metric-grid>div:nth-child(3){grid-column:span 2}}
 @media(max-width:520px){.live-metric-grid{grid-template-columns:1fr 1fr}.live-metric-grid b{font-size:21px}}
 
