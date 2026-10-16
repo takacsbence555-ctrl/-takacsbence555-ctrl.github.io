@@ -1,0 +1,19 @@
+name: Production smoke
+on:
+  push:
+    branches: [release/final-20261015, main]
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - run: python3 audit/production-health.py
+      - run: python3 audit/http.test.py
