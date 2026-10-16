@@ -1854,6 +1854,7 @@ document.addEventListener("DOMContentLoaded",()=>{
  $("#ownerDemoBtn")?.addEventListener("click",()=>showOwnerApp(true));
  $("#ownerTrialBtn")?.addEventListener("click",startOwnerTrial);
  $("#ownerSignOut")?.addEventListener("click",ownerSignOut);
+ $("#ownerSignOutMobile")?.addEventListener("click",ownerSignOut);
  if(ownerAccessToken){ if(new URLSearchParams(location.search).get("new_business")==="1") openBusinessSetup(); else showOwnerApp(false); }else if(sessionStorage.getItem("kavelyq-owner-demo"))showOwnerApp(true);else showOwnerGate(ownerAuthCallbackError); if(manageFromUrl)setTimeout(openGuestBookingManager,0);
 });
 

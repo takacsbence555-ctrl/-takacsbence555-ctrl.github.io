@@ -68,3 +68,27 @@ Remediation reference:
 https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable
 
 Automated checks are evidence of tested paths, not a comprehensive penetration-test certification.
+
+## 2026-10-16 verified continuation and required setup
+
+The owner logout/refresh race was reproduced with a failing regression before the application fix. Session generations now reject late refresh/RPC responses after logout, clear rendered owner data and close owner forms. Incomplete callbacks cannot reuse a previous account's refresh token; expired-link fragments are removed and an explicit error remains visible. Local logout is distinguished from an unconfirmed server logout.
+
+Desktop browser testing passed these cases; mobile testing then reproduced an inaccessible sign-out control because the sidebar footer is hidden. The candidate adds the same sign-out action to the mobile header. Current-head browser results must pass before release; the earlier 21/22 run is a failure, not release evidence.
+
+The connected provider inspection returned zero Resend domains, zero Resend inboxes and zero webhooks. Supabase returned zero auth users, zero non-demo businesses, zero enabled delivery configurations and no Edge Functions. These facts block real email-to-authentication and provider delivery E2E; mocked session tests are deliberately separate.
+
+### Minimal manual inputs
+
+1. Provide the address of a dedicated inbox you control and explicitly permit authentication and transactional test messages to that inbox. Do not provide its password, access tokens or magic links in the PR or chat. A second controlled identity is needed for signed-session cross-business browser tests. The current database tests create only temporary synthetic identities inside rolled-back transactions.
+2. In Resend, add a sending domain you own at https://resend.com/domains and configure the displayed DNS records at its DNS host until verification succeeds. No domain or paid resource has been purchased. In Supabase at https://supabase.com/dashboard/project/lpnewhfsbpwyjgdpoxqj/auth/smtp configure SMTP using a securely stored provider credential. Configure the app's existing production and authorised preview callback URLs at https://supabase.com/dashboard/project/lpnewhfsbpwyjgdpoxqj/auth/url-configuration. Existing-owner callback is /?view=hq; onboarding is /?new_business=1. Never disable email confirmation to bypass this gate.
+3. Supply database access through a secret manager/protected runtime environment, encrypted off-site backup storage, and an isolated disposable Postgres/Supabase restore target. The connection details are available from the project's Connect dialog: https://supabase.com/dashboard/project/lpnewhfsbpwyjgdpoxqj. Do not paste the database password into chat or commit it. A paid plan or branching upgrade requires separate approval; no upgrade was made.
+
+With those inputs, run real email receipt/callback and authenticated owner journeys; configure and test a worker/provider adapter and signed delivery webhooks against synthetic recipients; perform an actual isolated backup restore and record measured RPO/RTO. Sender verification alone does not implement a worker or prove delivery. A queue retry SQL assertion does not test a provider failure. Source control does not contain a recoverable customer-data backup.
+
+### Database checks rerun
+
+The production database passed the existing booking/CRM/settings suite (12 groups), branding/import/calendar/report suite (12 groups), industry/waitlist/intelligence suite (6 groups), five-industry onboarding and snapshot-role checks, table-role checks, queue retry/privacy checks, appointment/time-off conflicts and local timezone/DST checks. The added tenant matrix checks 14 foreign-object RPCs, all business_id table boundaries and staff-linked schedule tables. Foreign updates that return false are valid no-ops; no successful mutation or private export is accepted. All test identities, appointments and edits are rolled back.
+
+The read-only permission inspection found RLS enabled on all public tables, no anonymous direct-table grants, no client TRUNCATE/TRIGGER/REFERENCES grants, no publicly executable queue worker functions and an explicit search_path on public SECURITY DEFINER functions. Remaining advisor warnings identify intentionally callable guest/owner SECURITY DEFINER RPCs; review is not a penetration-test certification.
+
+No database migration was needed in this continuation. No production restore, real customer communication or billing activation was performed.

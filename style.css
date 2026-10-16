@@ -4173,3 +4173,7 @@ button {
 #booking .map-label{color:#403e38!important}
 
 @media(max-width:600px){.operator-plan-dock .plan-actions{display:grid;grid-template-columns:minmax(0,1fr);padding:0;gap:8px}.operator-plan-dock .plan-actions button{min-width:0;white-space:normal}}
+
+/* The sidebar footer is hidden on mobile; keep session termination available. */
+.mobile-owner-signout{display:none}
+@media(max-width:900px){.mobile-owner-signout{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 10px;white-space:nowrap}.head-actions{gap:8px}}
