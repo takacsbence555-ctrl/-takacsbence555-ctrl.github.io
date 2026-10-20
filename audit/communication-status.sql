@@ -1,0 +1,6 @@
+create or replace function public.owner_communication_status() returns jsonb language plpgsql stable security definer set search_path='' as $$
+declare bid uuid:=kavelyq_private.require_business_owner();begin
+return jsonb_build_object('delivery_enabled',coalesce((select transactional_enabled and provider_verified from kavelyq_private.communication_delivery where business_id=bid),false),'pending',(select count(*) from public.notification_queue where business_id=bid and status='pending'),'failed',(select count(*) from public.notification_queue where business_id=bid and status='failed'),'processing',(select count(*) from public.notification_queue where business_id=bid and status='processing'),'provider_note','No provider is enabled by default. Queued records are not evidence of delivery.','monitoring_note','GitHub smoke checks monitor public availability; browser errors and delivered-email outcomes require separate monitoring.');
+end $$;
+revoke all on function public.owner_communication_status() from public,anon;grant execute on function public.owner_communication_status() to authenticated;
+do $$declare d text;begin select pg_get_functiondef('public.queue_booking_notifications()'::regprocedure) into d;d:=replace(d,'status in (''pending'',''failed'')','status in (''pending'',''failed'',''processing'')');execute d;end $$;

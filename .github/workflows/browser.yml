@@ -1,0 +1,41 @@
+name: Browser regression
+on:
+  push:
+    branches: [release/final-20261015, main]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Optional verified production origin
+        required: false
+        default: ''
+concurrency:
+  group: browser-regression-${{ github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  browsers:
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble
+      options: --ipc=host
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - run: npm ci --ignore-scripts --omit=optional
+        working-directory: audit/browser
+      - run: npm test
+        working-directory: audit/browser
+        env:
+          BASE_URL: ${{ github.ref == 'refs/heads/main' && 'https://takacsbence555-ctrl-github-io.vercel.app' || inputs.target || '' }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: browser-results
+          path: |
+            audit/browser/results.json
+            audit/browser/playwright-report
+            audit/browser/test-results
+          retention-days: 7

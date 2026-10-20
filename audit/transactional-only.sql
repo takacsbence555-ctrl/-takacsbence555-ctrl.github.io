@@ -1,0 +1,1 @@
+do $$ declare d text;begin select pg_get_functiondef('public.claim_due_email_notifications(integer)'::regprocedure) into d;d:=replace(d,'where q.channel=''email'' and','where q.template in(''booking_confirmation'',''booking_reminder'',''booking_cancelled'') and q.channel=''email'' and');execute d;end $$;

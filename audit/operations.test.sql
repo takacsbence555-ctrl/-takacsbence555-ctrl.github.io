@@ -1,0 +1,35 @@
+begin;
+do $$ declare b uuid;q uuid;r public.notification_queue;begin
+insert into public.businesses(name,public_slug,timezone,currency,subscription_status) values('QA Notification','qa-notification-'||substr(gen_random_uuid()::text,1,8),'Europe/London','GBP','active') returning id into b;
+insert into kavelyq_private.communication_delivery(business_id) values(b);
+insert into public.notification_queue(business_id,channel,template,destination,scheduled_for) values(b,'email','booking_confirmation','qa@example.invalid',now()) returning id into q;
+perform set_config('request.jwt.claim.role','service_role',true);assert (select count(*) from public.claim_due_email_notifications(100))=0;
+update kavelyq_private.communication_delivery set transactional_enabled=true,provider_verified=true where business_id=b;
+select * into r from public.claim_due_email_notifications(1);assert r.id=q and r.status='processing' and r.attempt_count=1;
+perform public.fail_email_notification(q,'QA simulated provider failure');assert (select status from public.notification_queue where id=q)='failed';
+assert (select count(*) from public.claim_due_email_notifications(1))=0;
+update public.notification_queue set claimed_at=now()-interval '11 minutes' where id=q;
+select * into r from public.claim_due_email_notifications(1);assert r.id=q and r.attempt_count=2;
+perform public.complete_email_notification(q,'qa-simulated-provider-id');assert (select status from public.notification_queue where id=q)='sent';
+update public.notification_queue set status='processing',attempt_count=4,claimed_at=now()-interval '16 minutes' where id=q;
+select * into r from public.claim_due_email_notifications(1);assert r.attempt_count=5;
+perform public.fail_email_notification(q,'QA final attempt');update public.notification_queue set claimed_at=now()-interval '11 minutes' where id=q;
+assert (select count(*) from public.claim_due_email_notifications(1))=0;
+end $$;
+rollback;
+begin;
+do $$ declare b uuid;u uuid:=gen_random_uuid();r jsonb;c uuid;bk uuid;oldtoken uuid;w jsonb;begin
+select id into b from public.businesses where public_slug='demo-studio';
+insert into auth.users(id) values(u);insert into public.business_members(business_id,user_id,role) values(b,u,'owner');
+r:=public.create_public_booking_local_v2('demo-studio','demo-barber-a','classic-cut',current_date+1,'13:00','QA Privacy','qa-privacy@example.invalid','+430000000904');
+bk:=(r->>'booking_id')::uuid;oldtoken:=(r->>'manage_token')::uuid;select customer_id into c from public.bookings where id=bk;
+w:=public.join_public_waitlist('demo-studio','classic-cut',null,'QA Privacy','qa-privacy@example.invalid','+430000000904',current_date+1,current_date+2,true);
+perform set_config('request.jwt.claims',jsonb_build_object('sub',u,'role','authenticated')::text,true);execute 'set local role authenticated';
+r:=public.owner_export_customer(c);assert jsonb_array_length(r->'notifications')>0 and jsonb_array_length(r->'waitlist')=1;assert not ((r->'bookings'->0) ? 'manage_token');
+assert public.owner_delete_customer_data(c);
+assert (select email is null and phone is null and deleted_at is not null from public.customers where id=c);
+assert (select customer_id is null and manage_token<>oldtoken from public.bookings where id=bk);
+assert not exists(select 1 from public.notification_queue where booking_id=bk and (destination is not null or payload<>'{}'::jsonb or status<>'cancelled'));
+assert (select email is null and phone is null and not contact_permission and status='withdrawn' from public.waitlist_requests where id=(w->>'id')::uuid);
+end $$;
+rollback;
