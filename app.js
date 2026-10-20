@@ -1857,7 +1857,10 @@ function liveOwnerPanel(){
 parseAuthHash();
 ownerAccessToken=ownerAccessToken||sessionStorage.getItem("kavelyq-owner-token")||sessionStorage.getItem("operator-owner-token");
 document.addEventListener("DOMContentLoaded",()=>{
- if(new URLSearchParams(location.search).get("new_business")==="1"||ownerAuthCallbackError){$("#salesEntry")?.classList.add("hidden");setView("hq");}
+ // A verified magic-link session must enter Owner OS even when the provider drops redirect query parameters.
+ // Never show the public sales page over an authenticated owner session.
+ const ownerCallback=new URLSearchParams(location.search);
+ if(ownerAccessToken||ownerCallback.get("view")==="hq"||ownerCallback.get("new_business")==="1"||ownerAuthCallbackError){$("#salesEntry")?.classList.add("hidden");setView("hq");}
  const manageFromUrl=loadManageTokenFromUrl(); if(manageFromUrl){$("#salesEntry")?.classList.add("hidden");setView("booking");}
  $("#ownerLoginBtn")?.addEventListener("click",sendOwnerMagicLink);
  $("#ownerDemoBtn")?.addEventListener("click",()=>showOwnerApp(true));
