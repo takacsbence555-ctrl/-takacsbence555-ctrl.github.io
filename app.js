@@ -1661,7 +1661,7 @@ function parseAuthHash(){
  const queryAuth=['code','token_hash','error','error_code','error_description'].some(k=>url.searchParams.has(k));
  const callback=token||refresh||hash.has('error')||hash.has('error_code')||queryAuth;
  if(callback){
-  url.hash='';['code','token_hash','type','error','error_code','error_description','next','redirect_to'].forEach(k=>url.searchParams.delete(k));
+  const onboarding=url.searchParams.get('new_business')==='1';url.hash='';url.search='';url.searchParams.set(onboarding?'new_business':'view',onboarding?'1':'hq');
   history.replaceState(null,"",url.pathname+url.search);
   ['kavelyq-owner-token','operator-owner-token','kavelyq-owner-refresh','kavelyq-owner-demo'].forEach(k=>sessionStorage.removeItem(k));ownerAccessToken=null;ownerSessionEpoch++;
   if(!token||!refresh||queryAuth||hash.has("error")||hash.has("error_code")){

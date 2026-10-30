@@ -37,7 +37,7 @@ Status meanings: PASS = evidence supports the stated scope; FAIL = known current
 ## Completed safe engineering in this continuation
 
 - Verified Supabase identity and business membership before Owner UI/onboarding; recover without redirect query or prior Gmail browser storage.
-- Recover 401/403 access-token failures once using the refresh token; reject unsupported code/token_hash callback contracts with an explicit recovery path and scrub sensitive callback fields.
+- Recover 401/403 access-token failures once using the refresh token; reject unsupported code/token_hash callback contracts with an explicit recovery path and scrub sensitive callback fields and discard guest-booking/navigation parameters from Owner callbacks.
 - Keep Sign out available during verification; stale verification/refresh cannot restore a signed-out session.
 - Add fresh-browser real-link tests, consumed-link and network-failure checks, retaining all existing lifecycle and logout-race assertions.
 - Add read-only schema preflight, pinned CI action references, recurring-on-commit dependency/source/deployment security guards.
