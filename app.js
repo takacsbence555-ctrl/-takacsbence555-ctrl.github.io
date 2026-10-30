@@ -1676,9 +1676,9 @@ async function resumeOwnerSignIn(){
  try{
   let response=await fetch(SUPABASE_URL+'/auth/v1/user',{headers:ownerAuthHeaders()});
   if(epoch!==ownerSessionEpoch)return;
-  if(response.status===401&&await refreshOwnerSession())response=await fetch(SUPABASE_URL+'/auth/v1/user',{headers:ownerAuthHeaders()});
+  if([401,403].includes(response.status)&&await refreshOwnerSession())response=await fetch(SUPABASE_URL+'/auth/v1/user',{headers:ownerAuthHeaders()});
   if(epoch!==ownerSessionEpoch)return;
-  if(!response.ok)throw new Error(response.status===401?'AUTH_REQUIRED':'AUTH_UNAVAILABLE');
+  if(!response.ok)throw new Error([401,403].includes(response.status)?'AUTH_REQUIRED':'AUTH_UNAVAILABLE');
   const user=JSON.parse(await response.text());if(!/^[0-9a-f-]{36}$/i.test(user.id||''))throw new Error('AUTH_REQUIRED');
   const membership=await fetch(SUPABASE_URL+'/rest/v1/business_members?select=role&user_id=eq.'+encodeURIComponent(user.id),{headers:ownerAuthHeaders()});
   if(epoch!==ownerSessionEpoch)return;if(!membership.ok)throw new Error('AUTH_UNAVAILABLE');
@@ -1724,7 +1724,7 @@ function showOwnerApp(demo=false){
  }).catch(()=>{if(epoch===ownerSessionEpoch)expireOwnerSession("Sign-in expired. Request a new secure link.");});
 }
 function showOwnerGate(message=""){
- $("#ownerAppShell")?.classList.add("hidden");$("#ownerAuthGate")?.classList.remove("hidden");const s=$("#ownerAuthStatus");if(s)s.textContent=message;
+ $("#ownerAppShell")?.classList.add("hidden");$("#ownerAuthGate")?.classList.remove("hidden");const s=$("#ownerAuthStatus");if(s)s.textContent=message;$("#ownerAuthCancel")?.classList.toggle("hidden",!ownerAccessToken);
 }
 async function startOwnerTrial(){
  const email=$("#ownerEmail")?.value?.trim();
@@ -1892,6 +1892,7 @@ document.addEventListener("DOMContentLoaded",()=>{
  $("#ownerDemoBtn")?.addEventListener("click",()=>showOwnerApp(true));
  $("#ownerTrialBtn")?.addEventListener("click",startOwnerTrial);
  $("#ownerSignOut")?.addEventListener("click",ownerSignOut);
+ $("#ownerAuthCancel")?.addEventListener("click",ownerSignOut);
  $("#ownerSignOutMobile")?.addEventListener("click",ownerSignOut);
  if(ownerAccessToken){ resumeOwnerSignIn(); }else if(sessionStorage.getItem("kavelyq-owner-demo"))showOwnerApp(true);else showOwnerGate(ownerAuthCallbackError); if(manageFromUrl)setTimeout(openGuestBookingManager,0);
 });

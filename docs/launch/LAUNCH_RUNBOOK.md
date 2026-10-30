@@ -1,0 +1,72 @@
+# KAVELYQ controlled release and pilot runbook
+
+30 October 2026. Preparation only: neither launch stage is activated. This repository continues the existing static application, Supabase project and Vercel deployment. All dates/check outcomes in a release record must refer to its actual commit. Earlier reports are historical evidence.
+
+## Approval boundaries and £0 scope
+
+The operator must explicitly approve merge, deployment, hosted production migrations, real email tests, any customer communication and billing activation separately. No approval is implied by a green workflow. Keep release/final-20261015 automatic Vercel deployment disabled. New services, domains, subscriptions and upgrades have a budget of €0. No laptop is needed for the steps below.
+
+The current Vercel team tools do not expose its billing plan. Vercel Hobby is limited to personal/non-commercial use; a free pilot with commercial purposes cannot be assumed eligible. Check the actual plan and written applicable terms before inviting real salons. If an already-paid eligible plan exists, incremental cost can be €0. If Hobby applies and no permission/eligible existing arrangement exists, pause live commercial use. Do not upgrade or silently migrate hosting. Public Pro pricing is advertised from US$20/month plus applicable usage/tax; this is a conditional spending blocker, not an authorised purchase.
+
+Sources checked 30 October 2026: https://vercel.com/legal/terms and https://vercel.com/docs/limits/fair-use-guidelines ; current pricing https://vercel.com/pricing . The provider, not this runbook, determines eligibility.
+
+## iPhone: actions required before a hosted verification session
+
+1. In Safari open https://supabase.com/dashboard/project/lpnewhfsbpwyjgdpoxqj . Confirm the project is available. Current management integration attempts returned hibernation/connection timeouts while public HTTP checks worked. Do not reset the database, delete data or purchase an upgrade. If paused, review its restore/resume action and only use an existing free entitlement; then reconnect the integration if required.
+2. Authentication → URL Configuration: review Site URL and redirect allowlist. Production origin is https://takacsbence555-ctrl-github-io.vercel.app/ . The app requests the same origin with ?view=hq or ?new_business=1. Use exact production callback destinations where possible; avoid localhost and unnecessary wildcard preview domains. Do not change these settings until authorised.
+3. Authentication → Email/Templates: inspect the existing Magic Link and confirmation templates. This static application intentionally initiates Supabase implicit magic links (no PKCE challenge). The default ConfirmationURL returns access/refresh tokens in a fragment and can open in a separate browser; it does not require a verifier from Gmail's browser. A custom code/PKCE or token_hash template is a different contract and must not be enabled without a corresponding reviewed flow. The app fails closed for unsupported code callbacks and asks for a fresh link.
+4. Only after an approved candidate deployment, authorise one sign-in email to a controlled owner inbox. In Safari request a fresh link from Owner sign-in. Open the full link from Gmail into Safari using its Open in browser control; avoid copying only the final marketing URL. Do not paste a magic link, code, access token or refresh token into chat, screenshots or issues. Expired/consumed links require a new request.
+5. Verify an actual named business dashboard (or verified first-time setup), not merely a page load. Create only the approved test business. Refresh in the same Safari tab, sign out, confirm the Owner workspace disappears, and verify an old link cannot be reused. Repeat first-time onboarding and existing-owner login. A Gmail embedded browser and Safari do not share sessionStorage; each context requires its own completed sign-in. Closing a tab or clearing storage may require another link. No claim of physical-iPhone verification is made until this happens.
+6. In Safari open https://vercel.com/dashboard → existing team → Settings → Billing. Report only the plan name and commercial eligibility; do not share invoices/payment details. No upgrade is authorised.
+7. Decide the legal provider identity, support/privacy contact and pilot terms. Review LEGAL_DRAFTS.md. Confirm the authorised salon contacts and processing agreement before importing real records.
+8. For real Resend verification, approve a permitted sender and controlled recipient/simulator, configure existing credentials in secure server settings, then approve the exact test. No domains/webhooks were configured at inspection. A verified custom sender and production worker/webhook are still prerequisites for customer delivery. Testing may be free; production sending from a domain requires an authorised verified domain or an existing eligible sender arrangement. No domain purchase is assumed.
+
+## Technical verification and migration sequence
+
+- Inspect the exact PR head, all required checks and current hosted schema. Compare pending migrations against the actual hosted schema, function permissions, default privileges and RLS. The captured isolated schema is not a current hosted audit. Management timeouts block sign-off until this read-only comparison works.
+- Pending files are audit/owner-atomic-hours.pending.sql and audit/notification-adapter.pending.sql. Do not run historical audit migration files again. owner-atomic-hours is required before the new frontend calls its RPC. Notification migration creates private ledgers and service-only functions; it does not activate sending.
+- Before any authorised hosted migration, confirm a fresh encrypted recoverable backup and additive rollback plan. Apply reviewed migrations in a maintenance window with a verified database administrator session, record migration names/checksums and re-run permissions tests. On a failed transaction stop; do not manually remove production tables to retry.
+- After explicit approval, merge/release only the verified commit. Confirm Vercel deployment READY, production alias and actual commit independently; then run smoke and controlled browser journeys on that deployment. CI serving a checkout is not deployed-candidate evidence. Do not disable the branch deployment guard casually to obtain a preview.
+- Roll back the frontend to confirmed production commit 81edb461569b0eb8d80cde8873f298219c903c9f if the released candidate fails. Retain additive database changes and old RPCs unless a separately reviewed rollback requires action. No destructive down migration or production restore is an automatic rollback.
+
+## Zero-additional-cost Stage A: closed pilot, conditional on gates
+
+Use up to three named businesses, initially one at a time, for a 14-day free pilot matching the existing trial duration. Begin with synthetic records and a supervised Owner walkthrough. Real customers may be added only after hosted auth, backup, privacy/DPA, provider eligibility and deployed behavior are verified. No charge, card, automatic conversion or marketing campaign. Tattoo-specific features remain postponed.
+
+Keep the booking link unlisted and distribute it only to the approved pilot participants through an authorised channel. A private link is not an access-control mechanism: public signup currently exists, so a hard technical invite-only requirement needs approved Auth/provider gating before Stage A. Do not claim the product is invite-enforced merely because the audience is small. Until this is decided, no public acquisition campaign.
+
+For each salon, verify legal authority and controller contact, select one of the five industries, set timezone/currency, configure actual staff/services/hours/breaks/cancellation policy, review branding and test a booking through reschedule/cancel. Use CSV preview and commit only authorised files; never infer marketing consent. The salon keeps a fallback appointment record. No sensitive health notes, photos, payment data or unapproved staff access during the pilot.
+
+Automated notifications remain disabled unless separately activated after verification. Explain that on-screen persisted confirmation is the booking record and that email may be unavailable. The salon handles any necessary customer contact through its existing lawful process; the assistant will not send those communications. Do not promise campaign execution or AI revenue uplift: the intelligence features are a rules-based foundation with approval records.
+
+Suggested success criteria: every pilot booking lifecycle succeeds; zero tenant-access leaks or double bookings; no unresolved P0/P1 defect; all critical actions persist after refresh; owner can use Safari independently; support incidents and recovery have an owner; all trial limitations are understood. Record participant feedback and failures without copying customer data into GitHub issues.
+
+Support can initially use an existing monitored inbox approved by the operator. Agree staffed hours, named incident owner and severity handling. A sensible pilot target is acknowledge P0 issues within the agreed staffed window, with immediate pause of new bookings if consistency/privacy is uncertain. This is not a 24/7 SLA. At day 7 review incidents; at day 14 export/delete or extend only after explicit approval and verified trial behavior. Never convert silently into a paid subscription.
+
+If hosting eligibility or any mandatory safety gate cannot be met at €0, the available €0 activity is a supervised synthetic usability evaluation, not a live customer pilot. No new service has been created to bypass that limit.
+
+## Stage B: public paid service, not activated
+
+Requires every Stage A gate plus verified production sender and webhook/worker, approved billing integration with tax/invoice/cancellation/refund behavior, enforced tier/usage limits and communication cost controls, public approved legal notices/DPA/subprocessor list, business/trade/tax readiness, tested account closure, production backups/recovery, monitored errors/alerts, capacity/rate-limit evidence and staffed support.
+
+Proposed Essential £19 and Intelligence £39 monthly prices remain provisional. No real billing provider is connected or activated by this work. Successful payment alone must not be the only entitlement evidence: future webhook events need signature verification, replay protection, out-of-order handling and reconciliation. Billing sandbox testing and commercial approval come before checkout publication.
+
+## Monitoring and incidents
+
+Existing Production smoke workflow checks the public shell/security headers and 15 anonymous/invalid-input backend cases. Scheduled workflows execute from the default branch; unmerged release-branch changes are not an active production cron. Inspect the last actual scheduled runs and ensure the default-branch workflow exists before relying on it. Green scheduled runs are not an uptime SLA or authenticated monitoring. Enable existing GitHub failure notifications manually; no customer email is sent by this preparation.
+
+No browser error collector or guaranteed alert routing has been activated. During a small supervised pilot, a named operator must review smoke/CI and provider logs each staffed day and test an agreed incident notification channel. Public paid launch needs dependable alert coverage and retention/access controls, not empty Function logs from a static site.
+
+P0 response: stop new affected bookings/communications; preserve minimal evidence without tokens/PII; identify affected tenant/scope; isolate access without deleting records; notify the incident lead and controller; revoke compromised sessions/credentials as appropriate; roll back only the authorised release; test isolation and booking consistency before reopening. Never post raw database rows, magic links, exports or dumps in public issues.
+
+Maintain an incident ledger: UTC timeline, detection, affected scopes/record counts, containment, controller notification, risk assessment, remediation, validation and postmortem owner. A processor notifies its controller without undue delay; assess supervisory notifications with counsel. A notifiable UK breach generally has a 72-hour controller deadline, not a reason to wait before notifying. Use the current regulator rules for the actual establishment and affected persons.
+
+## Backup, restoration and privacy operations
+
+The isolated drill dumps synthetic Auth/application data, encrypts with AES-256-GCM, rejects corruption, restores separately, compares 47 tables plus application functions/policies/grants/constraints and tests restored RLS. This does not certify hosted Auth/storage/config recovery or create an off-site production backup.
+
+For a hosted export: securely configure a least-privilege export-capable connection, owner-held encryption keys/public certificate, existing private off-site storage, approved retention and a named recovery owner. Never put connection URLs in chat or public workflow arguments. Never upload plain or encrypted production dumps as public artifacts. Existing free resources can support a small manual drill; no RPO/RTO or free storage entitlement has been proven. Restore only to an isolated disposable target, and separately cover Auth configuration, provider configuration, object storage bytes, roles and attachments. Measure elapsed time and consistency; do not overwrite production for a drill.
+
+Customer requests: verify authority within the tenant, export through the customer export workflow, inspect consent/appointment associations, and obtain explicit approval for irreversible anonymization. Do not disclose one tenant's records to another requester. Maintain a minimal deletion ledger separately from erased content and replay it after any backup restoration. Individual erasure does not prove complete business-account closure or removal from provider logs/backups; those procedures require separate validation. No real account has been deleted during preparation.
+
+Retention: approve periods for customer records, audit logs, queue/events/suppressions, Auth records and backups. No automatic retention job is represented as deployed. Until automation is authorised, use a documented supervised review and escalation. Do not delete records merely to meet a proposed draft period. Privacy rights and legally required retention take precedence over convenience.
