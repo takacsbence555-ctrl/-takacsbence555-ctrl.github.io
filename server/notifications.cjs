@@ -21,11 +21,12 @@ function createResendProvider({apiKey,fetchImpl=fetch,timeoutMs=10000}){
  if(!r.ok)throw new DeliveryError(r.status===429?'PROVIDER_RATE_LIMIT':r.status>=500?'PROVIDER_UNAVAILABLE':'PROVIDER_REJECTED',r.status===429||r.status>=500);
  let body;try{body=await r.json()}catch{throw new DeliveryError('INVALID_PROVIDER_RESPONSE',true)}if(typeof body.id!=='string'||!body.id)throw new DeliveryError('INVALID_PROVIDER_RESPONSE',true);return {id:body.id};}};
 }
-async function processNotifications({enabled=false,providerVerified=false,queue,provider,from,appOrigin,approvedRecipients=[]}){
+async function processNotifications({enabled=false,providerVerified=false,queue,provider,from,appOrigin,approvedRecipients=[],claimLimit=10}){
  if(!enabled||!providerVerified)return {disabled:true,accepted:0,failed:0};
  if(!queue||!provider||!Array.isArray(approvedRecipients)||!approvedRecipients.length)throw new DeliveryError('APPROVED_RECIPIENTS_REQUIRED');
+ if(!Number.isInteger(claimLimit)||claimLimit<1||claimLimit>10)throw new DeliveryError('INVALID_CLAIM_LIMIT');
  const approved=new Set(approvedRecipients.map(x=>x.toLowerCase())),result={disabled:false,accepted:0,failed:0,skipped:0,unacknowledged:0};
- for(const job of await queue.claim(10)){
+ for(const job of await queue.claim(claimLimit)){
   if(!approved.has(String(job.destination).toLowerCase())||!transactional.has(job.template)){await queue.fail(job,'RECIPIENT_OR_TEMPLATE_NOT_APPROVED',false);result.skipped++;continue;}
   if(!await queue.isCurrent(job)){result.skipped++;continue;}
   let sent;try{const message=renderNotification(job,{from,appOrigin});sent=await provider.send(message,'kavelyq-notification-'+job.id);}catch(e){await queue.fail(job,e instanceof DeliveryError?e.code:'DELIVERY_FAILURE',e instanceof DeliveryError&&e.retryable);result.failed++;continue;}

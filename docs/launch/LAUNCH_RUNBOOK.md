@@ -55,6 +55,8 @@ Requires every Stage A gate plus verified production sender and webhook/worker, 
 
 Proposed Essential £19 and Intelligence £39 monthly prices remain provisional. No real billing provider is connected or activated by this work. Successful payment alone must not be the only entitlement evidence: future webhook events need signature verification, replay protection, out-of-order handling and reconciliation. Billing sandbox testing and commercial approval come before checkout publication.
 
+Notification activation details and secure server configuration are in NOTIFICATION_OPERATIONS.md. Native entry points are prepared and disabled by default; platform build/routing and actual delivery remain unverified until an approved deployment and controlled provider test. No scheduler is installed.
+
 ## Monitoring and incidents
 
 Existing Production smoke workflow checks the public shell/security headers and 15 anonymous/invalid-input backend cases. Scheduled workflows execute from the default branch; unmerged release-branch changes are not an active production cron. Inspection found the workflow absent from main (404) and no scheduled runs. Therefore scheduled production monitoring is not active. Its activation requires the approved merge/release procedure; ensure the default-branch workflow and a successful real scheduled run exist before relying on it. Green scheduled runs are not an uptime SLA or authenticated monitoring. Enable existing GitHub failure notifications manually; no customer email is sent by this preparation.

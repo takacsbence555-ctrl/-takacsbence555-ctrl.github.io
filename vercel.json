@@ -30,5 +30,13 @@
     "deploymentEnabled": {
       "release/final-20261015": false
     }
+  },
+  "functions": {
+    "api/notification-worker.mjs": {
+      "maxDuration": 60
+    },
+    "api/resend-webhook.mjs": {
+      "maxDuration": 30
+    }
   }
 }

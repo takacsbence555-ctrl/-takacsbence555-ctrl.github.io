@@ -18,9 +18,9 @@ Status meanings: PASS = evidence supports the stated scope; FAIL = known current
 | Released candidate and rollback verification | FAIL | FAIL | Production independently remains 81edb461569b0eb8d80cde8873f298219c903c9f; no release authorised | 2 |
 | Dependencies and source credential patterns | PASS | PASS | Both npm audit trees reported zero vulnerabilities; pinned manifests/locks and source/deployment guards; not a full penetration test | 1 |
 | Desktop/mobile accessibility and layout | PASS | PASS | Chromium and touch WebKit workflows and module WCAG scans; physical devices/manual screen-reader review remains additional evidence | 1 / 4 |
-| Notification foundation | PASS | PASS | Real local queue transitions with loopback provider contract; retries, idempotency, stale leases, signed webhooks, suppression and duplicates tested | 1 |
+| Notification foundation | PASS | PASS | Native worker/webhook entry points prepared with default-off controls; local queue/provider-contract tests cover retries, idempotency, stale leases, signed webhooks, suppression and duplicates | 1 |
 | Actual Auth SMTP / external Owner delivery | BLOCKED | BLOCKED | Own-account delivery does not prove external owners; built-in SMTP is restricted testing infrastructure; inspect actual SMTP configuration | 2 / 3 |
-| Automated customer notification delivery | PASS | BLOCKED | Pilot can explicitly use salon-managed communication with automation disabled; public automated service needs sender, secure route/worker, webhook and provider evidence | 2 / 3 |
+| Automated customer notification delivery | PASS | BLOCKED | Pilot can explicitly use salon-managed communication with automation disabled; public automated service needs approved deployment/configuration of the prepared routes, a verified sender, webhook and real provider evidence | 2 / 3 |
 | Encrypted synthetic recovery drill | PASS | PASS | 47-table disposable backup/restoration, integrity/authenticated encryption, restored RLS and grant-tampering checks; never a production restore | 1 |
 | Hosted off-site backup and measured recovery | BLOCKED | BLOCKED | Secure export access, owner-held keys, existing private storage and approved drill required; source/config/storage asset coverage must be checked | 2 |
 | Active scheduled monitoring and alert routing | FAIL | FAIL | Smoke workflow absent from main; no scheduled runs; Vercel log drains empty; PR-only cron is not operational monitoring | 2 |
@@ -41,6 +41,7 @@ Status meanings: PASS = evidence supports the stated scope; FAIL = known current
 - Keep Sign out available during verification; stale verification/refresh cannot restore a signed-out session.
 - Add fresh-browser real-link tests, consumed-link and network-failure checks, retaining all existing lifecycle and logout-race assertions.
 - Add read-only schema preflight, pinned CI action references, recurring-on-commit dependency/source/deployment security guards.
+- Prepare default-disabled, authenticated single-job worker and raw-body signed webhook native entry points, with privacy-safe logs and unit/local HTTP regression coverage; no runtime activated.
 - Draft pilot/public legal documents, DPA/storage/retention disclosure and incident/privacy/release/pilot runbooks without activating policies.
 
 ## Minimum operator actions and incremental cost

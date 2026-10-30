@@ -20,6 +20,6 @@ jobs:
         working-directory: audit
       - run: npm test
         working-directory: audit
-      - run: node --check app.js && node --check product-core.js
+      - run: node --check app.js && node --check product-core.js && node --check server/notification-runtime.cjs && node --check api/notification-worker.mjs && node --check api/resend-webhook.mjs
       - run: python3 -m py_compile audit/http.test.py
 
