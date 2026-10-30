@@ -1656,16 +1656,40 @@ function clearOwnerSession(){
 }
 function expireOwnerSession(message){clearOwnerSession();showOwnerGate(message);}
 function parseAuthHash(){
- const hash=new URLSearchParams((location.hash||"").replace(/^#/,""));
+ const url=new URL(location.href),hash=new URLSearchParams(url.hash.replace(/^#/,""));
  const token=hash.get("access_token"),refresh=hash.get("refresh_token");
- if(token||refresh||hash.has("error")||hash.has("error_code")){
-  history.replaceState(null,"",location.pathname+location.search);
+ const queryAuth=['code','token_hash','error','error_code','error_description'].some(k=>url.searchParams.has(k));
+ const callback=token||refresh||hash.has('error')||hash.has('error_code')||queryAuth;
+ if(callback){
+  url.hash='';['code','token_hash','type','error','error_code','error_description','next','redirect_to'].forEach(k=>url.searchParams.delete(k));
+  history.replaceState(null,"",url.pathname+url.search);
   ['kavelyq-owner-token','operator-owner-token','kavelyq-owner-refresh','kavelyq-owner-demo'].forEach(k=>sessionStorage.removeItem(k));ownerAccessToken=null;ownerSessionEpoch++;
-  if(!token||!refresh||hash.has("error")||hash.has("error_code")){ownerAuthCallbackError="This sign-in link is invalid or expired. Request a new secure link.";return false;}
-  ownerAccessToken=token;sessionStorage.setItem("kavelyq-owner-token",token);sessionStorage.setItem("kavelyq-owner-refresh",refresh);return true;
+  if(!token||!refresh||queryAuth||hash.has("error")||hash.has("error_code")){
+   ownerAuthCallbackError=queryAuth&&!hash.has('error')?'This sign-in callback cannot be completed in this browser. Open Owner sign-in in Safari and request a fresh secure link.':'This sign-in link is invalid or expired. Request a new secure link.';return false;
+  }
+  ownerAuthCallbackError='';ownerAccessToken=token;sessionStorage.setItem("kavelyq-owner-token",token);sessionStorage.setItem("kavelyq-owner-refresh",refresh);return true;
  }
  ownerAccessToken=sessionStorage.getItem("kavelyq-owner-token")||sessionStorage.getItem("operator-owner-token")||null;return !!ownerAccessToken;
 }
+async function resumeOwnerSignIn(){
+ const epoch=ownerSessionEpoch;showOwnerGate('Verifying your sign-in…');
+ try{
+  let response=await fetch(SUPABASE_URL+'/auth/v1/user',{headers:ownerAuthHeaders()});
+  if(epoch!==ownerSessionEpoch)return;
+  if(response.status===401&&await refreshOwnerSession())response=await fetch(SUPABASE_URL+'/auth/v1/user',{headers:ownerAuthHeaders()});
+  if(epoch!==ownerSessionEpoch)return;
+  if(!response.ok)throw new Error(response.status===401?'AUTH_REQUIRED':'AUTH_UNAVAILABLE');
+  const user=JSON.parse(await response.text());if(!/^[0-9a-f-]{36}$/i.test(user.id||''))throw new Error('AUTH_REQUIRED');
+  const membership=await fetch(SUPABASE_URL+'/rest/v1/business_members?select=role&user_id=eq.'+encodeURIComponent(user.id),{headers:ownerAuthHeaders()});
+  if(epoch!==ownerSessionEpoch)return;if(!membership.ok)throw new Error('AUTH_UNAVAILABLE');
+  const roles=JSON.parse(await membership.text());if(!Array.isArray(roles))throw new Error('AUTH_UNAVAILABLE');
+  if(epoch!==ownerSessionEpoch)return;
+  if(roles.some(x=>['owner','manager'].includes(x.role))){history.replaceState(null,'',location.pathname+'?view=hq');return showOwnerApp(false);}
+  if(roles.length){expireOwnerSession('This account does not have Owner access. Contact your business owner.');return;}
+  showOwnerGate('Sign-in verified. Create your business to continue.');openBusinessSetup();
+ }catch(e){if(epoch===ownerSessionEpoch)expireOwnerSession(e.message==='AUTH_REQUIRED'?'Session expired. Request a new secure link.':'Sign-in could not be verified. Check your connection and request a fresh link.');}
+}
+
 function ownerSignOut(){
  const token=ownerAccessToken,headers=ownerAuthHeaders();clearOwnerSession();const epoch=ownerSessionEpoch;showOwnerGate("Signed out on this device.");
  if(token)fetch(SUPABASE_URL+"/auth/v1/logout",{method:"POST",headers}).then(r=>{if(!r.ok)throw new Error("Sign-out unavailable");}).catch(()=>{if(epoch===ownerSessionEpoch)showOwnerGate("Signed out on this device. Server sign-out could not be confirmed.");});
@@ -1690,8 +1714,10 @@ function showOwnerApp(demo=false){
  const epoch=ownerSessionEpoch;
  ownerDemoMode=demo;$(".live-pill").innerHTML=demo?"<i></i> Demo workspace":"<i></i> Live owner workspace";$(".owner b").textContent=demo?"Demo Owner":"Business account";$$("#sideNav [data-module] i:not(.ai-dot)").forEach(n=>n.style.display=demo?"":"none"); if(demo)sessionStorage.setItem("kavelyq-owner-demo","1");else sessionStorage.removeItem("kavelyq-owner-demo"); $("#ownerAuthGate")?.classList.add("hidden"); $("#ownerAppShell")?.classList.remove("hidden");
  if(demo){renderModule(state.module||window.__pendingModule||"home");return;}
- Promise.all([loadOwnerDashboard(),ownerRpc("owner_industry_profile",{}).catch(()=>null),ownerRpc("owner_business_metrics",{}).catch(()=>null),ownerRpc("owner_customer_crm",{}).catch(()=>[]),ownerRpc("owner_rebooking_opportunities",{}).catch(()=>[]),ownerRpc("owner_onboarding_snapshot",{}).catch(()=>null),ownerRpc("owner_subscription_snapshot",{}).catch(()=>null),ownerRpc("owner_business_settings",{}).catch(()=>null),ownerRpc("owner_setup_snapshot",{}).catch(()=>null)]).then(([data,industry,metrics,crm,rebooking,onboarding,subscription,businessSettings,setup])=>{ if(epoch!==ownerSessionEpoch)return;ownerIndustryProfile=industry; ownerMetrics=metrics; ownerCrm=crm||[]; ownerRebooking=rebooking||[]; ownerOnboarding=onboarding; ownerSubscription=subscription; ownerBusinessSettings=businessSettings; ownerSetup=setup;
+ showOwnerGate("Loading your verified business…");
+ return Promise.all([loadOwnerDashboard(),ownerRpc("owner_industry_profile",{}).catch(()=>null),ownerRpc("owner_business_metrics",{}).catch(()=>null),ownerRpc("owner_customer_crm",{}).catch(()=>[]),ownerRpc("owner_rebooking_opportunities",{}).catch(()=>[]),ownerRpc("owner_onboarding_snapshot",{}).catch(()=>null),ownerRpc("owner_subscription_snapshot",{}).catch(()=>null),ownerRpc("owner_business_settings",{}).catch(()=>null),ownerRpc("owner_setup_snapshot",{}).catch(()=>null)]).then(([data,industry,metrics,crm,rebooking,onboarding,subscription,businessSettings,setup])=>{ if(epoch!==ownerSessionEpoch)return;ownerIndustryProfile=industry; ownerMetrics=metrics; ownerCrm=crm||[]; ownerRebooking=rebooking||[]; ownerOnboarding=onboarding; ownerSubscription=subscription; ownerBusinessSettings=businessSettings; ownerSetup=setup;
    if(!data){expireOwnerSession("This account is not connected to a business yet.");return;}
+   $("#ownerAuthGate")?.classList.add("hidden");$("#ownerAppShell")?.classList.remove("hidden");
    const brand=$(".brand small");if(brand)brand.textContent=(data.business?.name||"BUSINESS")+" · LIVE";
    const owner=$(".owner small");if(owner)owner.textContent=(data.business?.role||"owner").toUpperCase()+" · LIVE BACKEND";
    renderModule(state.module||window.__pendingModule||"home");
@@ -1708,7 +1734,7 @@ async function startOwnerTrial(){
   const redirect=location.origin+location.pathname+"?new_business=1";
   const res=await fetch(SUPABASE_URL+"/auth/v1/otp?redirect_to="+encodeURIComponent(redirect),{method:"POST",headers:{"apikey":SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify({email,create_user:true})});
   if(!res.ok)throw new Error(await res.text());
-  showOwnerGate("Trial link sent. Open the email on this device to create your business.");
+  showOwnerGate("Trial link sent. Open the email link in Safari to create your business.");
  }catch(e){showOwnerGate("Could not start the trial. Please try again.");}
  finally{if(btn)btn.disabled=false;}
 }
@@ -1742,7 +1768,7 @@ async function sendOwnerMagicLink(){
  const btn=$("#ownerLoginBtn");if(btn)btn.disabled=true;
  try{
   const res=await fetch(SUPABASE_URL+"/auth/v1/otp?redirect_to="+encodeURIComponent(location.origin+location.pathname+"?view=hq"),{method:"POST",headers:{"apikey":SUPABASE_KEY,"Content-Type":"application/json"},body:JSON.stringify({email,create_user:false})});
-  if(!res.ok)throw new Error(await res.text());showOwnerGate("Secure sign-in link sent. Open it on this device.");
+  if(!res.ok)throw new Error(await res.text());showOwnerGate("Secure sign-in link sent. Open the link in Safari.");
  }catch(e){showOwnerGate("Could not send the sign-in link. Only provisioned owner accounts can sign in.");}
  finally{if(btn)btn.disabled=false;}
 }
@@ -1867,7 +1893,7 @@ document.addEventListener("DOMContentLoaded",()=>{
  $("#ownerTrialBtn")?.addEventListener("click",startOwnerTrial);
  $("#ownerSignOut")?.addEventListener("click",ownerSignOut);
  $("#ownerSignOutMobile")?.addEventListener("click",ownerSignOut);
- if(ownerAccessToken){ if(new URLSearchParams(location.search).get("new_business")==="1") openBusinessSetup(); else showOwnerApp(false); }else if(sessionStorage.getItem("kavelyq-owner-demo"))showOwnerApp(true);else showOwnerGate(ownerAuthCallbackError); if(manageFromUrl)setTimeout(openGuestBookingManager,0);
+ if(ownerAccessToken){ resumeOwnerSignIn(); }else if(sessionStorage.getItem("kavelyq-owner-demo"))showOwnerApp(true);else showOwnerGate(ownerAuthCallbackError); if(manageFromUrl)setTimeout(openGuestBookingManager,0);
 });
 
 function bookingChoiceConfirm(label) {
@@ -2251,3 +2277,4 @@ function syncGuestBookingSummary(server){
  const label=$('#bookingSuccess h2').previousElementSibling;if(label)label.textContent=cancelled?'CANCELLED':'CONFIRMED';
  $('#bookingSuccess p').textContent=cancelled?'Your booking is cancelled. No online payment was charged.':'Your booking was saved. No online payment was charged.';
 }
+
