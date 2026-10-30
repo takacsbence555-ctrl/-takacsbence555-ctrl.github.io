@@ -30,6 +30,8 @@ jobs:
           docker compose -f audit/isolated/compose.yml exec -T db psql -U postgres -v ON_ERROR_STOP=1 < audit/owner-atomic-hours.pending.sql
           docker compose -f audit/isolated/compose.yml up -d rest
           python3 audit/isolated/wait.py http://127.0.0.1:3000/
+      - name: Read-only schema release preflight
+        run: python3 audit/isolated/preflight.py
       - name: Run desktop and mobile signed-owner journeys
         run: |
           docker run --rm --ipc=host --network=host -v "$PWD:/work" -w /work/audit/browser mcr.microsoft.com/playwright:v1.64.1-noble bash -c 'npm ci --ignore-scripts --omit=optional && npx playwright test --config owner.config.cjs'
