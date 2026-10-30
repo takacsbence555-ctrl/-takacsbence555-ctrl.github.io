@@ -12,9 +12,9 @@ Status meanings: PASS = evidence supports the stated scope; FAIL = known current
 | First-time versus existing Owner routing | PASS | PASS | Real local magic links opened in fresh browser contexts without shared storage or redirect intent; identity and membership checked | 1 |
 | Session refresh/logout/expired links | BLOCKED | BLOCKED | Local regression and signed-isolated coverage exist; final full CI and hosted Safari verification required; sessionStorage is browser/tab scoped | 1 / 2 |
 | Tenant isolation and staff permissions | PASS | PASS | Two signed isolated owners and staff-role escalation tests; this does not replace current hosted permissions review | 1 |
-| Current hosted schema, RLS, advisors and migration history | BLOCKED | BLOCKED | Management SQL/migrations/advisors time out; anonymous production checks pass, which is narrower evidence | 2 |
+| Current hosted schema, RLS, advisors and migration history | PASS | PASS | Connection recovered: 70 migrations reviewed, required functions present, all 81 application/private function definitions match the isolated fixture, 18 tenant-scoped policies reviewed, public RLS enabled and dangerous client grants absent. Advisor residuals documented below | 1 |
 | Booking conflicts, local time and DST | PASS | PASS | Concurrent synthetic guest attempts; database exclusion; three session timezones, winter/summer offsets, DST gap rejection and atomic invalid-week rollback | 1 |
-| Pending migration compatibility/application | BLOCKED | BLOCKED | Both pending migrations tested in disposable database only; hosted comparison, backup and explicit migration approval still required | 2 |
+| Pending migration compatibility/application | BLOCKED | BLOCKED | Hosted base signatures/source and legacy role patch compatibility checked; both additions absent as expected. Backup and explicit hosted migration approval still required | 2 |
 | Released candidate and rollback verification | FAIL | FAIL | Production independently remains 81edb461569b0eb8d80cde8873f298219c903c9f; no release authorised | 2 |
 | Dependencies and source credential patterns | PASS | PASS | Both npm audit trees reported zero vulnerabilities; pinned manifests/locks and source/deployment guards; not a full penetration test | 1 |
 | Desktop/mobile accessibility and layout | PASS | PASS | Chromium and touch WebKit workflows and module WCAG scans; physical devices/manual screen-reader review remains additional evidence | 1 / 4 |
@@ -34,6 +34,21 @@ Status meanings: PASS = evidence supports the stated scope; FAIL = known current
 | Rules-based intelligence / outreach approvals | PASS | PASS | Accurately labelled recorded-data foundation with internal approvals; no connected generative AI, guaranteed uplift or automatic customer outreach | 1 |
 | Broad load tests, SSO/MFA expansion, advanced telemetry | BLOCKED | BLOCKED | Can follow a tightly bounded pilot after a risk/limits decision; not claimed implemented; public scale requires capacity evidence | 4 |
 
+| Password policy / leaked-password warning | BLOCKED | BLOCKED | One existing confirmed Auth account has a password credential. Review password strength and restricted signup before pilot; leaked-password protection is disabled and is a paid Pro feature. Do not infer compromise or buy an upgrade | 2 / 3 |
+| Broader booking abuse controls | BLOCKED | BLOCKED | Per-contact limits exist; approve bounded pilot monitoring and review broader IP/edge controls before public scale. No CAPTCHA/provider or paid firewall rule activated | 2 / 4 |
+
+## Current hosted security and operational findings
+
+Read-only access recovered during this session. There is one confirmed Auth account, no business memberships/non-demo businesses, and zero enabled delivery configurations. First-time business onboarding is therefore needed; an Auth account alone is not a provisioned salon workspace. No user identity, password hash, token or customer row was retrieved.
+
+Security advisor: 3 INFO deny-all tables; 10 WARN anonymous SECURITY DEFINER APIs; 27 WARN authenticated SECURITY DEFINER APIs; 1 WARN leaked-password protection. The 37 execution-surface findings correspond to intentional guest capabilities and provisioning/Owner functions. All 81 base function definitions match the exercised fixture; policy predicates were reviewed for tenant ownership. This is scoped evidence, not a penetration-test certification, and execution grants must not be revoked blindly to silence warnings.
+
+The leaked-password warning remains unresolved. The UI uses magic links, but the hosted account has a password credential, so the warning is not dismissed as irrelevant. A strong unique password/password-policy review and curated signup are zero-cost mitigations requiring account approval; paid leaked-password checking remains outside the €0 budget. No password was read, reset or changed. Reference: https://supabase.com/docs/guides/auth/password-security .
+
+Performance advisor: 2 INFO unindexed foreign keys and 25 INFO unused indexes. Review against actual workload later; do not drop indexes from low-traffic statistics or apply hosted DDL without approval. The sampled 24-hour edge log window contained two Data API 502 responses; current smoke/browser checks pass, but this does not establish uptime or explain those historical responses. Active alerts and incident correlation remain operational gates. Only status/source aggregates were inspected, without URLs, IPs, emails or raw log messages.
+
+Advisor references: https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable and https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable .
+
 ## Completed safe engineering in this continuation
 
 - Verified Supabase identity and business membership before Owner UI/onboarding; recover without redirect query or prior Gmail browser storage.
@@ -48,7 +63,7 @@ Status meanings: PASS = evidence supports the stated scope; FAIL = known current
 
 | Blocker | iPhone-friendly minimum action | Minimum incremental cost |
 |---|---|---|
-| Management connection | Open existing Supabase project in Safari; confirm health/reconnect integration; do not reset data. Run only the read-only preflight when accessible | €0 under existing access |
+| Hosted schema access | Resolved automatically; read-only preflight, migrations, policies and advisors now inspected. No reconnection action needed | €0 |
 | Hosted callback release proof | After other safety gates, approve the exact candidate deployment and one fresh email to a controlled inbox; verify actual Owner dashboard in Safari, refresh and logout | €0 if existing hosting/Auth entitlements permit |
 | Hosted backup | Choose existing private storage, configure export credentials securely and retain the decryption key; approve read-only export and isolated restore, never production overwrite | €0 if suitable existing private storage/export access is available; otherwise unresolved, no purchase authorised |
 | External Owner/Auth SMTP | Inspect SMTP settings; supply an eligible existing sender/domain and secure provider credentials; approve a controlled test. Do not add salons as project administrators | €0 with suitable existing resources; new domain/provider cost is conditional and not approved |
