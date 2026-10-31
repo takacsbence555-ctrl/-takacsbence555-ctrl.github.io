@@ -79,3 +79,7 @@ Advisor references: https://supabase.com/docs/guides/database/database-linter?li
 Stage A: up to three named salons, one onboarded at a time, 14 days free, no card/automatic conversion, synthetic rehearsal first, approved restricted access and data processing, fallback appointment record, named support and daily staffed checks. Manual salon communications are explicit; automation stays off. Review day 7, export/delete or separately approve extension at day 14. Start only after the blocked/failed mandatory pilot gates above are resolved and the operator approves activation. If eligibility/resources cannot be provided at €0, continue only supervised synthetic usability evaluation.
 
 Stage B: after a successful pilot, resolve all public-paid gates, activate approved sender/worker/webhooks, billing and enforced tiers, approved legal documents, hosted recovery, dependable alerts/support and actual deployed-device evidence. Publish pricing and checkout only after explicit approval. No launch date or revenue claim is invented.
+
+## 31 October release-control follow-up
+
+Estimated live-pilot readiness: 65% (judgement estimate, not a test statistic); recommendation remains NO-GO. See APPROVAL_SEQUENCE.md for nine separate decisions, exact command templates, risks, effects, prerequisites, iPhone steps and a private feedback process. The new read-only release-gate evaluator rejects blanket approval, missing backups and missing pilot prerequisites. It is not connected to production and cannot authorise or execute a release.
