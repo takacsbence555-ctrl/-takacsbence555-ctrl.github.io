@@ -4177,3 +4177,10 @@ button {
 /* The sidebar footer is hidden on mobile; keep session termination available. */
 .mobile-owner-signout{display:none}
 @media(max-width:900px){.mobile-owner-signout{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 10px;white-space:nowrap}.head-actions{gap:8px}}
+
+/* Booking review accessibility: preserve the palette with readable small text. */
+#booking .safe{color:#7bc49a}
+#booking .social-login button,#booking .or{color:#aaa69e}
+#booking .deposit-card small{color:#555149}
+#bookingLegalLinks a{color:#f4f1e9;text-decoration:underline;text-underline-offset:.18em}
+#bookingLegalLinks a:focus-visible{outline:2px solid currentColor;outline-offset:4px}

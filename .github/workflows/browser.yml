@@ -27,6 +27,11 @@ jobs:
           docker compose -f audit/isolated/compose.yml exec -T db psql -U postgres -v ON_ERROR_STOP=1 < audit/isolated/guest-fixtures.sql
           docker compose -f audit/isolated/compose.yml up -d rest
           python3 audit/isolated/wait.py http://127.0.0.1:3000/
+      - name: Cross-tenant, table permissions, industry and DST SQL regressions
+        run: |
+          for test in audit/tenant-matrix.test.sql audit/table-role-boundaries.test.sql audit/snapshot-roles.test.sql audit/time-off-local.test.sql; do
+            docker compose -f audit/isolated/compose.yml exec -T db psql -U postgres -v ON_ERROR_STOP=1 < "$test"
+          done
       - name: Desktop and touch WebKit guest journeys (no hosted writes)
         run: docker run --rm --ipc=host --network=host -v "$PWD:/work" -w /work/audit/browser mcr.microsoft.com/playwright:v1.64.1-noble bash -c 'npm ci --ignore-scripts --omit=optional && npm test'
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

@@ -8,7 +8,7 @@ COMMAND=['docker','compose','-f',str(ROOT/'audit/isolated/compose.yml'),'exec','
 def sql(text,check=True):
     return subprocess.run(COMMAND,input=text.encode(),stdout=subprocess.PIPE,stderr=subprocess.PIPE,check=check)
 def fingerprint():
-    return sql("select md5(string_agg(x,'|' order by x)) from (select pg_get_functiondef(p.oid) x from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in('public','kavelyq_private') union all select schemaname||'.'||tablename from pg_tables where schemaname in('public','kavelyq_private')) s;").stdout
+    return sql("select md5(string_agg(x,'|' order by x)) from (select pg_get_functiondef(p.oid)||coalesce(p.proacl::text,'{}') x from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in('public','kavelyq_private') union all select n.nspname||'.'||c.relname||c.relrowsecurity::text||coalesce(c.relacl::text,'{}') from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname in('public','kavelyq_private') and c.relkind='r' union all select row_to_json(p)::text from pg_policies p where schemaname in('public','kavelyq_private')) s;").stdout
 paths=['audit/owner-atomic-hours.pending.sql','audit/notification-adapter.pending.sql']
 parts=[]
 for name in paths:

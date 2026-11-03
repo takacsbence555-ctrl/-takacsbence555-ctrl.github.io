@@ -8,7 +8,7 @@ assert.deepEqual(findings('sb_publishable_'+'a'.repeat(30)),[]);
 assert(findings('AGE-'+'SECRET-KEY-1'+'A'.repeat(58)).includes('age identity'));
 assert.deepEqual(findings('age1'+'a'.repeat(58)),[]);
 assert(findings('-----BEGIN '+'ENCRYPTED PRIVATE KEY-----\nAAAA\n-----END'+' ENCRYPTED PRIVATE KEY-----').includes('private key'));
-function walk(dir){return fs.readdirSync(dir,{withFileTypes:true}).flatMap(x=>['.git','node_modules','__pycache__','test-results','playwright-report'].includes(x.name)?[]:x.isDirectory()?walk(path.join(dir,x.name)):/(?:\.(?:c?js|mjs|json|sql|py|html|css|ya?ml|md|txt|pem|key)|(?:^|\/)\.env(?:\..*)?)$/.test(x.name)?[path.join(dir,x.name)]:[]);}
+function walk(dir){return fs.readdirSync(dir,{withFileTypes:true}).flatMap(x=>{if(x.isFile())assert(!/\.(dump|cms|age|pem|key)$/i.test(x.name),'Backup/identity artifact must not be in the source tree: '+path.relative(root,path.join(dir,x.name)));return ['.git','node_modules','__pycache__','test-results','playwright-report'].includes(x.name)?[]:x.isDirectory()?walk(path.join(dir,x.name)):/(?:\.(?:c?js|mjs|json|sql|py|html|css|ya?ml|md|txt|pem|key)|(?:^|\/)\.env(?:\..*)?)$/.test(x.name)?[path.join(dir,x.name)]:[];});}
 const guest=fs.readFileSync(path.join(root,'audit/browser/journeys.spec.cjs'),'utf8');
 assert(guest.includes("require('./isolated-backend.cjs')"));
 assert(!guest.includes("request.post(api+"),'Guest mutations must never target hosted backend');
