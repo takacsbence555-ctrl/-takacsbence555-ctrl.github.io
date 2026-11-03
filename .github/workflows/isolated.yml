@@ -41,6 +41,8 @@ jobs:
         run: docker compose -f audit/isolated/compose.yml exec -T db psql -U postgres -v ON_ERROR_STOP=1 < audit/isolated/timezone.test.sql
       - name: Install standard age recovery tool
         run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends age
+      - name: Synthetic age STREAM boundaries and protected identity recovery
+        run: python3 audit/isolated/age_recovery.py
       - name: Backup and restore only disposable CI data
         if: ${{ !cancelled() && steps.infrastructure.outcome == 'success' }}
         run: python3 audit/isolated/recovery.py

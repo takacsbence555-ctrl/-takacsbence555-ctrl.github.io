@@ -101,3 +101,8 @@ Keep each pending file's BEGIN/COMMIT boundary. Do not use psql --single-transac
 ## Test safety boundary
 
 Both guest and Owner browser suites use disposable backend services and block external page requests. The guest configuration refuses a remote BASE_URL; no automatic hosted mutation test is provided. Production smoke retains only non-booking-write anonymous/invalid-reference and shell/header checks. Keep exact deployed-commit and real-device testing as separate approval gates. Draft legal documents remain review files; only explicitly configured business HTTPS policy URLs appear in booking review.
+
+
+## Standard age recovery clarification
+
+The canonical format/custody and reproducible restore procedure is now [AGE_BACKUP_RECOVERY.md](AGE_BACKUP_RECOVERY.md). The founder already has an AgePony X25519 identity, a reported 32-character recovery passphrase privately in Bitwarden and a protected paper-recovery PDF. Do not request them or recreate the key. PDF durable storage and recovery are UNVERIFIED. The protected payload is a standard armored age scrypt file inside the PDF; do not assume PDF-container encryption. Synthetic tests now recover a protected identity, remove only the original SYNTHETIC key, decrypt with the recovered key, and reject wrong passphrases, missing keys and corrupted/truncated archives without publishing partial plaintext. Same-vault cached-key decryption alone is not independent recovery evidence.
