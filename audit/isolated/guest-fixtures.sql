@@ -11,7 +11,7 @@ do $$
 declare item jsonb;svc jsonb;bid uuid;sid uuid;vid uuid;n int;
 begin
  for item in select value from jsonb_array_elements('[
- {"type":"barber","slug":"demo-studio","name":"Demo Studio","role":"Barber","services":[["QA Haircut",2500,30],["QA Beard Trim",1500,30]]},
+ {"type":"barber","slug":"demo-studio","name":"Demo Studio","role":"Barber","services":[["Classic Cut",2500,30],["Skin Fade",3000,45],["Cut + Beard",4000,60],["Beard Ritual",1500,30]]},
  {"type":"beauty","slug":"demo-beauty","name":"KAVELYQ BEAUTY · DEMO","role":"Artist","services":[["Everyday Makeup",5500,60],["Evening Makeup",7500,90],["Bridal Trial",11000,120],["Facial Treatment",6500,60]]},
  {"type":"nails","slug":"demo-nails","name":"KAVELYQ NAILS · DEMO","role":"Technician","services":[["Classic Manicure",3500,45],["Gel Manicure",5500,75],["Lash Extensions",8500,120],["Lash Refill",5000,60]]},
  {"type":"wellness","slug":"demo-wellness","name":"KAVELYQ WELLNESS · DEMO","role":"Therapist","services":[["Relaxing Massage",6500,60],["Deep Tissue Massage",8500,90],["Back Massage",4000,30],["Wellness Consultation",2500,30]]},

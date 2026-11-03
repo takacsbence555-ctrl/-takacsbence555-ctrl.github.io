@@ -2110,10 +2110,25 @@ function restoreRoute(){
 window.addEventListener('popstate',restoreRoute);
 document.addEventListener('DOMContentLoaded',restoreRoute);
 
+// Show only the business's configured HTTPS policy links, never draft platform policies.
+function renderBookingLegalLinks(business){
+ let nav=document.getElementById('bookingLegalLinks');
+ if(!nav){nav=document.createElement('nav');nav.id='bookingLegalLinks';nav.setAttribute('aria-label','Business policies');document.querySelector('#bookingPolicyConsent')?.closest('.policy')?.after(nav);}
+ nav.replaceChildren();
+ for(const [field,label] of [['privacy_url','Privacy policy'],['terms_url','Terms and conditions']]){
+  const value=business?.[field];if(typeof value!=='string'||value.length>2048)continue;
+  let url;try{url=new URL(value);if(url.protocol!=='https:'||url.username||url.password)continue;}catch{continue;}
+  const link=document.createElement('a');link.href=url.href;link.textContent=label;link.target='_blank';link.rel='noopener noreferrer';
+  if(nav.childNodes.length)nav.append(document.createTextNode(' · '));nav.append(link);
+ }
+ nav.hidden=!nav.childNodes.length;
+}
+
 async function loadBookingCatalog(){
  try{
   const c=await supabaseRpc('get_public_booking_catalog',{p_business_slug:BOOKING_BUSINESS});
   if(!c || !c.business || !Array.isArray(c.services) || !Array.isArray(c.staff))throw new Error("CATALOG_UNAVAILABLE");
+  renderBookingLegalLinks(c.business);
   bookingCatalogReady=true;bookingBusinessType=c.business.business_type||"barber";bookingIsDemo=!!c.business.is_demo||BOOKING_BUSINESS==="demo-studio";supabaseRpc('get_public_branding',{p_business_slug:BOOKING_BUSINESS}).then(c=>{if(c)applyBookingBranding(c)}).catch(()=>{});
   bookingCurrency=c.business.currency||'EUR';bookingCancellationPolicy='Cancellation window: '+(c.business.cancellation_window_hours??24)+' hours. '+(c.business.no_show_policy||'Contact the business for its policy.');bookingTimeZone=c.business?.timezone||"Europe/Vienna";if(bookingDate<viennaISODate())bookingDate=viennaISODate();
   $$(".date-strip button").forEach((b,i)=>{b.dataset.date=viennaISODate(i);const d=new Date(b.dataset.date+"T12:00:00Z");b.querySelector("b").textContent=new Intl.DateTimeFormat("en-GB",{day:"2-digit",timeZone:bookingTimeZone}).format(d)});

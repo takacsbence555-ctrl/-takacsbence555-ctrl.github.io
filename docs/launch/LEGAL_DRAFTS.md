@@ -83,3 +83,8 @@ The controller warrants authorised instructions, lawful collection and adequate 
 - EDPB small-business roles: https://www.edpb.europa.eu/sme/learn-the-basics/data-controller-or-data-processor_en
 
 Professional review is required for these drafts before use. Its cost is unknown; no advice or filing has been purchased.
+
+
+## Proposed backup-provider disclosure — 3 November, still a draft
+
+The intended archive destination is a separately controlled Google Drive account with client-side age encryption. No production export has been made. Before activation, the operator must assess the account's applicable contractual/data-processing terms, access/recovery controls, retention/deletion, regional/international-transfer requirements and subprocessor disclosure. A free personal storage quota alone is not proof of an appropriate processor agreement. Private key custody is separate from the archive account; do not include identities, recovery PDFs or passphrases in policies or support records. No legal conclusion or new policy publication is implied by the synthetic transport/recovery tests.

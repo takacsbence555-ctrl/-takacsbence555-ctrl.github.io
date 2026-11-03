@@ -1,12 +1,12 @@
 # KAVELYQ release scorecard
 
-Preparation checkpoint, 30 October 2026. Recommendation: **NOT READY** for a live customer pilot or public paid launch. Safe synthetic evaluation can continue. This scorecard distinguishes candidate test evidence from hosted operation. The exact final commit's Actions results are recorded in PR #10; an older green run is not a release approval.
+Preparation checkpoint, 3 November 2026. Recommendation: **NOT READY** for a live customer pilot or public paid launch. Safe synthetic evaluation can continue. This scorecard distinguishes candidate test evidence from hosted operation. The exact final commit's Actions results are recorded in PR #10; an older green run is not a release approval.
 
 Status meanings: PASS = evidence supports the stated scope; FAIL = known current gap; BLOCKED = verification/activation needs access, configuration or approval. Categories: 1 = safe engineering completed/automatable; 2 = operator approval/account setup; 3 = conditional spending; 4 = optional improvement. No provider purchase, company registration, email campaign, payment activation, merge, production deployment or hosted migration was performed.
 
 | Critical area | Closed pilot | Public paid | Evidence / remaining gate | Category |
 |---|---|---|---|---|
-| Guest booking, manage, reschedule, cancellation | PASS | PASS | Desktop/mobile candidate suite exercises persisted synthetic demo bookings and concurrent conflicts; release still needs controlled deployed-candidate verification | 1 / 2 |
+| Guest booking, manage, reschedule, cancellation | PASS | PASS | Desktop/mobile candidate suite now runs against disposable PostgreSQL/PostgREST only, with preserved booking, waitlist, cancellation and concurrency assertions; release still needs controlled deployed-candidate verification | 1 / 2 |
 | Owner Calendar, CRM, staff, services, settings, branding, import, industries | PASS | PASS | Actual isolated signed-owner journeys, not mocked persistence; salon production records not exercised | 1 |
 | Real iPhone/Safari Owner sign-in | BLOCKED | BLOCKED | Callback/provisioning fixes are in PR; production still runs old commit; controlled hosted email and physical-iPhone verification require approval | 2 |
 | First-time versus existing Owner routing | PASS | PASS | Real local magic links opened in fresh browser contexts without shared storage or redirect intent; identity and membership checked | 1 |
@@ -18,11 +18,11 @@ Status meanings: PASS = evidence supports the stated scope; FAIL = known current
 | Released candidate and rollback verification | FAIL | FAIL | Production independently remains 81edb461569b0eb8d80cde8873f298219c903c9f; no release authorised | 2 |
 | Dependencies and source credential patterns | PASS | PASS | Both npm audit trees reported zero vulnerabilities; pinned manifests/locks and source/deployment guards; not a full penetration test | 1 |
 | Desktop/mobile accessibility and layout | PASS | PASS | Chromium and touch WebKit workflows and module WCAG scans; physical devices/manual screen-reader review remains additional evidence | 1 / 4 |
-| Notification foundation | PASS | PASS | Native worker/webhook entry points prepared with default-off controls; local queue/provider-contract tests cover retries, idempotency, stale leases, signed webhooks, suppression and duplicates | 1 |
+| Notification foundation | PASS | PASS | Default-off worker/webhook; missing business timezone and malformed known-event identifiers fail closed; late delay cannot downgrade delivered; local queue/provider-contract tests cover retries, idempotency, stale leases, signed webhooks, suppression and duplicates | 1 |
 | Actual Auth SMTP / external Owner delivery | BLOCKED | BLOCKED | Own-account delivery does not prove external owners; built-in SMTP is restricted testing infrastructure; inspect actual SMTP configuration | 2 / 3 |
 | Automated customer notification delivery | PASS | BLOCKED | Pilot can explicitly use salon-managed communication with automation disabled; public automated service needs approved deployment/configuration of the prepared routes, a verified sender, webhook and real provider evidence | 2 / 3 |
-| Encrypted synthetic recovery drill | PASS | PASS | 47-table disposable backup/restoration, integrity/authenticated encryption, restored RLS and grant-tampering checks; never a production restore | 1 |
-| Hosted off-site backup and measured recovery | BLOCKED | BLOCKED | Secure export access, owner-held keys, existing private storage and approved drill required; source/config/storage asset coverage must be checked | 2 |
+| Encrypted synthetic recovery drill | PASS | PASS | Disposable backup/restoration plus standard age X25519 compatibility, corrupt/truncated archive and wrong-identity rejection, explicit sequence state comparison and tampering checks; never a production restore | 1 |
+| Hosted off-site backup and measured recovery | BLOCKED | BLOCKED | Private Google Drive destination selected; founder reports locally generated AgePony X25519 identity, never inspected. Encrypted recovery PDF storage/import and physical-device decryption remain UNVERIFIED. Secure export access and approved drill required; source/config/storage asset coverage must be checked | 2 |
 | Active scheduled monitoring and alert routing | FAIL | FAIL | Smoke workflow absent from main; no scheduled runs; Vercel log drains empty; PR-only cron is not operational monitoring | 2 |
 | Pilot incident owner/support channel | BLOCKED | BLOCKED | Runbook drafted; operator must name contact/hours and test incident routing; manual staffed review may suffice for a tiny supervised pilot | 2 |
 | Export, customer anonymisation and consent | PASS | PASS | Isolated CRM lifecycle and existing privacy regression tests; no real customer erased during preparation | 1 |
@@ -83,3 +83,22 @@ Stage B: after a successful pilot, resolve all public-paid gates, activate appro
 ## 31 October release-control follow-up
 
 Estimated live-pilot readiness: 65% (judgement estimate, not a test statistic); recommendation remains NO-GO. See APPROVAL_SEQUENCE.md for nine separate decisions, exact command templates, risks, effects, prerequisites, iPhone steps and a private feedback process. The new read-only release-gate evaluator rejects blanket approval, missing backups and missing pilot prerequisites. It is not connected to production and cannot authorise or execute a release.
+
+
+## 3 November safe continuation
+
+Source re-established through the GitHub integration: PR #10 OPEN at ac48a7b before this continuation; all eight baseline runs successful. Main/production independently confirmed 81edb461569b0eb8d80cde8873f298219c903c9f; latest preview is older 6b810a8, not the current candidate. Deployment guard retained. No hosted write/export, email, merge or deployment performed.
+
+Fresh hosted read-only evidence: 70 migrations, 81/81 application/private function hashes match the base fixture after whitespace/statement-terminator normalization, public tables without RLS 0, anonymous public table grants 0, Auth users 1, memberships 0. Both pending additions remain absent; exact legacy notification patch guard present. Advisor residuals unchanged: 3 deny-all INFO, 10 anonymous and 27 authenticated SECURITY DEFINER findings, and disabled leaked-password protection. Resend has no domains/webhooks.
+
+The old guest CI targeted hosted demo records. It has been moved to disposable Auth/Mailpit/PostgREST/PostgreSQL, with all lifecycle/concurrency assertions retained and outbound page requests blocked. Production smoke now has 14 non-booking-write checks; its former invalid booking assertion runs against the isolated backend instead. This avoids both test pollution and assuming demo mutations are harmless hosted writes. No hosted records were cleaned up or altered during this correction.
+
+New standard age CLI tests generate ephemeral synthetic identities in a temporary 0700 directory only; no founder identity or public recipient is accepted. Successful local checks: X25519 round-trip, wrong identity, truncation and tampering rejection. The full CI restores the age-decrypted database archive and compares sequence state as well as rows/schema/RLS/grants. None of this proves that the founder's recovery PDF contains a usable identity or is stored safely. A paper passphrase alone is not an identity backup.
+
+New provider tests cover missing timezone and signed malformed identifiers; SQL protects delivered outcomes against late delayed events. Notification migration now rejects incompatible base definitions atomically instead of silently applying an ineffective replacement. Both workflows use the documented hours → notification order, with an isolated transactional rollback and incompatible-base rehearsal. Existing hosted migrations were not replayed.
+
+Business-configured HTTPS privacy/terms links are now rendered on booking review. Unsafe schemes, credential-bearing URLs and absent links are omitted. No platform legal draft has been published or approved. The business remains responsible for the configured destination and actual legal content; this is link integration, not a compliance certification.
+
+Conditional timezone gate: hosted PostgreSQL reports 17.6. Supabase's 30 October advisory identifies older service builds with incorrect conversions for America/Vancouver, America/Edmonton and Africa/Casablanca. Hosted conversion probes and index metadata were read; there are zero timezone-expression indexes. No upgraded service version or corrected rules have been verified. A supervised Europe/London/Europe/Vienna pilot is a narrower scope; do not approve businesses in the affected zones without service-version/support verification. Any hosted upgrade causes potential downtime and needs separate approval after backup. Source: https://supabase.com/changelog/tzdata-local-time-vancouver-edmonton-casablanca .
+
+Current-head CI evidence and remaining failures are recorded in NOVEMBER_VERIFICATION.md and PR #10. Local browser installation was blocked by truncated browser downloads; real desktop/touch-WebKit results must come from completed GitHub Actions, never that failed installation attempt.
