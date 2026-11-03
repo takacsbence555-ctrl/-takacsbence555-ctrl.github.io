@@ -99,7 +99,7 @@ def recovery_identity_for_drill(p,recipient,archive,encrypted):
     missing=p/'missing-identity.dump'
     assert not atomic_decrypt_for_drill(p/'nonexistent.identity',encrypted,missing)
     assert not missing.exists()
-    return {'protected_identity_recovery':True,'recovered_identity_decrypts_without_original':True,'wrong_recovery_passphrase_rejected':True,'damaged_recovery_payload_rejected':True,'missing_identity_rejected':True,'native_pdf_recovery_tested':False}
+    return restored.read_bytes(),{'protected_identity_recovery':True,'recovered_identity_decrypts_without_original':True,'wrong_recovery_passphrase_rejected':True,'damaged_recovery_payload_rejected':True,'missing_identity_rejected':True,'native_pdf_recovery_tested':False}
 
 def round_trip(archive,directory):
     p=pathlib.Path(directory)
@@ -133,8 +133,8 @@ def round_trip(archive,directory):
         raise AssertionError('Existing output overwritten')
     except FileExistsError:pass
     assert sentinel.read_bytes()==b'preserve this existing file'
-    recovery=recovery_identity_for_drill(p,recipient,archive,encrypted)
-    return plain,{'age_x25519_roundtrip':True,'malformed_recipient_rejected':True,'wrong_identity_rejected':True,'age_tampering_rejected':True,'age_truncation_rejected':True,'atomic_plaintext_publication':True,'partial_plaintext_removed':True,'existing_destination_preserved':True,**recovery,'founder_identity_used':False,'iphone_recovery_verified':False}
+    recovered_plain,recovery=recovery_identity_for_drill(p,recipient,archive,encrypted)
+    return recovered_plain,{'age_x25519_roundtrip':True,'malformed_recipient_rejected':True,'wrong_identity_rejected':True,'age_tampering_rejected':True,'age_truncation_rejected':True,'atomic_plaintext_publication':True,'partial_plaintext_removed':True,'existing_destination_preserved':True,**recovery,'founder_identity_used':False,'iphone_recovery_verified':False}
 
 def main():
     # Exercise empty input and both sides of the 64 KiB STREAM boundary.
