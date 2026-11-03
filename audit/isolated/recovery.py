@@ -4,6 +4,7 @@ It never accepts a production URL, exports a hosted database, or uploads a dump/
 The full dump includes Auth fixture records, application data, policies and grants.
 """
 import hashlib,json,os,pathlib,subprocess,tempfile,time,uuid
+from age_recovery import round_trip
 
 ROOT=pathlib.Path(__file__).resolve().parents[2]
 COMPOSE=['docker','compose','-f',str(ROOT/'audit/isolated/compose.yml')]
@@ -25,7 +26,10 @@ def manifest(database):
         rows[table]={'count':len(json.loads(value)),'sha256':hashlib.sha256(value.encode()).hexdigest()}
     # A restored database has a new catalog name; compare every grant field except that name.
     structural=query(database,"select jsonb_build_object('policies',(select jsonb_agg(to_jsonb(p) order by schemaname,tablename,policyname) from pg_policies p where schemaname in('public','kavelyq_private')),'functions',(select jsonb_agg(pg_get_functiondef(p.oid) order by n.nspname,p.proname,pg_get_function_identity_arguments(p.oid)) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in('public','kavelyq_private')),'grants',(select jsonb_agg(to_jsonb(g)-'table_catalog' order by table_schema,table_name,grantee,privilege_type) from information_schema.role_table_grants g where table_schema in('public','kavelyq_private')),'constraints',(select jsonb_agg(pg_get_constraintdef(c.oid) order by n.nspname,t.relname,c.conname) from pg_constraint c join pg_class t on t.oid=c.conrelid join pg_namespace n on n.oid=t.relnamespace where n.nspname in('public','kavelyq_private')))::text")
-    return {'tables':rows,'structure_sha256':hashlib.sha256(structural.encode()).hexdigest(),'components':{k:hashlib.sha256(json.dumps(v,sort_keys=True).encode()).hexdigest() for k,v in json.loads(structural).items()}}
+    sequences={}
+    for name in json.loads(query(database,"select coalesce(json_agg(format('%I.%I',schemaname,sequencename) order by schemaname,sequencename),'[]') from pg_sequences where schemaname in ('auth','public','kavelyq_private')")):
+        sequences[name]=json.loads(query(database,'select row_to_json(s)::text from (select last_value,is_called from '+name+') s'))
+    return {'sequences':sequences,'tables':rows,'structure_sha256':hashlib.sha256(structural.encode()).hexdigest(),'components':{k:hashlib.sha256(json.dumps(v,sort_keys=True).encode()).hexdigest() for k,v in json.loads(structural).items()}}
 
 def verify_boundaries(database):
     query(database,"""begin; do $$ declare u uuid;b uuid;n integer;begin
@@ -44,6 +48,7 @@ def verify_boundaries(database):
 def main():
     # Stop only the local fixture Auth process so the source remains quiescent.
     run(COMPOSE+['stop','auth'])
+    query('postgres',"create sequence public.qa_recovery_sequence start 101 increment 7; select nextval('public.qa_recovery_sequence');")
     before=manifest('postgres');target='qa_restore_'+uuid.uuid4().hex
     assert target.startswith('qa_restore_') and len(target)==43
     started=time.monotonic()
@@ -59,6 +64,8 @@ def main():
         damaged=bytearray((p/'backup.cms').read_bytes());damaged[-1]^=1;(p/'damaged.cms').write_bytes(damaged)
         bad=subprocess.run(['openssl','cms','-decrypt','-binary','-inform','DER','-in',str(p/'damaged.cms'),'-recip',str(p/'cert.pem'),'-inkey',str(p/'key.pem')],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
         assert bad.returncode!=0,'Encrypted archive corruption was not rejected'
+        # Restore the age-decrypted archive; CMS remains an independently checked legacy format.
+        plain,age_result=round_trip(archive,p)
         db(['createdb','-U','postgres',target])
         db(['pg_restore','-U','postgres','-d',target,'--clean','--if-exists','--exit-on-error','--single-transaction'],input=plain)
         after=manifest(target)
@@ -70,9 +77,13 @@ def main():
         assert manifest(target)['components']['grants']!=before['components']['grants'],'Grant tampering was not detected'
         query(target,'revoke select on public.customers from anon')
         assert manifest(target)==before,'Grant rollback did not restore the expected permissions'
+        query(target,"select setval('public.qa_recovery_sequence',9999,true)")
+        assert manifest(target)['sequences']!=before['sequences'],'Sequence tampering was not detected'
+        query(target,"select setval('public.qa_recovery_sequence',101,true)")
+        assert manifest(target)==before,'Sequence rollback did not restore state'
         verify_boundaries(target)
         assert manifest('postgres')==before,'Source data changed during drill'
-        result={'scope':'isolated synthetic CI database only','tables_verified':len(before['tables']),'backup_sha256':hashlib.sha256(archive).hexdigest(),'encrypted_roundtrip':True,'corruption_rejected':True,'rows_schema_policies_grants_equal':True,'restored_rls_verified':True,'grant_tampering_detected':True,'source_unchanged':True,'duration_seconds':round(time.monotonic()-started,2),'production_backup_verified':False}
+        result={'scope':'isolated synthetic CI database only','tables_verified':len(before['tables']),'sequences_verified':len(before['sequences']),'sequence_tampering_detected':True,**age_result,'backup_sha256':hashlib.sha256(archive).hexdigest(),'encrypted_roundtrip':True,'corruption_rejected':True,'rows_schema_policies_grants_equal':True,'restored_rls_verified':True,'grant_tampering_detected':True,'source_unchanged':True,'duration_seconds':round(time.monotonic()-started,2),'production_backup_verified':False}
         (ROOT/'audit/isolated/recovery-result.json').write_text(json.dumps(result,indent=2)+'\n')
         print(json.dumps(result))
     # The whole isolated Compose cluster is removed by CI; no real database is touched.

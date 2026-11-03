@@ -3,6 +3,9 @@ begin;
 do $$ declare signature text;definition text;begin
 foreach signature in array array['public.complete_email_notification(uuid,text)','public.fail_email_notification(uuid,text)'] loop
 select pg_get_functiondef(signature::regprocedure) into definition;
+if position($q$coalesce(current_setting('request.jwt.claim.role',true),'') <> 'service_role'$q$ in definition)=0 then
+raise exception 'INCOMPATIBLE_NOTIFICATION_BASE: %',signature;
+end if;
 definition:=replace(definition,$q$coalesce(current_setting('request.jwt.claim.role',true),'') <> 'service_role'$q$,$q$coalesce(current_setting('request.jwt.claim.role',true),'') <> 'service_role' and coalesce(auth.jwt()->>'role','') <> 'service_role'$q$);
 execute definition;
 end loop;
@@ -42,7 +45,7 @@ if coalesce(auth.jwt()->>'role','')<>'service_role' then raise exception 'SERVIC
 if p_event_id is null or length(p_event_id)>200 or p_type not in('email.delivered','email.bounced','email.complained','email.suppressed','email.failed','email.delivery_delayed') then raise exception 'INVALID_EVENT';end if;
 select * into q from public.notification_queue where provider_message_id=p_provider_id limit 1 for update;if q.id is null then raise exception 'UNKNOWN_PROVIDER_MESSAGE';end if;
 insert into kavelyq_private.notification_delivery_events(event_id,notification_id,event_type) values(p_event_id,q.id,p_type) on conflict do nothing;if not found then return 'duplicate';end if;
-insert into kavelyq_private.notification_delivery_state(notification_id,outcome) values(q.id,p_type) on conflict(notification_id) do update set outcome=excluded.outcome,updated_at=now() where notification_delivery_state.outcome not in('email.bounced','email.complained','email.suppressed','email.failed');
+insert into kavelyq_private.notification_delivery_state(notification_id,outcome) values(q.id,p_type) on conflict(notification_id) do update set outcome=excluded.outcome,updated_at=now() where notification_delivery_state.outcome not in('email.bounced','email.complained','email.suppressed','email.failed') and (notification_delivery_state.outcome<>'email.delivered' or excluded.outcome in('email.bounced','email.complained','email.suppressed','email.failed'));
 if p_type in('email.bounced','email.complained','email.suppressed') then
 insert into kavelyq_private.notification_suppressions values(q.business_id,encode(extensions.digest(lower(q.destination),'sha256'),'hex'),p_type) on conflict do nothing;
 update public.notification_queue set status='cancelled' where business_id=q.business_id and lower(destination)=lower(q.destination) and status in('pending','failed','processing');end if;

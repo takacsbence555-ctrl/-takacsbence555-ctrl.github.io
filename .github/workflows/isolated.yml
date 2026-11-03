@@ -26,8 +26,9 @@ jobs:
         id: infrastructure
         run: |
           docker compose -f audit/isolated/compose.yml exec -T db psql -U postgres -v ON_ERROR_STOP=1 < audit/isolated/schema.sql
-          docker compose -f audit/isolated/compose.yml exec -T db psql -U postgres -v ON_ERROR_STOP=1 < audit/notification-adapter.pending.sql
+          python3 audit/isolated/migrations.py
           docker compose -f audit/isolated/compose.yml exec -T db psql -U postgres -v ON_ERROR_STOP=1 < audit/owner-atomic-hours.pending.sql
+          docker compose -f audit/isolated/compose.yml exec -T db psql -U postgres -v ON_ERROR_STOP=1 < audit/notification-adapter.pending.sql
           docker compose -f audit/isolated/compose.yml up -d rest
           python3 audit/isolated/wait.py http://127.0.0.1:3000/
       - name: Read-only schema release preflight
@@ -38,6 +39,8 @@ jobs:
       - name: Business-local hours and DST database regression
         if: ${{ !cancelled() && steps.infrastructure.outcome == 'success' }}
         run: docker compose -f audit/isolated/compose.yml exec -T db psql -U postgres -v ON_ERROR_STOP=1 < audit/isolated/timezone.test.sql
+      - name: Install standard age recovery tool
+        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends age
       - name: Backup and restore only disposable CI data
         if: ${{ !cancelled() && steps.infrastructure.outcome == 'success' }}
         run: python3 audit/isolated/recovery.py

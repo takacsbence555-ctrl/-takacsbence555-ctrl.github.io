@@ -3,11 +3,6 @@ on:
   push:
     branches: [release/final-20261015, main]
   workflow_dispatch:
-    inputs:
-      target:
-        description: Optional verified production origin
-        required: false
-        default: ''
 concurrency:
   group: browser-regression-${{ github.ref }}
   cancel-in-progress: true
@@ -16,20 +11,24 @@ permissions:
 jobs:
   browsers:
     runs-on: ubuntu-latest
-    container:
-      image: mcr.microsoft.com/playwright:v1.64.1-noble
-      options: --ipc=host
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           persist-credentials: false
-      - run: npm ci --ignore-scripts --omit=optional
-        working-directory: audit/browser
-      - run: npm test
-        working-directory: audit/browser
-        env:
-          BASE_URL: ${{ github.ref == 'refs/heads/main' && 'https://takacsbence555-ctrl-github-io.vercel.app' || inputs.target || '' }}
+      - name: Start disposable guest backend only
+        run: |
+          docker compose -f audit/isolated/compose.yml up -d --wait db mail
+          docker compose -f audit/isolated/compose.yml up -d auth
+          python3 audit/isolated/wait.py http://127.0.0.1:9999/health
+          docker compose -f audit/isolated/compose.yml exec -T db psql -U postgres -v ON_ERROR_STOP=1 < audit/isolated/schema.sql
+          docker compose -f audit/isolated/compose.yml exec -T db psql -U postgres -v ON_ERROR_STOP=1 < audit/owner-atomic-hours.pending.sql
+          docker compose -f audit/isolated/compose.yml exec -T db psql -U postgres -v ON_ERROR_STOP=1 < audit/notification-adapter.pending.sql
+          docker compose -f audit/isolated/compose.yml exec -T db psql -U postgres -v ON_ERROR_STOP=1 < audit/isolated/guest-fixtures.sql
+          docker compose -f audit/isolated/compose.yml up -d rest
+          python3 audit/isolated/wait.py http://127.0.0.1:3000/
+      - name: Desktop and touch WebKit guest journeys (no hosted writes)
+        run: docker run --rm --ipc=host --network=host -v "$PWD:/work" -w /work/audit/browser mcr.microsoft.com/playwright:v1.64.1-noble bash -c 'npm ci --ignore-scripts --omit=optional && npm test'
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
@@ -39,3 +38,6 @@ jobs:
             audit/browser/playwright-report
             audit/browser/test-results
           retention-days: 7
+      - name: Remove disposable services
+        if: always()
+        run: docker compose -f audit/isolated/compose.yml down -v

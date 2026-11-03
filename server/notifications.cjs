@@ -9,6 +9,8 @@ function renderNotification(job,{from,appOrigin}){
  if(!/^\S+@\S+\.\S+$/.test(job.destination||'')||/[\r\n]/.test(from||'')||!from)throw new DeliveryError('INVALID_ADDRESS');
  const origin=new URL(appOrigin);if(origin.protocol!=='https:'||origin.origin!==appOrigin)throw new DeliveryError('INVALID_APP_ORIGIN');
  const p=job.payload||{},date=new Date(p.starts_at);if(!Number.isFinite(date.getTime()))throw new DeliveryError('INVALID_BOOKING_TIME');
+ // Undefined silently selects the runner's timezone in Intl. Never guess a business clock.
+ if(typeof p.timezone!=='string'||!p.timezone.trim())throw new DeliveryError('INVALID_TIMEZONE');
  let time;try{time=new Intl.DateTimeFormat('en-GB',{timeZone:p.timezone,dateStyle:'full',timeStyle:'short'}).format(date);}catch{throw new DeliveryError('INVALID_TIMEZONE');}
  const title={booking_confirmation:'Booking confirmed',booking_reminder:'Appointment reminder',booking_cancelled:'Booking cancelled'}[job.template];
  const lines=[title,String(p.business_name||'Your business'),String(p.service_name||'Appointment')+' · '+time];
@@ -42,7 +44,8 @@ function verifyWebhook(raw,headers,secret,now=Math.floor(Date.now()/1000)){
  const key=Buffer.from(secret.slice(6),'base64');if(key.length<16)throw new DeliveryError('INVALID_WEBHOOK');const expected=crypto.createHmac('sha256',key).update(id+'.'+ts+'.'+raw).digest();
  const valid=signatures.split(' ').some(s=>{const [version,value]=s.split(',');if(version!=='v1'||!value)return false;const got=Buffer.from(value,'base64');return got.length===expected.length&&crypto.timingSafeEqual(got,expected)});if(!valid)throw new DeliveryError('INVALID_WEBHOOK');
  let event;try{event=JSON.parse(raw)}catch{throw new DeliveryError('INVALID_WEBHOOK')}
- if(!['email.delivered','email.bounced','email.complained','email.suppressed','email.failed','email.delivery_delayed'].includes(event.type)||typeof event.data?.email_id!=='string')throw new DeliveryError('UNSUPPORTED_WEBHOOK');
+ if(!['email.delivered','email.bounced','email.complained','email.suppressed','email.failed','email.delivery_delayed'].includes(event?.type))throw new DeliveryError('UNSUPPORTED_WEBHOOK');
+ if(typeof event.data?.email_id!=='string'||!event.data.email_id.trim()||event.data.email_id.length>200||!id.trim()||id.length>200)throw new DeliveryError('INVALID_WEBHOOK');
  return {id,type:event.type,providerMessageId:event.data.email_id};
 }
 async function handleWebhook({raw,headers,secret,ledger,now}){const event=verifyWebhook(raw,headers,secret,now);if(!ledger||typeof ledger.recordOnce!=='function')throw new DeliveryError('DURABLE_EVENT_LEDGER_REQUIRED');return ledger.recordOnce(event);}
