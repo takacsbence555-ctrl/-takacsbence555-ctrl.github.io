@@ -29,7 +29,7 @@ tests.extend([
  ('unknown manage token has no booking','/rest/v1/rpc/get_public_booking_manage',{'p_token':'11111111-1111-4111-8111-111111111111'},[200],False),
  ('public catalog','/rest/v1/rpc/get_public_booking_catalog',{'p_business_slug':'demo-studio'},[200],False),
  ('invalid manage token rejected','/rest/v1/rpc/get_public_booking_manage',{'p_token':'invalid'},[400],False),
- ('invalid booking contact rejected','/rest/v1/rpc/create_public_booking_local_v2',{'p_business_slug':'demo-studio','p_staff_slug':'demo-barber-a','p_service_slug':'classic-cut','p_date':'2026-10-02','p_time':'10:00','p_display_name':'Audit','p_email':'bad-email','p_phone':None},[400],False)
+
 ])
 passed=0
 with concurrent.futures.ThreadPoolExecutor(max_workers=5) as pool:

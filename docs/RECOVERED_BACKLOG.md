@@ -74,3 +74,38 @@ Follow-up inspection found owner_setup_snapshot and owner_subscription_snapshot 
 Rollback: retain prior main/Vercel deployments and readiness/completion branches. Application rollback can target the previous confirmed deployment. Keep additive database migrations and security guards; do not drop tables or undo data while rolling back frontend assets. The two cancelled QA bookings and withdrawn QA waitlist request contain fictional data only.
 
 Additional rollback-only onboarding test passed for all five business types: persisted business_type, Europe/London timezone and GBP currency were asserted for each new business; all users/businesses rolled back. This is API/database verification, not a completed real email/signup browser journey.
+
+## Final production-completion pass
+
+Observed baseline main/production: 81edb461569b0eb8d80cde8873f298219c903c9f, confirmed unchanged at start. PRs #1–#9 reviewed; #3 is superseded and closed. Changes for this pass are in PR #10.
+
+### Reproduced and fixed
+
+- Staff could modify service prices directly under legacy membership-only RLS. Client roles also held dangerous TRUNCATE/TRIGGER/REFERENCES grants. Reproduced with rollback-only fixtures; replaced policies with owner/manager checks and revoked anonymous table access and dangerous grants. Owner operations and guest RPCs retained.
+- Notification claims tried to use processing despite a status constraint that prohibited it. Fixed state validation and fail-closed provider activation; retry/backoff/stale-claim/max-attempt tests pass without any real messages.
+- Rescheduling left stale reminders queued. Updated queue handling and excluded marketing templates from transactional delivery claims.
+- Customer erasure omitted queued/waitlist contact information. Export and erasure now cover associated records; management tokens are excluded from exports and revoked on erasure.
+- Owner OTP calls used an ignored body redirect field. Corrected redirect_to query semantics for signup and login, added request-contract tests, cancellation, form validation and duplicate-submit handling. Actual received-email E2E remains blocked.
+- Time off could overlap existing bookings. Added database-trigger validation using the same staff lock as booking creation, tested rejection, availability and removal.
+- Time-off form values were interpreted as server timestamps. Added business-local conversion and tested BST/GMT plus invalid spring-forward wall times. Form labels and displayed absence times use the business timezone.
+- Mobile operator action controls overflowed. Corrected action stacking and wrapped headers. Automated contrast failures on booking labels were repaired without changing the visual identity.
+- Added CSP, repeatable real browser CI and read-only scheduled production smoke checks. Browser CI mirrors Vercel security headers before release and targets the production URL on main.
+
+### Evidence checkpoint
+
+Local UI regression: 30 scenarios passed. Product/branding: 16 checks passed. Four original database suites rerun successfully after permission/scheduling changes (30 named scenario groups plus snapshot/onboarding assertions). New direct-table permissions, notification retries/privacy, time-off conflicts and local-time DST suites pass with rolled-back fixtures. Additional owner delivery-status role assertions passed.
+
+Real browser run 38820762380 passed all 18 cases: desktop Chromium and touch-enabled mobile WebKit, five catalogs, persistent booking/refresh/reschedule/cancel, history/validation, waitlist withdrawal, unavailable-network handling, demo navigation/invalid login, invalid references, anonymous denial, WCAG 2.1 AA booking scan and simultaneous slot attempts. Later source/security-header changes must pass their own required checks before merge.
+
+Synthetic CI bookings are cancelled in finally blocks and database checks confirm no active QA appointments. No customer notifications, real charges, paid resources or real account deletions occurred.
+
+### Remaining gates
+
+- P0: Controlled test inbox and actual auth session are still required. Production contains zero auth users; Owner email/signup/login and authenticated Owner desktop/mobile E2E remain unverified.
+- P2: Verified notification provider/worker, approved test delivery and delivery webhooks remain absent. Default claim eligibility is disabled for every business.
+- Recovery: Free-plan project; no actual off-site backup/isolated restore drill was available. Secure database credentials, backup storage and a restore target are needed.
+- Monitoring: Read-only smoke workflow exists; external client-error alerting and log drains remain absent. Empty Function logs do not certify a static frontend.
+- Physical mobile devices, manual screen-reader testing, full Owner accessibility and capacity/load testing remain unverified.
+- Existing non-core demonstration modules remain illustrative or unavailable in live mode; they are not completed business operations. Generative AI and live billing remain unconnected/disabled.
+
+Release recommendation remains NOT READY until the P0 identity/Owner E2E gate and remaining operational requirements are closed. See docs/OPERATIONS_RUNBOOK.md for concrete prerequisites and safe procedures.

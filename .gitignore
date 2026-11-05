@@ -2,3 +2,18 @@ node_modules/
 .env
 .env.*
 !.env.example
+
+# Never stage backup archives, identities or local browser reports.
+*.dump
+*.cms
+*.age
+*.pem
+*.key
+*identity*.txt
+*secret-key*.txt
+audit/browser/results.json
+audit/browser/owner-results.json
+audit/browser/playwright-report/
+audit/browser/test-results/
+audit/isolated/recovery-result.json
+__pycache__/

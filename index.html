@@ -221,7 +221,7 @@ window.__guestLang=function(lang){
                 <span class="safe">SECURE BOOKING</span>
               </div>
               <div class="social-login">
-                <button type="button" data-action="guest-auth-info" aria-label="Sign-in availability">● Apple · Demo</button><button type="button" data-action="guest-auth-info" aria-label="Sign-in availability">G Google · Demo</button>
+                <button type="button" data-action="guest-auth-info">● Apple · Demo</button><button type="button" data-action="guest-auth-info">G Google · Demo</button>
               </div>
               <div class="or"><span>or book without an account</span></div>
               <div class="form-grid">
@@ -285,7 +285,7 @@ window.__guestLang=function(lang){
     </main>
 
     <main id="hq" class="view">
-      <section id="ownerAuthGate" class="owner-auth-gate"><div class="owner-auth-card"><small>KAVELYQ PRO · 14-DAY FREE TRIAL</small><h1>Run your business with Kavelyq.</h1><p>Proposed plans: Essential £19/month and Intelligence £39/month. Live billing is disabled. Existing owners can sign in with a secure magic link.</p><label>Email<input id="ownerEmail" type="email" autocomplete="email" placeholder="owner@example.com"></label><button id="ownerLoginBtn" class="primary" type="button">Send secure sign-in link</button><span id="ownerAuthStatus"></span><button id="ownerDemoBtn" class="secondary" type="button">Continue with demo Owner OS</button><div class="owner-trial-signup"><span>NEW TO KAVELYQ?</span><button id="ownerTrialBtn" class="secondary" type="button">Start 14-day free trial</button></div></div></section>
+      <section id="ownerAuthGate" class="owner-auth-gate"><div class="owner-auth-card"><small>KAVELYQ PRO · 14-DAY FREE TRIAL</small><h1>Run your business with Kavelyq.</h1><p>Proposed plans: Essential £19/month and Intelligence £39/month. Live billing is disabled. Existing owners can sign in with a secure magic link.</p><label>Email<input id="ownerEmail" type="email" autocomplete="email" placeholder="owner@example.com"></label><button id="ownerLoginBtn" class="primary" type="button">Send secure sign-in link</button><span id="ownerAuthStatus" role="status"></span><button id="ownerAuthCancel" class="secondary hidden" type="button">Sign out</button><button id="ownerDemoBtn" class="secondary" type="button">Continue with demo Owner OS</button><div class="owner-trial-signup"><span>NEW TO KAVELYQ?</span><button id="ownerTrialBtn" class="secondary" type="button">Start 14-day free trial</button></div></div></section>
       <div id="ownerAppShell" class="app-shell hidden">
         <aside class="sidebar">
           <div class="brand">
@@ -344,6 +344,7 @@ window.__guestLang=function(lang){
               <p id="pageSub">Executive overview · September 2026</p>
             </div>
             <div class="head-actions">
+              <button id="ownerSignOutMobile" class="mobile-owner-signout secondary small" type="button" aria-label="Sign out">Sign out</button>
               <button class="search">
                 ⌕ <span>Search</span><kbd>⌘ K</kbd></button
               ><button class="icon-btn" aria-label="Notifications">
@@ -368,8 +369,8 @@ window.__guestLang=function(lang){
       <span>✓</span>
       <div><b id="toastTitle">Done</b><small id="toastText"></small></div>
     </div>
-    <script src="product-core.js?v=completion-4"></script>
-    <script src="app.js?v=completion-4"></script>
+    <script src="product-core.js?v=release-final-1"></script>
+    <script src="app.js?v=release-final-1"></script>
     <script src="multi-industry-preview.js?v=completion"></script>
   </body>
 </html>
