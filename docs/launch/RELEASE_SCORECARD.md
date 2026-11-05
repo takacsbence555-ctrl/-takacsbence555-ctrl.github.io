@@ -1,5 +1,42 @@
 # KAVELYQ release scorecard
 
+## 5 November pilot gate — latest verified candidate
+
+**NO-GO for real customer data.** This supersedes older preparation dates below. Verified executable candidate: `4a44af08032ce71edfa72e00db4d9b9e868a4bc2`. All eight visible push/PR Actions runs completed successfully; no failed test remains at that revision. A documentation-only follow-up must also retain green CI. Completed candidate tests do not establish live operation.
+
+| Critical requirement | Status | Verified scope / remaining founder action |
+|---|---|---|
+| Guest booking, confirmation, cancellation, rescheduling, concurrent attempts | PASS | 26/26 isolated desktop Chromium and touch WebKit cases; persisted disposable database only |
+| Authenticated Owner, onboarding, five industries, Calendar, CRM, staff, services/settings and navigation | PASS | 26/26 actual local Auth/Mailpit/PostgREST journeys, no skipped test |
+| Tenant isolation, roles, RLS, timezone and DST | PASS | Four SQL suites, 14 cross-tenant RPC denials, staff/table boundaries, winter/summer/gap and three database session zones |
+| Pending migrations, order and rollback | PASS | Local only: owner-atomic-hours.pending.sql then notification-adapter.pending.sql; atomic rollback and incompatible-base rejection |
+| Standard age X25519 encryption and synthetic recovered-key restore | PASS | Six payload sizes including STREAM boundaries; recovered identity used after removing ORIGINAL SYNTHETIC identity; 47 tables/3 sequences restored, source unchanged |
+| Corruption, truncation, wrong identity/passphrase and incomplete output | PASS | CLI authentication failures, protected recovery-payload damage, missing identity, private quarantine and existing-output preservation |
+| Notification retries/idempotency/webhook security | PASS | Local mock-provider HTTP + real disposable database, signed durable events, suppression/backoff/stale leases; no external email |
+| Dependency/source/deployment guards and responsive accessibility | PASS | Both audited dependency trees zero vulnerabilities; 92-source-file guards; desktop/touch WebKit and scoped WCAG checks |
+| Founder recovery PDF custody and iPhone recovery | BLOCKED | Retrieve durable separate off-device copy; privately open saved recovery payload and verify recovered-key challenge. No key/PDF/passphrase may be supplied to us |
+| Live backup and measured recovery | BLOCKED | Separately approve precise export destination/scope and isolated restore after private recovery evidence; secure runner and owner-local decryption handoff need approval |
+| Hosted migrations and controlled candidate release | BLOCKED | Approve each pending migration after backup, then exact merge/deployment separately. No production change authorised |
+| Physical Safari sign-in and full deployed first-salon lifecycle | BLOCKED | After approved release, approve controlled inbox/account/booking test and perform on iPhone |
+| Restricted signup/password review, external-owner Auth SMTP | BLOCKED | Review existing users; approve exact Auth settings and eligible sender. No public registration or real email activated |
+| Notifications in real pilot | BLOCKED | Select explicit salon-managed communications with automation disabled, or approve/configure verified sender and separate delivery test |
+| Monitoring, incident/support and rollback | BLOCKED | Name support contact/hours, approve active failure notifications/release and verify incident routing. Existing documentation is not active monitoring |
+| Hosting commercial eligibility | BLOCKED | Confirm existing plan/permission in Vercel Billing without upgrade. A free pilot is not assumed exempt |
+| Legal/privacy/retention/account closure | BLOCKED | Supply operator/contact and retention decisions; approve reviewed pilot terms/DPA and deletion process/provider use |
+| Pilot scope and payments | BLOCKED | Approve at most three named salons, one at a time, 14 days free/no card, with explicit limitations. Payments remain disabled |
+
+No new application defect was reproduced by the latest complete suite. These PASS entries are deliberately limited to candidate/isolation evidence; no live launch, penetration-test certification, physical-device or founder-recovery pass is claimed. Residual hosted advisor findings and conditional provider timezone restrictions remain documented below and require review, not indiscriminate grant removal.
+
+### Exact completed Actions evidence
+
+- Product PR [41683889618](https://github.com/takacsbence555-ctrl/-takacsbence555-ctrl.github.io/actions/runs/41683889618), push [41683876443](https://github.com/takacsbence555-ctrl/-takacsbence555-ctrl.github.io/actions/runs/41683876443): success.
+- Guest/browser [41683876432](https://github.com/takacsbence555-ctrl/-takacsbence555-ctrl.github.io/actions/runs/41683876432): 26/26 plus SQL suites.
+- Owner/recovery PR [41683889292](https://github.com/takacsbence555-ctrl/-takacsbence555-ctrl.github.io/actions/runs/41683889292), push [41683876610](https://github.com/takacsbence555-ctrl/-takacsbence555-ctrl.github.io/actions/runs/41683876610): 26/26, age recovery/47-table restore and mock notification integration.
+- Security PR [41683889076](https://github.com/takacsbence555-ctrl/-takacsbence555-ctrl.github.io/actions/runs/41683889076), push [41683876422](https://github.com/takacsbence555-ctrl/-takacsbence555-ctrl.github.io/actions/runs/41683876422): success, zero dependency vulnerabilities.
+- Production smoke [41683876438](https://github.com/takacsbence555-ctrl/-takacsbence555-ctrl.github.io/actions/runs/41683876438): existing production non-booking-write smoke only, not candidate deployment proof.
+
+Smallest next founder action: follow [AGE_BACKUP_RECOVERY.md](AGE_BACKUP_RECOVERY.md#exact-private-iphone-verification-procedure) privately using the saved separate recovery copy, without deleting/resetting the original identity. Same-vault duplicate recognition is useful but not an independent recovered-key decryption proof. Report only pass/fail, never secret material. All production actions remain separate later decisions.
+
 Preparation checkpoint, 3 November 2026. Recommendation: **NOT READY** for a live customer pilot or public paid launch. Safe synthetic evaluation can continue. This scorecard distinguishes candidate test evidence from hosted operation. The exact final commit's Actions results are recorded in PR #10; an older green run is not a release approval.
 
 Status meanings: PASS = evidence supports the stated scope; FAIL = known current gap; BLOCKED = verification/activation needs access, configuration or approval. Categories: 1 = safe engineering completed/automatable; 2 = operator approval/account setup; 3 = conditional spending; 4 = optional improvement. No provider purchase, company registration, email campaign, payment activation, merge, production deployment or hosted migration was performed.
